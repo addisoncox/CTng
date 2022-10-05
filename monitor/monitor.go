@@ -10,56 +10,124 @@ import (
 	"log"
 	"net/http"
 	"time"
+	"strings"
+	"github.com/gorilla/mux"
 )
 
 const PROTOCOL = "http://"
-// Queries all loggers for their STH.
-// Currently, will only grab the latest STH, as our fakeLogger doesn't have date-handling implemented.
-// It also Accuses each logger if it doesnt give correct data or any issues occur.
-// Obtaining certificate entries from a logger is unimplemented and left as an exercise for the reader ;)
+func bindMonitorContext(context *MonitorContext, fn func(context *MonitorContext, w http.ResponseWriter, r *http.Request)) func(w http.ResponseWriter, r *http.Request) {
+	return func(w http.ResponseWriter, r *http.Request) {
+		fn(context, w, r)
+	}
+}
+
+func handleMonitorRequests(c *MonitorContext) {
+	// MUX which routes HTTP directories to functions.
+	gorillaRouter := mux.NewRouter().StrictSlash(true)
+	// POST functions
+	gorillaRouter.HandleFunc("/monitor/recieve-gossip", bindMonitorContext(c, handle_gossip)).Methods("POST")
+	gorillaRouter.HandleFunc("/monitor/recieve-gossip-from-gossiper", bindMonitorContext(c, handle_gossip_from_gossiper)).Methods("POST")
+	// Start the HTTP server.
+	http.Handle("/", gorillaRouter)
+	// Listen on port set by config until server is stopped.
+	log.Fatal(http.ListenAndServe(":"+c.Config.Port, nil))
+}
+
+func receiveGossip(c *MonitorContext, w http.ResponseWriter, r *http.Request) {
+	// Post request, parse sent object.
+	body, err := ioutil.ReadAll(r.Body)
+	// If there is an error, post the error and terminate.
+	if err != nil {
+		panic(err)
+	}
+	// Converts JSON passed in the body of a POST to a Gossip_object.
+	var gossip_obj gossip.Gossip_object
+	err = json.NewDecoder(r.Body).Decode(&gossip_obj)
+	// Prints the body of the post request to the server console
+	log.Println(string(body))
+	// Use a mapped empty interface to store the JSON object.
+	var postData map[string]interface{}
+	// Decode the JSON object stored in the body
+	err = json.Unmarshal(body, &postData)
+	// If there is an error, post the error and terminate.
+	if err != nil {
+		panic(err)
+	}
+}
+
+func handle_gossip_from_gossiper(c *MonitorContext, w http.ResponseWriter, r *http.Request){
+	var gossip_obj gossip.Gossip_object
+	err := json.NewDecoder(r.Body).Decode(&gossip_obj)
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusBadRequest)
+	}
+	fmt.Println("Recieved new, valid", gossip.TypeString(gossip_obj.Type), "from "+util.GetSenderURL(r)+".")
+	Process_valid_object(c, gossip_obj)
+}
+func handle_gossip(c *MonitorContext, w http.ResponseWriter, r *http.Request) {
+	// Parse sent object.
+	// Converts JSON passed in the body of a POST to a Gossip_object.
+	var gossip_obj gossip.Gossip_object
+	err := json.NewDecoder(r.Body).Decode(&gossip_obj)
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusBadRequest)
+	}
+	// Verify the object is valid.
+	err = gossip_obj.Verify(c.Config.Crypto)
+	if err != nil {
+		fmt.Println("Recieved invalid object from " + util.GetSenderURL(r) + ".")
+		AccuseEntity(c, gossip_obj.Signer)
+		http.Error(w, err.Error(), http.StatusOK)
+		return
+	}
+	// Check for duplicate object.
+	if c.IsDuplicate(gossip_obj){
+		// If the object is already stored, still return OK.{
+		fmt.Println("Duplicate:", gossip.TypeString(gossip_obj.Type), util.GetSenderURL(r)+".")
+		http.Error(w, "Gossip object already stored.", http.StatusOK)
+		// processDuplicateObject(c, gossip_obj, stored_obj)
+		return
+	} else {
+		fmt.Println("Recieved new, valid", gossip_obj.Type, "from "+util.GetSenderURL(r)+".")
+		Process_valid_object(c, gossip_obj)
+		c.SaveStorage()
+	}
+	http.Error(w, "Gossip object Processed.", http.StatusOK)
+}
+
+
 func QueryLoggers(c *MonitorContext) {
 	for _, logger := range c.Config.Logger_URLs {
-
-		// For when dates are possible: Get today's STH from logger.
-		// Get today's date in format YYYY-MM-DD
-		// (Used when querying individual days)
 		// var today = time.Now().UTC().Format(time.RFC3339)[0:10]
+		if Check_entity_pom(c, logger){
+			fmt.Println(util.RED,"There is a PoM against this Logger. Query will not be initiated",util.RESET)
+		}else
+		{
+			fmt.Println(util.GREEN + "Querying Logger Initiated" + util.RESET)
+			sthResp, err := http.Get(PROTOCOL + logger + "/ctng/v2/get-sth/")
+			if err != nil {
+				log.Println(util.RED+"Query Logger Failed: "+err.Error(), util.RESET)
+				AccuseEntity(c, logger)
+				continue
+			}
 
-		sthResp, err := http.Get(PROTOCOL + logger + "/ctng/v2/get-sth/")
-		if err != nil {
-			log.Println(util.RED+"Query Logger Failed: "+err.Error(), util.RESET)
-			AccuseEntity(c, logger)
-			continue
+			sthBody, err := ioutil.ReadAll(sthResp.Body)
+			var STH gossip.Gossip_object
+			err = json.Unmarshal(sthBody, &STH)
+			if err != nil {
+				log.Println(util.RED+err.Error(), util.RESET)
+				AccuseEntity(c, logger)
+				continue
+			}
+			err = STH.Verify(c.Config.Crypto)
+			if err != nil {
+				log.Println(util.RED+"STH signature verification failed", err.Error(), util.RESET)
+				AccuseEntity(c, logger)
+			} else {
+
+				Process_valid_object(c, STH)
+			}
 		}
-
-		sthBody, err := ioutil.ReadAll(sthResp.Body)
-		var STH gossip.Gossip_object
-		err = json.Unmarshal(sthBody, &STH)
-		if err != nil {
-			log.Println(util.RED+err.Error(), util.RESET)
-			AccuseEntity(c, logger)
-			continue
-		}
-		err = STH.Verify(c.Config.Crypto)
-		if err != nil {
-			log.Println(util.RED+"STH signature verification failed", err.Error(), util.RESET)
-			AccuseEntity(c, logger)
-		} else {
-
-			Process_valid_object(c, STH)
-		}
-		// Get today's entries from logger. Currently unimplemented in both storage + executation.
-		// entriesResp, err := http.Get(logger + "/ctng/v1/get-entries/" + today)
-		// if err != nil {
-		// 	log.Println(util.RED+err.Error(), util.RESET)
-		// }
-
-		// entiresBody, err := ioutil.ReadAll(entriesResp.Body)
-		// if err != nil {
-		// 	log.Println(util.RED+err.Error(), util.RESET)
-		// }
-		// entries := string(entiresBody)
-		// fmt.Printf("Entries from logger " + logger + ": " + entries + "\n") //temp
 	}
 
 }
@@ -72,41 +140,40 @@ func QueryAuthorities(c *MonitorContext) {
 		// Get today's revocation information from CA.
 		// Get today's date in format YYYY-MM-DD
 		// var today = time.Now().UTC().Format(time.RFC3339)[0:10]
+		if Check_entity_pom(c, CA){
+			fmt.Println(util.RED,"There is a PoM against this CA. Query will not be initiated",util.RESET)
+		}else
+		{
+			fmt.Println(util.GREEN + "Querying CA Initiated" + util.RESET)
+			revResp, err := http.Get(PROTOCOL + CA + "/ctng/v2/get-revocation/")
+			if err != nil {
+				log.Println(util.RED+"Query CA failed: "+err.Error(), util.RESET)
+				AccuseEntity(c, CA)
+				continue
+			}
 
-		revResp, err := http.Get(PROTOCOL + CA + "/ctng/v2/get-revocation/")
-		if err != nil {
-			log.Println(util.RED+"Query CA failed: "+err.Error(), util.RESET)
-			AccuseEntity(c, CA)
-			continue
-		}
-
-		revBody, err := ioutil.ReadAll(revResp.Body)
-		if err != nil {
-			log.Println(util.RED+err.Error(), util.RESET)
-			AccuseEntity(c, CA)
-		}
-		//rev := string(revBody)
-		//fmt.Println("Revocation information from CA " + CA + ": " + rev + "\n")
-
-		// TODO - process revocation data
-		// Our plan was to have the SRH in payload[0] of the object and the dCRV in payload[1].
-		// Thus, it will pass the RSA gossip object verification
-		// and later functions can verify the SRH is actually accurate.
-		// Some of these design decisions exist in fakeCA.go, but nowhere else in the code.
-		var REV gossip.Gossip_object
-		err = json.Unmarshal(revBody, &REV)
-		if err != nil {
-			log.Println(util.RED+err.Error(), util.RESET)
-			AccuseEntity(c, CA)
-			continue
-		}
-		//fmt.Println(c.Config.Public)
-		err = REV.Verify(c.Config.Crypto)
-		if err != nil {
-			log.Println(util.RED+"Revocation information signature verification failed", err.Error(), util.RESET)
-			AccuseEntity(c, CA)
-		} else {
-			Process_valid_object(c, REV)
+			revBody, err := ioutil.ReadAll(revResp.Body)
+			if err != nil {
+				log.Println(util.RED+err.Error(), util.RESET)
+				AccuseEntity(c, CA)
+			}
+			//rev := string(revBody)
+			//fmt.Println("Revocation information from CA " + CA + ": " + rev + "\n")
+			var REV gossip.Gossip_object
+			err = json.Unmarshal(revBody, &REV)
+			if err != nil {
+				log.Println(util.RED+err.Error(), util.RESET)
+				AccuseEntity(c, CA)
+				continue
+			}
+			//fmt.Println(c.Config.Public)
+			err = REV.Verify(c.Config.Crypto)
+			if err != nil {
+				log.Println(util.RED+"Revocation information signature verification failed", err.Error(), util.RESET)
+				AccuseEntity(c, CA)
+			} else {
+				Process_valid_object(c, REV)
+			}
 		}
 	}
 
@@ -116,18 +183,7 @@ func QueryAuthorities(c *MonitorContext) {
 //It is called when the gossip object received is not valid, or the monitor didn't get response when querying the logger or the CA
 //Accused = Domain name of the accused entity (logger etc.)
 func AccuseEntity(c *MonitorContext, Accused string) {
-	GID := gossip.Gossip_ID{
-		// should be C.Period but we have sync issues with Local testing Environment, therefore gonna set to 0
-		Period: gossip.GetCurrentPeriod(),
-		Type: gossip.ACC_FRAG,
-		Entity_URL: Accused,
-	}
-	if _,ok := (*c.Storage_ACCUSATION_POM)[GID]; ok{
-		fmt.Println(util.BLUE+"Entity has Accusation_PoM on file, no need for more accusations."+util.RESET)
-		return
-	}
-	if _,ok := (*c.Storage_CONFLICT_POM)[GID]; ok{
-		fmt.Println(util.BLUE+"Entity has Conflict_PoM on file, no need for more accusations."+util.RESET)
+	if Check_entity_pom(c,Accused){
 		return
 	}
 	msg := Accused
@@ -185,7 +241,12 @@ func Check_entity_pom(c *MonitorContext, Accused string) bool {
 		fmt.Println(util.BLUE+"Entity has Accusation_PoM on file, no need for more accusations."+util.RESET)
 		return true
 	}
-	if _,ok := (*c.Storage_CONFLICT_POM)[GID]; ok{
+	GID2 := gossip.Gossip_ID{
+		Period: "0",
+		Type: gossip.CONFLICT_POM,
+		Entity_URL: Accused,
+	}
+	if _,ok := (*c.Storage_CONFLICT_POM)[GID2]; ok{
 		fmt.Println(util.BLUE+"Entity has Conflict_PoM on file, no need for more accusations."+util.RESET)
 		return true
 	}
@@ -219,16 +280,21 @@ func PeriodicTasks(c *MonitorContext) {
 	}
 	time.AfterFunc(time.Duration(c.Config.Public.MMD)*time.Second, f)
 	// Run the periodic tasks.
-	fmt.Println(util.GREEN + "Querying Loggers" + util.RESET)
 	QueryLoggers(c)
-    fmt.Println(util.GREEN + "Querying CAs" + util.RESET)
 	QueryAuthorities(c)
-
 	c.SaveStorage()
-	// TODO: Switch storage directory to a new folder for the next day's STHs.
-	// However, we also still need to accept STH_FULL and REV_FULL for the previous day's data. maybe we need storage for the previous day too?
-	// not sure.
+}
 
+func InitializeMonitorStorage(c *MonitorContext){
+	c.StorageDirectory = "testData/monitordata/"+c.StorageID+"/"
+	c.StorageFile_CONFLICT_POM  = "CONFLICT_POM.json"
+	c.StorageFile_ACCUSATION_POM = "ACCUSATION_POM.json"
+	c.StorageFile_STH_FULL = "STH_FULL.json"
+	c.StorageFile_REV_FULL = "REV_FULL.json" 
+	util.CreateFile(c.StorageDirectory+c.StorageFile_CONFLICT_POM)
+	util.CreateFile(c.StorageDirectory+c.StorageFile_ACCUSATION_POM)
+	util.CreateFile(c.StorageDirectory+c.StorageFile_STH_FULL)
+	util.CreateFile(c.StorageDirectory+c.StorageFile_REV_FULL)
 }
 
 //This function is called by handle_gossip in monitor_server.go under the server folder
@@ -290,9 +356,33 @@ func Process_valid_object(c *MonitorContext, g gossip.Gossip_object) {
 	}
 	// PoMs should be noted, but currently nothing special is done besides this.
 	if g.Type == gossip.ACCUSATION_POM || g.Type == gossip.CONFLICT_POM || g.Type == gossip.STH_FULL || g.Type == gossip.REV_FULL{
-		fmt.Println("Storing: ", g.Type)
 		c.StoreObject(g)
 		return
 	}
 	return
+}
+
+func StartMonitorServer(c *MonitorContext) {
+	// Check if the storage file exists in this directory
+	InitializeMonitorStorage(c)
+	err := c.LoadStorage()
+	if err != nil {
+		if strings.Contains(err.Error(), "no such file or directory") {
+			// Storage File doesn't exit. Create new, empty json file.
+			err = c.SaveStorage()
+			if err != nil {
+				panic(err)
+			}
+		} else {
+			panic(err)
+		}
+	}
+	tr := &http.Transport{}
+	c.Client = &http.Client{
+		Transport: tr,
+	}
+	// Run a go routine to handle tasks that must occur every MMD
+	go PeriodicTasks(c)
+	// Start HTTP server loop on the main thread
+	handleMonitorRequests(c)
 }

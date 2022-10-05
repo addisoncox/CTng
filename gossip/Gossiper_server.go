@@ -103,10 +103,10 @@ func handleGossip(c *GossiperContext, w http.ResponseWriter, r *http.Request) {
 	}
 	// Check for duplicate object.
 	stored_obj, found := c.GetObject(gossip_obj.GetID())
-	if found && stored_obj.Signature == gossip_obj.Signature{
+	if found && gossip_obj.Signer == stored_obj.Signer{
 		// If the object is already stored, still return OK.
 		//fmt.Println("Duplicate:", gossip_obj.Type, util.GetSenderURL(r)+".")
-		//fmt.Println("Duplicate: ", TypeString(gossip_obj.Type), " signed by ",gossip_obj.Signer+".")
+		fmt.Println("Duplicate: ", TypeString(gossip_obj.Type), " signed by ",gossip_obj.Signer+".")
 		err := ProcessDuplicateObject(c, gossip_obj, stored_obj)
 		if err != nil {
 			http.Error(w, err.Error(), http.StatusOK)
@@ -183,15 +183,8 @@ func PeriodicTasks(c *GossiperContext) {
 	f := func() {
 		PeriodicTasks(c)
 	}
-	time.AfterFunc(time.Duration(c.Config.Public.MMD)*time.Second, f)
-	for k := range *c.Storage{
-		delete (*c.Storage,k)
-	}
-	err := c.ClearStorage()
-	if err != nil{
-		fmt.Println(util.RED+"Clear Storage error"+util.RESET)
-		return
-	}
+	time.AfterFunc(time.Duration(c.Config.Public.MMD*3)*time.Second, f)
+	c.WipeStorage()
 }
 
 func InitializeGossiperStorage (c* GossiperContext){
@@ -227,6 +220,6 @@ func StartGossiperServer(c *GossiperContext) {
 	GossiperServerType = 2
 	getGossiperServerType()
 	// HTTP Server Loop
-	//go PeriodicTasks(c)
+	go PeriodicTasks(c)
 	handleRequests(c)
 }

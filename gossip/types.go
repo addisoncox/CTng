@@ -5,10 +5,9 @@ import (
 	"CTngv1/util"
 	"CTngv1/crypto"
 	"encoding/json"
-	"net/http"
-	"os"
+	"net/http"	
 	"reflect"
-    //"strconv"	
+	"fmt"
 )
 
 // The only valid application type
@@ -18,13 +17,9 @@ const CTNG_APPLICATION = "CTng"
 const (
 	STH      = "http://ctng.uconn.edu/101"
 	REV      = "http://ctng.uconn.edu/102"
-	//From monitor to gossiper
 	STH_FRAG = "http://ctng.uconn.edu/201"
 	REV_FRAG = "http://ctng.uconn.edu/202"
 	ACC_FRAG = "http://ctng.uconn.edu/203"
-	// From gossiper to monitor
-	// Or in the case of a new monitor is connected to the system, the existing monitor will send them to the new monitor
-	// Also used to serve the realying party
 	STH_FULL = "http://ctng.uconn.edu/301" 
 	REV_FULL = "http://ctng.uconn.edu/302" 
 	ACCUSATION_POM  = "http://ctng.uconn.edu/303"
@@ -128,26 +123,36 @@ type GossiperContext struct {
 
 // Saves the Storage object to the value in c.StorageFile.
 func (c *GossiperContext) SaveStorage() error {
-	// Turn the gossipStorage into a list, and save the list.
-	// This is slow as the size of the DB increases, but since we want to clear the DB each Period it will not infinitely grow..
+	// we only save the CONFLICT POM
 	storageList := []Gossip_object{}
-	for _, gossipObject := range *c.Storage{
-		storageList = append(storageList, gossipObject)
+	for key, gossipObject := range *c.Storage{
+		if key.Type == CONFLICT_POM{
+			storageList = append(storageList, gossipObject)
+		}
 	}
 	err := util.WriteData(c.StorageDirectory+"/"+c.StorageFile, storageList)
-	//err := util.WriteData(c.StorageFile, storageList)
 	return err
 }
-func (c *GossiperContext) ClearStorage() error{
-	err := os.Remove(c.StorageDirectory+"/"+c.StorageFile)
-	return err
+
+//wipe all temp data
+func (c *GossiperContext) WipeStorage(){
+	for key, _ := range *c.Storage{
+		if key.Type != CONFLICT_POM|| key.Period!=GetCurrentPeriod(){
+			delete(*c.Storage,key)
+		}
+	}
+	for key, _:= range *c.Obj_TSS_DB{
+		if key.Period!=GetCurrentPeriod(){
+			delete(*c.Obj_TSS_DB,key)
+		}
+	}
+	fmt.Println(util.BLUE,"Temp storage has been wiped.",util.RESET)
 }
 // Read every gossip object from c.StorageFile.
 // Store all files in c.Storage by their ID.
 func (c *GossiperContext) LoadStorage() error {
 	// Get the array that has been written to the storagefile.
 	storageList := []Gossip_object{}
-	//period := c.Config.Public.Period_interval
 	bytes, err := util.ReadByte(c.StorageFile)
 	if err != nil {
 		return err

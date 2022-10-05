@@ -47,10 +47,10 @@ var request_count int
 // Generates a fake STH and returns a gossip object of that STH.
 func generateSTH(loggerType int, Period_num int) gossip.Gossip_object {
 	// Generate a random-ish STH, add to STHS.
-	hashmsg := "Root Hash" + fmt.Sprint(currentPeriod+request_count)
+	hashmsg := "Root Hash" + fmt.Sprint(Period_num+request_count+loggerType)
 	hash, _ := crypto.GenerateSHA256([]byte(hashmsg))
 	STH1 := STH{
-		Timestamp: gossip.GetCurrentTimestamp(),
+		Timestamp: fmt.Sprint(Period_num),
 		RootHash:  hex.EncodeToString(hash),
 		TreeSize:  currentPeriod * 12571285,
 	}
@@ -94,7 +94,7 @@ func fill_with_data(){
 	STHS = STHS[:0]
 	fakeSTHs = fakeSTHs[:0]
 	for i:=0; i<60; i++{
-		sth1 := generateSTH(loggerType,i)
+		sth1 := generateSTH(1,i)
 		fakeSTH1 := generateSTH(loggerType,i)
 		STHS = append(STHS, sth1)
 	    fakeSTHs = append(fakeSTHs, fakeSTH1)
@@ -102,8 +102,25 @@ func fill_with_data(){
 }
 func requestSTH(w http.ResponseWriter, r *http.Request){
 	STH_index,err := strconv.Atoi(gossip.GetCurrentPeriod())
+	//Disconnecting logger
+	if loggerType == 3 && currentPeriod%config.MisbehaviorInterval == 0 {
+		// No response or any bad request response should trigger the accusation
+		request_count++
+		fmt.Println(util.RED,"Not sending Any STHS",util.RESET)
+		return
+	}
+	//Split-World Logger
+	if loggerType == 2 && request_count%2 == 0 && currentPeriod%config.MisbehaviorInterval == 0{
+		json.NewEncoder(w).Encode(fakeSTHs[STH_index])
+		request_count++
+		fmt.Println(util.RED,"FakeSTH sent.",fakeSTHs[STH_index].GetID(),"sig: ", fakeSTHs[STH_index].Signature[0],util.RESET)
+		return
+	}
+	// Normal logger
 	if err == nil{}
 	json.NewEncoder(w).Encode(STHS[STH_index])
+	fmt.Println(util.GREEN,"STH sent",STHS[STH_index].GetID(),"sig: ", STHS[STH_index].Signature[0], util.RESET)
+	request_count++
 }
 
 //func requestSTH(w http.ResponseWriter, r *http.Request) {
@@ -167,7 +184,7 @@ func RunFakeLogger(configFile string) {
 		fmt.Println("Error reading config file: ", err)
 	}
 	// request the object type from the user
-	//getLoggerType()
+	getLoggerType()
 	// MUX which routes HTTP directories to functions.
 	gorillaRouter := mux.NewRouter().StrictSlash(true)
 	// because we use global variables, we dont need to bind anything to requestSTH like we do for the other files.

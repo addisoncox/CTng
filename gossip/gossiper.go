@@ -256,20 +256,22 @@ func ProcessDuplicateObject(c *GossiperContext, obj Gossip_object, dup Gossip_ob
 	//Signed by the same Entity
 	//But the signature is different
 	//MALICIOUS, you are exposed
-	if obj.Type == dup.Type && obj.Period == dup.Period && obj.Signer == dup.Signer && obj.Signature[0] != dup.Signature[0]{
+	//note PoMs can have different signatures
+	if obj.Type == dup.Type && obj.Period == dup.Period && obj.Signer == dup.Signer && obj.Signature[0] != dup.Signature[0] && obj.Type!= CONFLICT_POM && obj.Type != ACCUSATION_POM{
 		D2_POM:= Gossip_object{
 			Application: obj.Application,
 			Type:        CONFLICT_POM,
-			Period:      obj.Period,
+			Period:      "0",
 			Signer:      "",
 			Timestamp:   GetCurrentTimestamp(),
 			Signature:   [2]string{obj.Signature[0], dup.Signature[0]},
 			Payload:     [3]string{obj.Signer, obj.Payload[0]+obj.Payload[1]+obj.Payload[2],dup.Payload[0]+dup.Payload[1]+dup.Payload[2]},
 		}
 		//store the object and send to monitor
+		fmt.Println(util.RED, "Entity: ", D2_POM.Payload[0], " is Malicious!", util.RESET)
 		SendToOwner(c,D2_POM)
 		c.StoreObject(D2_POM)
-
+		GossipData(c,D2_POM)
 	}
 	return nil
 }
