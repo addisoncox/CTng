@@ -1,0 +1,200 @@
+package gossip
+import (
+	"fmt"
+	"CTngv1/crypto"
+	"errors"
+	"time"
+	"strconv"
+)
+
+
+// The only valid application type
+const CTNG_APPLICATION = "CTng"
+
+// Identifiers for different types of gossip that can be sent.
+const (
+	STH      = "http://ctng.uconn.edu/101"
+	REV      = "http://ctng.uconn.edu/102"
+	STH_FRAG = "http://ctng.uconn.edu/201"
+	REV_FRAG = "http://ctng.uconn.edu/202"
+	ACC_FRAG = "http://ctng.uconn.edu/203"
+	STH_FULL = "http://ctng.uconn.edu/301" 
+	REV_FULL = "http://ctng.uconn.edu/302" 
+	ACCUSATION_POM  = "http://ctng.uconn.edu/303"
+	CONFLICT_POM = "http://ctng.uconn.edu/304"
+)
+
+// This function prints the "name string" of each Gossip object type. It's used when printing this info to console.
+func TypeString(t string) string {
+	switch t {
+	case STH:
+		return "STH"
+	case REV:
+		return "REV"
+	case STH_FRAG:
+		return "STH_FRAG"
+	case REV_FRAG:
+		return "REV_FRAG"
+	case ACC_FRAG:
+		return "ACC_FRAG"
+	case STH_FULL:
+		return "STH_FULL"
+	case REV_FULL:
+		return "REV_FULL"
+	case ACCUSATION_POM:
+		return "ACCUSATION_POM"
+	case CONFLICT_POM:
+		return "CONGLICT_POM"
+	default:
+		return "UNKNOWN"
+	}
+}
+type Gossip_object struct {
+	Application string `json:"application"`
+	Period string `json:"period"`
+	Type        string `json:"type"`
+	Signer string `json:"signer"`
+	//**************************The number of signers should be equal to the Threshold, it just happened to be 2 in our case***************************************
+	Signers map[int]string `json:"signers"`
+	Signature [2]string `json:"signature"`
+	// Timestamp is a UTC RFC3339 string
+	Timestamp string `json:"timestamp"`
+	Crypto_Scheme string `json:"crypto_scheme"`
+	Payload [3]string `json:"payload,omitempty"`
+}
+
+type Gossip_ID struct{
+	Period     string `json:"period"`
+	Type       string `json:"type"`
+	Entity_URL string `json:"entity_URL"`
+}
+
+
+//This returns the ID of a gossip object, which is the primary key in our Gossip_Object_TSS_DB, and in our Gossip Storage
+func (g Gossip_object) GetID() Gossip_ID{
+	new_ID := Gossip_ID{
+		Period: g.Period,
+		Type: g.Type,
+		Entity_URL: g.Payload[0],
+	}
+	return new_ID
+}
+
+//Gossip Storage
+type Gossip_Storage map[Gossip_ID]Gossip_object
+
+func GetCurrentTimestamp() string {
+	return time.Now().UTC().Format(time.RFC3339)
+}
+
+func GetCurrentPeriod() string{
+	timerfc := time.Now().UTC().Format(time.RFC3339)
+	Miniutes, err := strconv.Atoi(timerfc[14:16])
+	Periodnum := strconv.Itoa(Miniutes)
+	if err != nil {
+	}
+	return Periodnum
+}
+func Verify_gossip_pom(g Gossip_object, c *crypto.CryptoConfig) error {
+	if g.Type == CONFLICT_POM {
+		var err1, err2 error
+		if g.Signature[0] != g.Signature[1] {
+			if g.Crypto_Scheme == "BLS"{
+				fragsig1, sigerr1 := crypto.SigFragmentFromString(g.Signature[0])
+				fragsig2, sigerr2 := crypto.SigFragmentFromString(g.Signature[1])
+				// Verify the signatures were made successfully
+				if sigerr1 != nil || sigerr2 != nil && !fragsig1.Sign.IsEqual(fragsig2.Sign) {
+					err1 = c.FragmentVerify(g.Payload[1], fragsig1)
+					err2 = c.FragmentVerify(g.Payload[2], fragsig2)
+				}
+			}else{
+				rsaSig1, sigerr1 := crypto.RSASigFromString(g.Signature[0])
+				rsaSig2, sigerr2 := crypto.RSASigFromString(g.Signature[1])
+				// Verify the signatures were made successfully
+				if sigerr1 != nil || sigerr2 != nil {
+					err1 = c.Verify([]byte(g.Payload[1]), rsaSig1)
+					err2 = c.Verify([]byte(g.Payload[2]), rsaSig2)
+				}}
+			}
+			if err1 == nil && err2 == nil {
+				return nil
+			} else {
+				return errors.New("Message Signature Mismatch" + fmt.Sprint(err1) + fmt.Sprint(err2))
+			}
+		} else {
+			//if signatures are the same, there are no conflicting information
+			return errors.New("This is not a valid gossip pom")
+		}
+}
+
+//verifies signature fragments match with payload
+func Verify_PayloadFrag(g Gossip_object, c *crypto.CryptoConfig) error {
+	if g.Signature[0] != "" && g.Payload[0] != "" {
+		sig, _ := crypto.SigFragmentFromString(g.Signature[0])
+		err := c.FragmentVerify(g.Payload[0]+g.Payload[1]+g.Payload[2], sig)
+		if err != nil {
+			return errors.New(No_Sig_Match)
+		}
+		return nil
+	} else {
+		return errors.New(Mislabel)
+	}
+}
+
+//verifies threshold signatures match payload
+func Verify_PayloadThreshold(g Gossip_object, c *crypto.CryptoConfig) error {
+	if g.Signature[0] != "" && g.Payload[0] != "" {
+		sig, _ := crypto.ThresholdSigFromString(g.Signature[0])
+		err := c.ThresholdVerify(g.Payload[0]+g.Payload[1]+g.Payload[2], sig)
+		if err != nil {
+			return errors.New(No_Sig_Match)
+		}
+		return nil
+	} else {
+		return errors.New(Mislabel)
+	}
+}
+
+// Verifies RSAsig matches payload, wait.... i think this just works out of the box with what we have
+func Verify_RSAPayload(g Gossip_object, c *crypto.CryptoConfig) error {
+	if g.Signature[0] != "" && g.Payload[0] != "" {
+		sig, err := crypto.RSASigFromString(g.Signature[0])
+		if err != nil {
+			return errors.New(No_Sig_Match)
+		}
+		return c.Verify([]byte(g.Payload[0]+g.Payload[1]+g.Payload[2]), sig)
+
+	} else {
+		return errors.New(Mislabel)
+	}
+}
+
+//Verifies Gossip object based on the type:
+//STH and Revocations use RSA
+//Trusted information Fragments use BLS SigFragments
+//PoMs use Threshold signatures
+func (g Gossip_object) Verify(c *crypto.CryptoConfig) error {
+	// If everything Verified correctly, we return nil
+	switch g.Type {
+	case STH:
+		return Verify_RSAPayload(g, c)
+	case REV:
+		return Verify_RSAPayload(g, c)
+	case STH_FRAG:
+		return Verify_PayloadFrag(g, c)
+	case REV_FRAG:
+		return Verify_PayloadFrag(g, c)
+	case ACC_FRAG:
+		return Verify_PayloadFrag(g, c)
+	case STH_FULL:
+		return Verify_PayloadThreshold(g, c)
+	case REV_FULL:
+		return Verify_PayloadThreshold(g, c)
+	case ACCUSATION_POM:
+		return Verify_PayloadThreshold(g, c)
+	case CONFLICT_POM:
+		return Verify_gossip_pom(g, c)
+	default:
+		return errors.New(Invalid_Type)
+	}
+}

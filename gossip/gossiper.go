@@ -8,131 +8,178 @@ import (
 	"fmt"
 	"strings"
 	"CTngv1/crypto"
-	"errors"
+	"log"
+	"net/http"
+	"os"
+	"github.com/gorilla/mux"
 	"time"
-	"strconv"
 )
 
+var GossiperServerType int
+type Gossiper interface {
+
+	// Response to entering the 'base page' of a gossiper.
+	// TODO: Create informational landing page
+	homePage()
+
+	// HTTP POST request, receive a JSON object from another gossiper or connected monitor.
+	// /gossip/push-data
+	handleGossip(w http.ResponseWriter, r *http.Request)
+
+	// Respond to HTTP GET request.
+	// /gossip/get-data
+	handleGossipObjectRequest(w http.ResponseWriter, r *http.Request)
+
+	// Push JSON object to connected network from this gossiper via HTTP POST.
+	// /gossip/gossip-data
+	gossipData()
+
+	// TODO: Push JSON object to connected 'owner' (monitor) from this gossiper via HTTP POST.
+	// Sends to an owner's /monitor/recieve-gossip endpoint.
+	sendToOwner()
+
+	// Process JSON object received from HTTP POST requests.
+	processData()
+
+	// TODO: Erase stored data after one MMD.
+	eraseData()
+
+	// HTTP server function which handles GET and POST requests.
+	handleRequests()
+}
+
+// Binds the context to the functions we pass to the router.
+func bindContext(context *GossiperContext, fn func(context *GossiperContext, w http.ResponseWriter, r *http.Request)) func(w http.ResponseWriter, r *http.Request) {
+	return func(w http.ResponseWriter, r *http.Request) {
+		fn(context, w, r)
+	}
+}
+
+func handleRequests(c *GossiperContext) {
+
+	// MUX which routes HTTP directories to functions.
+	gorillaRouter := mux.NewRouter().StrictSlash(true)
+
+	// homePage() is ran when base directory is accessed.
+	gorillaRouter.HandleFunc("/gossip/", homePage)
+
+	// Inter-gossiper endpoints
+	gorillaRouter.HandleFunc("/gossip/push-data", bindContext(c, handleGossip)).Methods("POST")
+
+	//gorillaRouter.HandleFunc("/gossip/get-data", bindContext(c, handleGossipObjectRequest)).Methods("GET")
+
+	// Monitor interaction endpoint
+	if GossiperServerType == 2{
+		gorillaRouter.HandleFunc("/gossip/gossip-data", bindContext(c, handleOwnerGossip)).Methods("POST")}else{
+		gorillaRouter.HandleFunc("/gossip/gossip-data", bindContext(c, handleGossip)).Methods("POST")
+	}
+	// Start the HTTP server.
+	http.Handle("/", gorillaRouter)
+	fmt.Println(util.BLUE+"Listening on port:", c.Config.Port, util.RESET)
+	err := http.ListenAndServe(":"+c.Config.Port, nil)
+	// We wont get here unless there's an error.
+	log.Fatal("ListenAndServe: ", err)
+	os.Exit(1)
+}
+
+func homePage(w http.ResponseWriter, r *http.Request) {
+	fmt.Fprintf(w, "Welcome to the base page for the CTng gossiper.")
+}
+// handleGossip() is ran when POST is recieved at /gossip/push-data.
+// It should verify the Gossip object and then send it to the network.
+func handleGossip(c *GossiperContext, w http.ResponseWriter, r *http.Request) {
+	// Parse sent object.
+	// Converts JSON passed in the body of a POST to a Gossip_object.
+	var gossip_obj Gossip_object
+	err := json.NewDecoder(r.Body).Decode(&gossip_obj)
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusBadRequest)
+		return
+	}
+	// Verify the object is valid, if invalid we just ignore it
+	err = gossip_obj.Verify(c.Config.Crypto)
+	if err != nil {
+		//fmt.Println("Received invalid object "+TypeString(gossip_obj.Type)+" from " + util.GetSenderURL(r) + ".")
+		fmt.Println(util.RED,"Received invalid object "+TypeString(gossip_obj.Type)+ " signed by " + gossip_obj.Signer + ".",util.RESET)
+		http.Error(w, err.Error(), http.StatusOK)
+		return
+	}
+	// Check for duplicate object.
+	stored_obj, found := c.GetObject(gossip_obj.GetID())
+	if found && gossip_obj.Signer == stored_obj.Signer{
+		// If the object is already stored, still return OK.
+		//fmt.Println("Duplicate:", gossip_obj.Type, util.GetSenderURL(r)+".")
+		fmt.Println("Duplicate: ", TypeString(gossip_obj.Type), " signed by ",gossip_obj.Signer+".")
+		err := ProcessDuplicateObject(c, gossip_obj, stored_obj)
+		if err != nil {
+			http.Error(w, err.Error(), http.StatusOK)
+			return
+		}
+		http.Error(w, "Received Duplicate Object."+ TypeString(gossip_obj.Type)+ " signed by " + gossip_obj.Signer+".", http.StatusOK)
+		return
+	} else {
+		//fmt.Println(util.GREEN+"Received new, valid", TypeString(gossip_obj.Type), "from "+util.GetSenderURL(r)+".", util.RESET)
+		fmt.Println(util.GREEN,"Received new, valid ",TypeString(gossip_obj.Type), "signed by ",gossip_obj.Signer, " at Period ",gossip_obj.Period,"from "+util.GetSenderURL(r), " .", util.RESET)
+		ProcessValidObject(c, gossip_obj)
+		c.SaveStorage()
+	}
+	http.Error(w, "Gossip object Processed.", http.StatusOK)
+}
+
+// Runs when /gossip/gossip-data is sent a POST request.
+// Should verify gossip object and then send it to the network
+// With the exception of not handling invalidObjects, this feels identical to gossipObject..
+func handleOwnerGossip(c *GossiperContext, w http.ResponseWriter, r *http.Request) {
+	var gossip_obj Gossip_object
+	// Verify sender is an owner.
+	if !util.IsOwner(c.Config.Owner_URL, util.GetSenderURL(r)) {
+		http.Error(w, "Not an owner.", http.StatusForbidden)
+		return
+	}
+	// Parses JSON from body of the request into gossip_obj
+	err := json.NewDecoder(r.Body).Decode(&gossip_obj)
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusBadRequest)
+		return
+	}
+
+	err = gossip_obj.Verify(c.Config.Crypto)
+	if err != nil {
+		// Might not want to handle invalid object for our owner: Just warn them.
+		// gossip.ProcessInvalidObject(gossip_obj, err)
+		fmt.Println(util.RED+"Owner sent invalid object.", util.RESET)
+		http.Error(w, err.Error(), http.StatusBadRequest)
+		return
+	}
+	stored_obj, found := c.GetObject(gossip_obj.GetID())
+	if found && stored_obj.Type == gossip_obj.Type && stored_obj.Period == gossip_obj.Period{
+		// If the object is already stored, still return OK.{
+		fmt.Println("Recieved duplicate object from Owner.")
+		err := ProcessDuplicateObject(c, gossip_obj, stored_obj)
+		if err != nil {
+			http.Error(w, "Duplicate Object recieved!", http.StatusOK)
+		} else {
+			// TODO: understand how duplicate POM works
+			http.Error(w, "error", http.StatusOK)
+		}
+		return
+
+	} else {
+		// Prints the body of the post request to the server console
+		fmt.Println(util.GREEN+"Recieved new, valid", gossip_obj.Type, "from owner.", util.RESET)
+		ProcessValidObjectFromOwner(c, gossip_obj)
+		c.SaveStorage()
+	}
+}
+
+func getGossiperServerType() {
+	fmt.Println("Which mode of Goissper server do you want to start?")
+	fmt.Println("1. local host testing environment, Assume benigh monitor-gossiper connection")
+	fmt.Println("2. NTTP mode")
+	fmt.Scanln(&GossiperServerType)
+}
 // GetCurrentTimestamp returns the current UTC timestamp in RFC3339 format
 // This is the standard which we've decided upon in  the specs.
-func GetCurrentTimestamp() string {
-	return time.Now().UTC().Format(time.RFC3339)
-}
-
-func GetCurrentPeriod() string{
-	timerfc := time.Now().UTC().Format(time.RFC3339)
-	Miniutes, err := strconv.Atoi(timerfc[14:16])
-	Periodnum := strconv.Itoa(Miniutes)
-	if err != nil {
-	}
-	return Periodnum
-}
-
-func Verify_gossip_pom(g Gossip_object, c *crypto.CryptoConfig) error {
-	if g.Type == CONFLICT_POM {
-		var err1, err2 error
-		if g.Signature[0] != g.Signature[1] {
-			if g.Crypto_Scheme == "BLS"{
-				fragsig1, sigerr1 := crypto.SigFragmentFromString(g.Signature[0])
-				fragsig2, sigerr2 := crypto.SigFragmentFromString(g.Signature[1])
-				// Verify the signatures were made successfully
-				if sigerr1 != nil || sigerr2 != nil && !fragsig1.Sign.IsEqual(fragsig2.Sign) {
-					err1 = c.FragmentVerify(g.Payload[1], fragsig1)
-					err2 = c.FragmentVerify(g.Payload[2], fragsig2)
-				}
-			}else{
-				rsaSig1, sigerr1 := crypto.RSASigFromString(g.Signature[0])
-				rsaSig2, sigerr2 := crypto.RSASigFromString(g.Signature[1])
-				// Verify the signatures were made successfully
-				if sigerr1 != nil || sigerr2 != nil {
-					err1 = c.Verify([]byte(g.Payload[1]), rsaSig1)
-					err2 = c.Verify([]byte(g.Payload[2]), rsaSig2)
-				}}
-			}
-			if err1 == nil && err2 == nil {
-				return nil
-			} else {
-				return errors.New("Message Signature Mismatch" + fmt.Sprint(err1) + fmt.Sprint(err2))
-			}
-		} else {
-			//if signatures are the same, there are no conflicting information
-			return errors.New("This is not a valid gossip pom")
-		}
-}
-
-//verifies signature fragments match with payload
-func Verify_PayloadFrag(g Gossip_object, c *crypto.CryptoConfig) error {
-	if g.Signature[0] != "" && g.Payload[0] != "" {
-		sig, _ := crypto.SigFragmentFromString(g.Signature[0])
-		err := c.FragmentVerify(g.Payload[0]+g.Payload[1]+g.Payload[2], sig)
-		if err != nil {
-			return errors.New(No_Sig_Match)
-		}
-		return nil
-	} else {
-		return errors.New(Mislabel)
-	}
-}
-
-//verifies threshold signatures match payload
-func Verify_PayloadThreshold(g Gossip_object, c *crypto.CryptoConfig) error {
-	if g.Signature[0] != "" && g.Payload[0] != "" {
-		sig, _ := crypto.ThresholdSigFromString(g.Signature[0])
-		err := c.ThresholdVerify(g.Payload[0]+g.Payload[1]+g.Payload[2], sig)
-		if err != nil {
-			return errors.New(No_Sig_Match)
-		}
-		return nil
-	} else {
-		return errors.New(Mislabel)
-	}
-}
-
-// Verifies RSAsig matches payload, wait.... i think this just works out of the box with what we have
-func Verify_RSAPayload(g Gossip_object, c *crypto.CryptoConfig) error {
-	if g.Signature[0] != "" && g.Payload[0] != "" {
-		sig, err := crypto.RSASigFromString(g.Signature[0])
-		if err != nil {
-			return errors.New(No_Sig_Match)
-		}
-		return c.Verify([]byte(g.Payload[0]+g.Payload[1]+g.Payload[2]), sig)
-
-	} else {
-		return errors.New(Mislabel)
-	}
-}
-
-//Verifies Gossip object based on the type:
-//STH and Revocations use RSA
-//Trusted information Fragments use BLS SigFragments
-//PoMs use Threshold signatures
-func (g Gossip_object) Verify(c *crypto.CryptoConfig) error {
-	// If everything Verified correctly, we return nil
-	switch g.Type {
-	case STH:
-		return Verify_RSAPayload(g, c)
-	case REV:
-		return Verify_RSAPayload(g, c)
-	case STH_FRAG:
-		return Verify_PayloadFrag(g, c)
-	case REV_FRAG:
-		return Verify_PayloadFrag(g, c)
-	case ACC_FRAG:
-		return Verify_PayloadFrag(g, c)
-	case STH_FULL:
-		return Verify_PayloadThreshold(g, c)
-	case REV_FULL:
-		return Verify_PayloadThreshold(g, c)
-	case ACCUSATION_POM:
-		return Verify_PayloadThreshold(g, c)
-	case CONFLICT_POM:
-		return Verify_gossip_pom(g, c)
-	default:
-		return errors.New(Invalid_Type)
-	}
-}
-
-
 
 
 // Sends a gossip object to all connected gossipers.
@@ -470,4 +517,52 @@ func Process_REV_FRAG(gc *GossiperContext, new_obj Gossip_object) error{
 	(*gc.Obj_TSS_DB)[key] = new_counter
 	fmt.Println("Number of counters in TSS DB is: ", len(*gc.Obj_TSS_DB))
 	return nil
+}
+
+func PeriodicTasks(c *GossiperContext) {
+	// Immediately queue up the next task to run at next MMD.
+	// Doing this first means: no matter how long the rest of the function takes,
+	// the next call will always occur after the correct amount of time.
+	f := func() {
+		PeriodicTasks(c)
+	}
+	time.AfterFunc(time.Duration(c.Config.Public.MMD*3)*time.Second, f)
+	c.WipeStorage()
+}
+
+func InitializeGossiperStorage (c* GossiperContext){
+	c.StorageDirectory = "testData/gossiperdata/"+c.StorageID+"/"
+	c.StorageFile = "GossipStorage.Json"
+	util.CreateFile(c.StorageDirectory+c.StorageFile)
+
+}
+
+func StartGossiperServer(c *GossiperContext) {
+	// Check if the storage file exists in this directory
+	// Only need to store Degree2_PoM
+	InitializeGossiperStorage(c)
+	err := c.LoadStorage()
+	if err != nil {
+		if strings.Contains(err.Error(), "no such file or directory") {
+			// Storage File doesn't exit. Create new, empty json file.
+			err = c.SaveStorage()
+			if err != nil {
+				panic(err)
+			}
+		} else {
+			panic(err)
+		}
+	}
+	// Create the http client to be used.
+	// This is thorough and allows for HTTP client configuration,
+	// although we don't need it yet.
+	tr := &http.Transport{}
+	c.Client = &http.Client{
+		Transport: tr,
+	}
+	GossiperServerType = 2
+	getGossiperServerType()
+	// HTTP Server Loop
+	go PeriodicTasks(c)
+	handleRequests(c)
 }

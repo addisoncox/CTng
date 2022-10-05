@@ -10,47 +10,6 @@ import (
 	"fmt"
 )
 
-// The only valid application type
-const CTNG_APPLICATION = "CTng"
-
-// Identifiers for different types of gossip that can be sent.
-const (
-	STH      = "http://ctng.uconn.edu/101"
-	REV      = "http://ctng.uconn.edu/102"
-	STH_FRAG = "http://ctng.uconn.edu/201"
-	REV_FRAG = "http://ctng.uconn.edu/202"
-	ACC_FRAG = "http://ctng.uconn.edu/203"
-	STH_FULL = "http://ctng.uconn.edu/301" 
-	REV_FULL = "http://ctng.uconn.edu/302" 
-	ACCUSATION_POM  = "http://ctng.uconn.edu/303"
-	CONFLICT_POM = "http://ctng.uconn.edu/304"
-)
-
-// This function prints the "name string" of each Gossip object type. It's used when printing this info to console.
-func TypeString(t string) string {
-	switch t {
-	case STH:
-		return "STH"
-	case REV:
-		return "REV"
-	case STH_FRAG:
-		return "STH_FRAG"
-	case REV_FRAG:
-		return "REV_FRAG"
-	case ACC_FRAG:
-		return "ACC_FRAG"
-	case STH_FULL:
-		return "STH_FULL"
-	case REV_FULL:
-		return "REV_FULL"
-	case ACCUSATION_POM:
-		return "ACCUSATION_POM"
-	case CONFLICT_POM:
-		return "CONGLICT_POM"
-	default:
-		return "UNKNOWN"
-	}
-}
 
 // Types of errors that can occur when parsing a Gossip_object
 const (
@@ -61,38 +20,6 @@ const (
 
 // Gossip_object representations of these types can be utilized in many places, as opposed to
 // converting them back and forth from an intermediate representation.
-type Gossip_object struct {
-	Application string `json:"application"`
-	Period string `json:"period"`
-	Type        string `json:"type"`
-	Signer string `json:"signer"`
-	//**************************The number of signers should be equal to the Threshold, it just happened to be 2 in our case***************************************
-	Signers map[int]string `json:"signers"`
-	Signature [2]string `json:"signature"`
-	// Timestamp is a UTC RFC3339 string
-	Timestamp string `json:"timestamp"`
-	Crypto_Scheme string `json:"crypto_scheme"`
-	Payload [3]string `json:"payload,omitempty"`
-}
-
-type Gossip_ID struct{
-	Period     string `json:"period"`
-	Type       string `json:"type"`
-	Entity_URL string `json:"entity_URL"`
-}
-
-
-//This returns the ID of a gossip object, which is the primary key in our Gossip_Object_TSS_DB, and in our Gossip Storage
-func (g Gossip_object) GetID() Gossip_ID{
-	new_ID := Gossip_ID{
-		Period: g.Period,
-		Type: g.Type,
-		Entity_URL: g.Payload[0],
-	}
-	return new_ID
-}
-//Struct to keep track of the number of accusations for an object
-
 type Entity_Gossip_Object_TSS_Counter struct {
 	Signers     []string
 	Partial_sigs []crypto.SigFragment
@@ -101,8 +28,6 @@ type Entity_Gossip_Object_TSS_Counter struct {
 
 //This DB stores sth_frags. rec_frags and acc_frags with the counter object
 type Gossip_Object_TSS_DB map[Gossip_ID]*Entity_Gossip_Object_TSS_Counter
-//This Storage stores 
-type Gossip_Storage map[Gossip_ID]Gossip_object
 
 // Gossiper Context
 // Ths type represents the current state of a gossiper HTTP server.
