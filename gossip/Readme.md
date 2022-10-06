@@ -10,7 +10,7 @@
 ## Gossiper.go
 - `handlegossip` and `handleownergossip`: gossip object handler
 - `GossipData`: send gossip object to its connected gossipers
-- `SendtoOwner`: send gossip object to its monitor
+- `SendtoOwner`: send gossip object to its Owner (e.g. monitor)
 - `ProcessValidObject`: valid Gossiper object handler, only invoked if the gossip object received has passed the signature verification process
 - `ProcessDuplicateObject`: duplicate object handler, only invoked if the gossip object received has the same Gossip ID with a gossip object in the storage/cache, It will generate CONFLICT POM if the signature(s)/payload(s) are different
 - `Process_STH_FRAG` and `Process_ACC_FRAG` and `Process_REV_FRAG`: Different Handlers for different types of gossip object with Threshold Signature Scheme 
