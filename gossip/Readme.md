@@ -1,8 +1,4 @@
 # Gossip Package
-
-## Contents
-
-
 ## Contents
 - `types.go`: type declarations for gossiper context and some basic gossiper methods definitions
 - `gossiper.go`: implementation of gossiper functions
