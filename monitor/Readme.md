@@ -18,8 +18,3 @@
 - `AccuseEntity`: accuses the entity if its URL is provided   
 - `Send_to_gossiper`: send the input gossip object to the gossiper  
 - `PeriodicTasks` : query loggers once per MMD, accuse if the logger is inactive
-## monitor_process.go
-- `Process_valid_object`:  
-  If the monitor receives a valid sth from a logger or valid revocation information from a CA (both need to be in the form of a gossip object),  
-  this function will send the raw version of the gossip object to the gossiper, wait for gossip_wait_time, check updated local PoM database,  
-  if there is no PoM against the signer of this sth/revocation information, threshold sign this sth/revocation information and send it to the gossiper  
