@@ -1,10 +1,5 @@
 package fakeCA
 
-/*
-Code Ownership:
-Isaac - Responsible for all functions
-Finn - Helped with review+implementation ideas
-*/
 import (
 	//"CTngv1/GZip"
 	"CTngv1/crypto"
@@ -34,11 +29,6 @@ type CAConfig struct {
 	MisbehaviorInterval int
 }
 
-type Revocation struct {
-	day       int
-	delta_CRV []byte
-	srh       SRH
-}
 
 
 type SRH struct {
@@ -46,24 +36,24 @@ type SRH struct {
 	TreeSize  int
 	Period string
 }
+
+type Revocation struct {
+	Day       int
+	Delta_CRV []byte
+	SRH      SRH
+}
 //Caution: this file is plagued with Global Variables for conciseness.
 var config CAConfig
-var SRHS []gossip.Gossip_object
-var fakeSRHs []gossip.Gossip_object
+var REVS []gossip.Gossip_object
+var fakeREVs []gossip.Gossip_object
 var request_count int
 var currentPeriod int
-var caType int
+var CAType int
 
-func generateRevocation(CA CAConfig,miss int, Period_num int) gossip.Gossip_object{
+func generateRevocation(CA CAConfig,catype int, Period_num int) gossip.Gossip_object{
 	// Generate a random-ish SRH, add to SRHS.
-	hashmsg := "Root Hash" + fmt.Sprint(currentPeriod+request_count)
+	hashmsg := "Root Hash" + fmt.Sprint((Period_num+7)*(24+catype))
 	hash, _ := crypto.GenerateSHA256([]byte(hashmsg))
-	SRH1 := SRH{
-		//Timestamp: gossip.GetCurrentTimestamp(),
-		RootHash:  hex.EncodeToString(hash),
-		TreeSize:  currentPeriod * 12571285,
-		Period: gossip.GetCurrentPeriod(),
-	}
 	// Generate delta CRV and then compress it
 	first_arr := CA.CRVs[CA.Day] //this assumes we never have CRV of len 0 (fresh CA)
 	CA.Day += 1
@@ -83,13 +73,19 @@ func generateRevocation(CA CAConfig,miss int, Period_num int) gossip.Gossip_obje
 		CA.CRVs[CA.Day][i] = first_arr[i] ^ delta_crv[i]
 	} //this is scuffed/slow for giant CRVs O(n), also I am assuming CRVs are same size, can modify for different sizes
 	REV := Revocation{
-		day:       CA.Day,
-		delta_CRV: delta_crv,
-		srh: SRH1,
+		Day:       CA.Day,
+		Delta_CRV: delta_crv,
+		SRH: SRH{
+			RootHash:  hex.EncodeToString(hash),
+			TreeSize:  currentPeriod * 12571285,
+			Period: gossip.GetCurrentPeriod(),
+		},
 	}
 	payload3, _ := json.Marshal(REV)
 	payload := string(CA.Signer)+"CRV"+string(payload3)
 	signature, _ := crypto.RSASign([]byte(payload), &config.Private, config.Signer)
+	//fmt.Println(payload)
+	//fmt.Println(signature)
 	gossipREV := gossip.Gossip_object{
 		Application: "CTng",
 		Type:        gossip.REV,
@@ -107,69 +103,63 @@ func periodicTasks() {
 	time.AfterFunc(time.Duration(config.MRD)*time.Second, periodicTasks)
 	// Generate CRV and SRH
 	fmt.Println("CA Running Tasks at Period", gossip.GetCurrentPeriod())
-	/*
-	Rev1 := generateRevocation(config, caType-request_count)
-	request_count++
-	fakeRev1 := generateRevocation(config, caType-request_count) //Should be incorrect SRH
-	SRHS = append(SRHS, Rev1)
-	fakeSRHs = append(fakeSRHs, fakeRev1)
-	*/
 	currentPeriod++
 }
 
 
 //Hard code to simulate a CA server that will generate subdomain to communicate
-func requestSRH(w http.ResponseWriter, r *http.Request) {
-	SRH_index,err := strconv.Atoi(gossip.GetCurrentPeriod())
+func requestREV(w http.ResponseWriter, r *http.Request) {
+	REV_index,err := strconv.Atoi(gossip.GetCurrentPeriod())
 	if err == nil{}
-	json.NewEncoder(w).Encode(SRHS[SRH_index])
+		//Disconnecting CA
+		if CAType == 3 && request_count%config.MisbehaviorInterval == 0 {
+			// No response or any bad request response should trigger the accusation
+			request_count++
+			fmt.Println(util.RED,"Not sending Any REVS",util.RESET)
+			return
+		}
+		//Split-World CA
+		if CAType == 2 && request_count%config.MisbehaviorInterval == 0{
+			json.NewEncoder(w).Encode(fakeREVs[REV_index])
+			request_count++
+			fmt.Println(util.RED,"FakeREV sent.",fakeREVs[REV_index].GetID(),"sig: ", fakeREVs[REV_index].Signature[0],util.RESET)
+			return
+		}
+		// Normal CA
+		if err == nil{}
+		json.NewEncoder(w).Encode(REVS[REV_index])
+		fmt.Println(util.GREEN,"REV sent",REVS[REV_index].GetID(),"sig: ", REVS[REV_index].Signature[0], util.RESET)
+		request_count++
 }
 
 func fill_with_data(){
-	SRHS = SRHS[:0]
-	fakeSRHs = fakeSRHs[:0]
+	REVS = REVS[:0]
+	fakeREVs = fakeREVs[:0]
 	for i:=0; i<60; i++{
-		srh1 := generateRevocation(config, caType, i)
-		fakeSRH1 := generateRevocation(config, caType, i)
-		SRHS = append(SRHS, srh1)
-	    fakeSRHs = append(fakeSRHs, fakeSRH1)
+		rev1 := generateRevocation(config, 1, i)
+		fakeREV1 := generateRevocation(config, CAType, i)
+		REVS = append(REVS, rev1)
+	    fakeREVs = append(fakeREVs, fakeREV1)
 	}
 }
-/*
-func requestSRH(w http.ResponseWriter, r *http.Request) {
-	//Disconnecting CA:
-	request_count++
-	if caType == 3 && currentPeriod%config.MisbehaviorInterval == 0 {
-		// No response or any bad request response should trigger the accusation
-		return
-	}
-	// Split-World CA
-	if caType == 2 && request_count%2 == 0 && currentPeriod%config.MisbehaviorInterval == 0 {
-		json.NewEncoder(w).Encode(fakeSRHs[currentPeriod-1])
-		return
-	}
-	json.NewEncoder(w).Encode(SRHs[currentPeriod-1])
-}*/
 
-/*
 func getCAType() {
 	fmt.Println("What type of CA would you like to use?")
 	fmt.Println("1. Normal, behaving CA (default)")
-	fmt.Println("2. Split-World (Two different SRHs on every", config.MisbehaviorInterval, "MRD)")
-	fmt.Println("3. Disconnecting CA (unresponsive every", config.MisbehaviorInterval, "MRD)")
-	fmt.Println("4. Invalid SRH on every ", config.MisbehaviorInterval, "MRD) (CURRENTLY UNIMPLEMENTED)")
-	fmt.Scanln(&caType)
-}*/
+	fmt.Println("2. Split-World (Send fake REVs after ", config.MisbehaviorInterval, "requests)")
+	fmt.Println("3. Disconnecting CA (unresponsive every", config.MisbehaviorInterval, "requests)")
+	fmt.Scanln(&CAType)
+}
 
 // Runs a fake CA server with the ability to act roguely.
 func RunFakeCA(configFile string) {
 	// Global Variable initialization
 	CA_SIZE = 1024
-	caType = 1
+	CAType = 1
 	currentPeriod = 0
 	request_count = 0
-	SRHS = make([]gossip.Gossip_object, 0, 60)
-	fakeSRHs = make([]gossip.Gossip_object, 0, 60)
+	REVS = make([]gossip.Gossip_object, 0, 60)
+	fakeREVs = make([]gossip.Gossip_object, 0, 60)
 	// Read the config file
 	config = CAConfig{}
 	configBytes, err := util.ReadByte(configFile)
@@ -181,18 +171,16 @@ func RunFakeCA(configFile string) {
 	if err != nil {
 		fmt.Println("Error reading config file: ", err)
 	}
-
 	config.CRVs = make([][]byte, 999, 999)
 	config.CRVs[0] = make([]byte, CA_SIZE, CA_SIZE)
 	config.Day = 0
-	//getCAType()
-	caType = 1
+	getCAType()
+	fill_with_data()
 	// MUX which routes HTTP directories to functions.
 	gorillaRouter := mux.NewRouter().StrictSlash(true)
-	gorillaRouter.HandleFunc("/ctng/v2/get-revocation", requestSRH).Methods("GET")
+	gorillaRouter.HandleFunc("/ctng/v2/get-revocation", requestREV).Methods("GET")
 	http.Handle("/", gorillaRouter)
 	fmt.Println("Listening on port", config.Port)
-	fill_with_data()
 	go periodicTasks()
 	http.ListenAndServe(":"+config.Port, nil)
 }

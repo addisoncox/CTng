@@ -1,10 +1,4 @@
 package fakeLogger
-
-/*
-Code ownership:
-Finn - Wrote all functions
-*/
-
 import (
 	"CTngv1/crypto"
 	"CTngv1/gossip"
@@ -47,7 +41,7 @@ var request_count int
 // Generates a fake STH and returns a gossip object of that STH.
 func generateSTH(loggerType int, Period_num int) gossip.Gossip_object {
 	// Generate a random-ish STH, add to STHS.
-	hashmsg := "Root Hash" + fmt.Sprint(Period_num+request_count+loggerType)
+	hashmsg := "Root Hash" + fmt.Sprint((Period_num+7)*(24+loggerType))
 	hash, _ := crypto.GenerateSHA256([]byte(hashmsg))
 	STH1 := STH{
 		Timestamp: fmt.Sprint(Period_num),
@@ -78,16 +72,8 @@ func generateSTH(loggerType int, Period_num int) gossip.Gossip_object {
 func periodicTasks() {
 	// Queue the next tasks to occur at next MMD.
 	time.AfterFunc(time.Duration(config.MMD)*time.Second, periodicTasks)
-	// Generate STH and FakeSTH
 	cperiod := gossip.GetCurrentPeriod()
 	fmt.Println("Logger Running Tasks at Period ", cperiod)
-	/*
-	sth1 := generateSTH(loggerType)
-	request_count++
-	fakeSTH1 := generateSTH(loggerType)
-	STHS = append(STHS, sth1)
-	fakeSTHs = append(fakeSTHs, fakeSTH1)
-	*/
 	currentPeriod++
 }
 func fill_with_data(){
@@ -103,14 +89,14 @@ func fill_with_data(){
 func requestSTH(w http.ResponseWriter, r *http.Request){
 	STH_index,err := strconv.Atoi(gossip.GetCurrentPeriod())
 	//Disconnecting logger
-	if loggerType == 3 && currentPeriod%config.MisbehaviorInterval == 0 {
+	if loggerType == 3 && request_count%config.MisbehaviorInterval == 0 {
 		// No response or any bad request response should trigger the accusation
 		request_count++
 		fmt.Println(util.RED,"Not sending Any STHS",util.RESET)
 		return
 	}
 	//Split-World Logger
-	if loggerType == 2 && request_count%2 == 0 && currentPeriod%config.MisbehaviorInterval == 0{
+	if loggerType == 2 && request_count%config.MisbehaviorInterval == 0{
 		json.NewEncoder(w).Encode(fakeSTHs[STH_index])
 		request_count++
 		fmt.Println(util.RED,"FakeSTH sent.",fakeSTHs[STH_index].GetID(),"sig: ", fakeSTHs[STH_index].Signature[0],util.RESET)
@@ -123,41 +109,13 @@ func requestSTH(w http.ResponseWriter, r *http.Request){
 	request_count++
 }
 
-//func requestSTH(w http.ResponseWriter, r *http.Request) {
-	/*
-	var PeriodByte []byte
-	json.NewDecoder(r.Body).Decode(&PeriodByte)
-	Periodstring := string(PeriodByte)
-	reqPeriod, err := strconv.Atoi(Periodstring)
-	if err != nil{
-		return
-	}
-	*/
-	/*
-	//Disconnecting logger:
-	request_count++
-	if loggerType == 3 && currentPeriod%config.MisbehaviorInterval == 0 {
-		// No response or any bad request response should trigger the accusation
-		return
-	}
-	// Split-World Logger
-	if loggerType == 2 && request_count%2 == 0 && currentPeriod%config.MisbehaviorInterval == 0{
-		json.NewEncoder(w).Encode(fakeSTHs[currentPeriod-1])
-		return
-	}
-	// Normal logger
-	json.NewEncoder(w).Encode(STHS[currentPeriod-1])
-}*/
-
-
-
 // Prompts used and accepts input from the user.
 // If something other than a 1,2, or 3, are printed, it is treated as a 1.
 func getLoggerType() {
 	fmt.Println("What type of Logger would you like to use?")
 	fmt.Println("1. Normal, behaving Logger (default)")
-	fmt.Println("2. Split-World (Two different STHS on every", config.MisbehaviorInterval, "MMD)")
-	fmt.Println("3. Disconnecting Logger (unresponsive every", config.MisbehaviorInterval, "MMD)")
+	fmt.Println("2. Split-World (Two different STHS on every", config.MisbehaviorInterval, "requests)")
+	fmt.Println("3. Disconnecting Logger (unresponsive every", config.MisbehaviorInterval, "requests)")
 	fmt.Scanln(&loggerType)
 }
 
@@ -185,18 +143,13 @@ func RunFakeLogger(configFile string) {
 	}
 	// request the object type from the user
 	getLoggerType()
+	fill_with_data()
 	// MUX which routes HTTP directories to functions.
 	gorillaRouter := mux.NewRouter().StrictSlash(true)
 	// because we use global variables, we dont need to bind anything to requestSTH like we do for the other files.
 	gorillaRouter.HandleFunc("/ctng/v2/get-sth", requestSTH).Methods("GET")
 	http.Handle("/", gorillaRouter)
-	/*
-	gorillaRouter := mux.NewRouter()
-	gorillaRouter.HandleFunc("/ctng/v2/get-sth/{Period}",requestSTH)
-	http.Handle("/", gorillaRouter)
-	*/
 	fmt.Println("Listening on port", config.Port)
-	fill_with_data()
 	// start the server for editing STHs and serve the STHs
 	go periodicTasks()
 	http.ListenAndServe(":"+config.Port, nil)
