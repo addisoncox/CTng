@@ -33,6 +33,32 @@ type MonitorContext struct {
 	Client     *http.Client
 }
 
+func (c *MonitorContext) Clean_Conflicting_Object(){
+	GID := gossip.Gossip_ID{}
+	for key, _ := range *c.Storage_STH_FULL{
+		GID = gossip.Gossip_ID{
+			Period: "0",
+			Type: gossip.CONFLICT_POM,
+			Entity_URL: key.Entity_URL,
+		}
+		if _,ok := (*c.Storage_CONFLICT_POM)[GID]; ok{
+			fmt.Println(util.BLUE+"Logger: "+ key.Entity_URL + "has Conflict_PoM on file, cleared the STH from this Logger this MMD"+util.RESET)
+			delete(*c.Storage_STH_FULL,key)
+		}
+	}
+	for key, _ := range *c.Storage_REV_FULL{
+		GID = gossip.Gossip_ID{
+			Period: "0",
+			Type: gossip.CONFLICT_POM,
+			Entity_URL: key.Entity_URL,
+		}
+		if _,ok := (*c.Storage_CONFLICT_POM)[GID]; ok{
+			fmt.Println(util.BLUE+"CA: "+ key.Entity_URL + "has Conflict_PoM on file, cleared the REV from this CA this MRD"+util.RESET)
+			delete(*c.Storage_REV_FULL,key)
+		}
+	}
+}
+
 func (c *MonitorContext) SaveStorage() error{
 	storageList_conflict_pom := []gossip.Gossip_object{}
     storageList_accusation_pom := []gossip.Gossip_object{}
@@ -67,6 +93,7 @@ func (c *MonitorContext) SaveStorage() error{
 	if err!=nil{
 		return err
 	}
+	fmt.Println(util.BLUE,"File Storage Complete for Period: ",gossip.GetCurrentPeriod(),util.RESET)
 	return nil
 }
 
@@ -175,6 +202,7 @@ func (c *MonitorContext) StoreObject(o gossip.Gossip_object) {
 			(*c.Storage_CONFLICT_POM)[o.GetID()] = o
 			fmt.Println(util.BLUE,"CONFLICT_POM Stored",util.RESET)
 		case gossip.ACCUSATION_POM:
+			//ACCUSATION POM does not need to be stored, but this function is here for testing purposes
 			(*c.Storage_ACCUSATION_POM)[o.GetID()] = o
 			fmt.Println(util.BLUE,"ACCUSATION_POM Stored",util.RESET)
 		case gossip.STH_FULL:
@@ -184,4 +212,14 @@ func (c *MonitorContext) StoreObject(o gossip.Gossip_object) {
 			(*c.Storage_REV_FULL)[o.GetID()] = o
 			fmt.Println(util.BLUE,"REV_FULL Stored",util.RESET)
 		}
+}
+
+//wipe all temp data
+func (c *MonitorContext) WipeStorage(){
+	for key, _ := range *c.Storage_ACCUSATION_POM{
+		if  key.Period!=gossip.GetCurrentPeriod(){
+			delete(*c.Storage_ACCUSATION_POM,key)
+		}
+	}
+	fmt.Println(util.BLUE,"Temp storage has been wiped.",util.RESET)
 }

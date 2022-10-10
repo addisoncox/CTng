@@ -247,8 +247,10 @@ func ProcessValidObject(c *GossiperContext, obj Gossip_object) {
 	var err error = nil
 	switch obj.Type {
 	case STH:
+		SendToOwner(c, obj)
 		err = GossipData(c, obj)
 	case REV:
+		SendToOwner(c, obj)
 		err = GossipData(c, obj)
 	case STH_FRAG:
 		err = GossipData(c, obj)

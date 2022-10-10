@@ -282,6 +282,8 @@ func PeriodicTasks(c *MonitorContext) {
 	// Run the periodic tasks.
 	QueryLoggers(c)
 	QueryAuthorities(c)
+	c.WipeStorage()
+	c.Clean_Conflicting_Object()
 	c.SaveStorage()
 }
 
@@ -300,13 +302,12 @@ func InitializeMonitorStorage(c *MonitorContext){
 //This function is called by handle_gossip in monitor_server.go under the server folder
 //It will be called if the gossip object is validated
 func Process_valid_object(c *MonitorContext, g gossip.Gossip_object) {
-	//if the valid object is from the logger in the monitor config logger URL list
 	//This handles the STHS
-	if IsLogger(c, g.Signer) && g.Type == gossip.STH {
-
-		// Send an unsigned copy to the gossiper
-		//Manually sync Period for local testing
-		Send_to_gossiper(c, g)
+	if g.Type == gossip.STH {
+		// Send an unsigned copy to the gossiper if the STH is from the logger
+		if IsLogger(c, g.Signer){
+			Send_to_gossiper(c, g)
+		}
 		// The below function for creates the SIG_FRAG object
 		f := func() {
 			sig_frag, err := c.Config.Crypto.ThresholdSign(g.Payload[0]+g.Payload[1]+g.Payload[2])
@@ -332,9 +333,11 @@ func Process_valid_object(c *MonitorContext, g gossip.Gossip_object) {
 	}
 	//if the object is from a CA, revocation information
 	//this handles revocation information
-	if IsAuthority(c, g.Signer) && g.Type == gossip.REV{
-		// Send an unsigned copy to the gossiper
-		Send_to_gossiper(c, g)
+	if  g.Type == gossip.REV{
+		// Send an unsigned copy to the gossiper if the REV is received from a CA
+		if IsAuthority(c, g.Signer){
+			Send_to_gossiper(c, g)
+		}
 		f := func() {
 			sig_frag, err := c.Config.Crypto.ThresholdSign(g.Payload[0]+g.Payload[1]+g.Payload[2])
 			if err != nil {
@@ -352,9 +355,8 @@ func Process_valid_object(c *MonitorContext, g gossip.Gossip_object) {
 		}
 		time.AfterFunc(time.Duration(c.Config.Public.Gossip_wait_time)*time.Second, f)
 		return
-
 	}
-	// PoMs should be noted, but currently nothing special is done besides this.
+	// ACCUSATION_POM, CONFLICT_POM, STH_FULL, REV_FULL should be stored
 	if g.Type == gossip.ACCUSATION_POM || g.Type == gossip.CONFLICT_POM || g.Type == gossip.STH_FULL || g.Type == gossip.REV_FULL{
 		c.StoreObject(g)
 		return
