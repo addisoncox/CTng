@@ -55,6 +55,8 @@ func main() {
 			panic(err)
 		}
 		// Space is allocated for all storage fields, and then make is run to initialize these spaces.
+		storage_temp := new(gossip.Gossip_Storage)
+		*storage_temp  = make(gossip.Gossip_Storage)
 		storage_conflict_pom := new(gossip.Gossip_Storage)
 		*storage_conflict_pom  = make(gossip.Gossip_Storage)
 		storage_accusation_pom := new(gossip.Gossip_Storage)
@@ -65,6 +67,7 @@ func main() {
 		*storage_rev_full  = make(gossip.Gossip_Storage)
 		ctx := monitor.MonitorContext{
 			Config:      &conf,
+			Storage_TEMP: storage_temp,
 			Storage_CONFLICT_POM:  storage_conflict_pom,
 			Storage_ACCUSATION_POM: storage_accusation_pom,
 			Storage_STH_FULL: storage_sth_full,

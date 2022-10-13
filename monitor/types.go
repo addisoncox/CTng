@@ -13,6 +13,7 @@ import (
 
 type MonitorContext struct {
 	Config      *config.Monitor_config
+	Storage_TEMP *gossip.Gossip_Storage
 	// Gossip objects from the gossiper will be assigned to their dedicated storage
 	Storage_CONFLICT_POM *gossip.Gossip_Storage
 	Storage_ACCUSATION_POM *gossip.Gossip_Storage
@@ -185,6 +186,9 @@ func (c *MonitorContext) GetObject(id gossip.Gossip_ID) gossip.Gossip_object{
 	case gossip.REV_FULL:
 		obj := (*c.Storage_REV_FULL)[id]
 		return obj
+	case gossip.STH, gossip.REV:
+		obj := (*c.Storage_TEMP)[id]
+		return obj
 	}
 	return gossip.Gossip_object{}
 
@@ -211,11 +215,21 @@ func (c *MonitorContext) StoreObject(o gossip.Gossip_object) {
 		case gossip.REV_FULL:
 			(*c.Storage_REV_FULL)[o.GetID()] = o
 			fmt.Println(util.BLUE,"REV_FULL Stored",util.RESET)
+		default:
+			(*c.Storage_TEMP)[o.GetID()] = o
 		}
+
+		
+
 }
 
 //wipe all temp data
 func (c *MonitorContext) WipeStorage(){
+	for key, _ := range *c.Storage_TEMP{
+		if  key.Period!=gossip.GetCurrentPeriod(){
+			delete(*c.Storage_ACCUSATION_POM,key)
+		}
+	}
 	for key, _ := range *c.Storage_ACCUSATION_POM{
 		if  key.Period!=gossip.GetCurrentPeriod(){
 			delete(*c.Storage_ACCUSATION_POM,key)
