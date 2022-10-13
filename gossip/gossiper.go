@@ -96,7 +96,7 @@ func handleGossip(c *GossiperContext, w http.ResponseWriter, r *http.Request) {
 	err = gossip_obj.Verify(c.Config.Crypto)
 	if err != nil {
 		//fmt.Println("Received invalid object "+TypeString(gossip_obj.Type)+" from " + util.GetSenderURL(r) + ".")
-		fmt.Println(util.RED,"Received invalid object "+TypeString(gossip_obj.Type)+ " signed by " + gossip_obj.Signer + ".",util.RESET)
+		fmt.Println(util.RED,"Received invalid object "+TypeString(gossip_obj.Type)+ " signed by " + EntityString(gossip_obj.Signer) + ".",util.RESET)
 		http.Error(w, err.Error(), http.StatusOK)
 		return
 	}
@@ -115,7 +115,7 @@ func handleGossip(c *GossiperContext, w http.ResponseWriter, r *http.Request) {
 		return
 	} else {
 		//fmt.Println(util.GREEN+"Received new, valid", TypeString(gossip_obj.Type), "from "+util.GetSenderURL(r)+".", util.RESET)
-		fmt.Println(util.GREEN,"Received new, valid ",TypeString(gossip_obj.Type), "signed by ",gossip_obj.Signer, " at Period ",gossip_obj.Period," .", util.RESET)
+		fmt.Println(util.GREEN,"Received new, valid ",TypeString(gossip_obj.Type), "signed by ",EntityString(gossip_obj.Signer), " at Period ",gossip_obj.Period," regarding ", EntityString(gossip_obj.Payload[0])," .", util.RESET)
 		//fmt.Println(gossip_obj.Signature)
 		ProcessValidObject(c, gossip_obj)
 		c.SaveStorage()
@@ -287,7 +287,7 @@ func Process_TSS_Object(gc *GossiperContext, new_obj Gossip_object, target_type 
 		}
 		val.Partial_sigs[val.Num] = p_sig
 		val.Num = val.Num + 1
-		fmt.Println("Finished updating Counters, the new number is", val.Num)
+		//fmt.Println("Finished updating Counters, the new number is", val.Num)
 		//now we check if the number of sigs have reached the threshold
 		if val.Num>=c.Threshold{
 			TSS_sig, _ := c.ThresholdAggregate(val.Partial_sigs)
@@ -318,7 +318,7 @@ func Process_TSS_Object(gc *GossiperContext, new_obj Gossip_object, target_type 
 		}
 	}
 	//if the this is the first STH_FRAG received
-	fmt.Println("This is the first partial sig registered")
+	//fmt.Println("This is the first partial sig registered")
 	new_counter := new(Entity_Gossip_Object_TSS_Counter)
 	*new_counter = Entity_Gossip_Object_TSS_Counter{
 		Signers:     []string{new_obj.Signer,""},
@@ -326,7 +326,7 @@ func Process_TSS_Object(gc *GossiperContext, new_obj Gossip_object, target_type 
 		Partial_sigs: []crypto.SigFragment{p_sig,p_sig},
 	}
 	(*gc.Obj_TSS_DB)[key] = new_counter
-	fmt.Println("Number of counters in TSS DB is: ", len(*gc.Obj_TSS_DB))
+	//fmt.Println("Number of counters in TSS DB is: ", len(*gc.Obj_TSS_DB))
 	return nil
 
 }

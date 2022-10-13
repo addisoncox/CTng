@@ -49,6 +49,33 @@ func TypeString(t string) string {
 		return "UNKNOWN"
 	}
 }
+
+func EntityString(t string) string{
+	switch t {
+	case "localhost:9000":
+		return "Logger 1"
+	case "localhost:9001":
+		return "Logger 2"
+	case "localhost:9002":
+		return "Logger 3"
+	case "localhost:9100":
+		return "CA 1"
+	case "localhost:9101":
+		return "CA 2"
+	case "localhost:9102":
+		return "CA 3"
+	case "localhost:8180":
+		return "Monitor 1"
+	case "localhost:8181":
+		return "Monitor 2"
+	case "localhost:8182":
+		return "Monitor 3"
+	case "localhost: 8183":
+		return "Monitor 4"
+	default:
+		return "UNKNOWN"
+	}
+}
 type Gossip_object struct {
 	Application string `json:"application"`
 	Period string `json:"period"`
