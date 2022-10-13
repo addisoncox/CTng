@@ -186,7 +186,10 @@ func (c *MonitorContext) GetObject(id gossip.Gossip_ID) gossip.Gossip_object{
 	case gossip.REV_FULL:
 		obj := (*c.Storage_REV_FULL)[id]
 		return obj
-	case gossip.STH, gossip.REV:
+	case gossip.STH:
+		obj := (*c.Storage_TEMP)[id]
+		return obj
+	case gossip.REV:
 		obj := (*c.Storage_TEMP)[id]
 		return obj
 	}

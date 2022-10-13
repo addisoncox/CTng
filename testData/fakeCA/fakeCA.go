@@ -111,6 +111,12 @@ func periodicTasks() {
 func requestREV(w http.ResponseWriter, r *http.Request) {
 	REV_index,err := strconv.Atoi(gossip.GetCurrentPeriod())
 	if err == nil{}
+	    //Always disconnecting CA
+		if CAType == 4{
+			request_count++
+			fmt.Println(util.RED,"Not sending Any REVS",util.RESET)
+			return
+		}
 		//Disconnecting CA
 		if CAType == 3 && request_count%config.MisbehaviorInterval == 0 {
 			// No response or any bad request response should trigger the accusation
@@ -148,6 +154,7 @@ func getCAType() {
 	fmt.Println("1. Normal, behaving CA (default)")
 	fmt.Println("2. Split-World (Send fake REVs after ", config.MisbehaviorInterval, "requests)")
 	fmt.Println("3. Disconnecting CA (unresponsive every", config.MisbehaviorInterval, "requests)")
+	fmt.Println("4. Always Unreponsive CA")
 	fmt.Scanln(&CAType)
 }
 

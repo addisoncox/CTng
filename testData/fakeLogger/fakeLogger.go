@@ -89,6 +89,11 @@ func fill_with_data(){
 func requestSTH(w http.ResponseWriter, r *http.Request){
 	STH_index,err := strconv.Atoi(gossip.GetCurrentPeriod())
 	//Disconnecting logger
+	if loggerType == 4{
+		request_count++
+		fmt.Println(util.RED,"Not sending Any STHS",util.RESET)
+		return
+	}
 	if loggerType == 3 && request_count%config.MisbehaviorInterval == 0 {
 		// No response or any bad request response should trigger the accusation
 		request_count++
@@ -116,6 +121,7 @@ func getLoggerType() {
 	fmt.Println("1. Normal, behaving Logger (default)")
 	fmt.Println("2. Split-World (Two different STHS on every", config.MisbehaviorInterval, "requests)")
 	fmt.Println("3. Disconnecting Logger (unresponsive every", config.MisbehaviorInterval, "requests)")
+	fmt.Println("4. Always Unreponsive logger")
 	fmt.Scanln(&loggerType)
 }
 

@@ -68,8 +68,9 @@ func handle_gossip_from_gossiper(c *MonitorContext, w http.ResponseWriter, r *ht
 		// processDuplicateObject(c, gossip_obj, stored_obj)
 		return
 	} else {
-	fmt.Println("Recieved new, valid", gossip.TypeString(gossip_obj.Type), "from gossiper.")
-	Process_valid_object(c, gossip_obj)}
+		fmt.Println("Recieved new, valid", gossip.TypeString(gossip_obj.Type), "from gossiper.")
+		Process_valid_object(c, gossip_obj)
+	}
 }
 func handle_gossip(c *MonitorContext, w http.ResponseWriter, r *http.Request) {
 	// Parse sent object.
