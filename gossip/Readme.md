@@ -8,12 +8,12 @@
 - `Gossiper_context`: Gossiper context is an object that contains all the configuration and storage information about the gossiper
 - `methods`: internal methods defined in this file includes save storage, load storage, wipe storage, store object, get object, isduplicate, hasPoM
 ## Gossiper.go
-- `handlegossip` and `handleownergossip`: gossip object handler
+- `handlegossip`: gossip object handler
 - `GossipData`: send gossip object to its connected gossipers
 - `SendtoOwner`: send gossip object to its Owner (e.g. monitor)
 - `ProcessValidObject`: valid Gossiper object handler, only invoked if the gossip object received has passed the signature verification process
 - `ProcessDuplicateObject`: duplicate object handler, only invoked if the gossip object received has the same Gossip ID with a gossip object in the storage/cache, It will generate CONFLICT POM if the signature(s)/payload(s) are different
-- `Process_STH_FRAG` and `Process_ACC_FRAG` and `Process_REV_FRAG`: Different Handlers for different types of gossip object with Threshold Signature Scheme 
+- `Process_TSS_Object`: Handlers for different types of gossip object with Threshold Signature Scheme 
 - `PeriodicTasks` : only keeps the data for the current period (keep all Conflict PoMs), wipe every 3 Period 
 
 
