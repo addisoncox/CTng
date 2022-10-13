@@ -61,7 +61,7 @@ func handle_gossip_from_gossiper(c *MonitorContext, w http.ResponseWriter, r *ht
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusBadRequest)
 	}
-	fmt.Println("Recieved new, valid", gossip.TypeString(gossip_obj.Type), "from "+util.GetSenderURL(r)+".")
+	fmt.Println("Recieved new, valid", gossip.TypeString(gossip_obj.Type), "from gossiper.")
 	Process_valid_object(c, gossip_obj)
 }
 func handle_gossip(c *MonitorContext, w http.ResponseWriter, r *http.Request) {
@@ -83,12 +83,12 @@ func handle_gossip(c *MonitorContext, w http.ResponseWriter, r *http.Request) {
 	// Check for duplicate object.
 	if c.IsDuplicate(gossip_obj){
 		// If the object is already stored, still return OK.{
-		fmt.Println("Duplicate:", gossip.TypeString(gossip_obj.Type), util.GetSenderURL(r)+".")
+		//fmt.Println("Duplicate:", gossip.TypeString(gossip_obj.Type), util.GetSenderURL(r)+".")
 		http.Error(w, "Gossip object already stored.", http.StatusOK)
 		// processDuplicateObject(c, gossip_obj, stored_obj)
 		return
 	} else {
-		fmt.Println("Recieved new, valid", gossip_obj.Type, "from "+util.GetSenderURL(r)+".")
+		fmt.Println("Recieved new, valid", gossip_obj.Type,".")
 		Process_valid_object(c, gossip_obj)
 		c.SaveStorage()
 	}
@@ -106,7 +106,8 @@ func QueryLoggers(c *MonitorContext) {
 			fmt.Println(util.GREEN + "Querying Logger Initiated" + util.RESET)
 			sthResp, err := http.Get(PROTOCOL + logger + "/ctng/v2/get-sth/")
 			if err != nil {
-				log.Println(util.RED+"Query Logger Failed: "+err.Error(), util.RESET)
+				//log.Println(util.RED+"Query Logger Failed: "+err.Error(), util.RESET)
+				log.Println(util.RED+"Query Logger Failed, connection refused.",util.RESET)
 				AccuseEntity(c, logger)
 				continue
 			}
@@ -147,7 +148,8 @@ func QueryAuthorities(c *MonitorContext) {
 			fmt.Println(util.GREEN + "Querying CA Initiated" + util.RESET)
 			revResp, err := http.Get(PROTOCOL + CA + "/ctng/v2/get-revocation/")
 			if err != nil {
-				log.Println(util.RED+"Query CA failed: "+err.Error(), util.RESET)
+				//log.Println(util.RED+"Query CA failed: "+err.Error(), util.RESET)
+				log.Println(util.RED+"Query CA Failed, connection refused.",util.RESET)
 				AccuseEntity(c, CA)
 				continue
 			}
