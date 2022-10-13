@@ -312,6 +312,7 @@ func InitializeMonitorStorage(c *MonitorContext){
 //This function is called by handle_gossip in monitor_server.go under the server folder
 //It will be called if the gossip object is validated
 func Process_valid_object(c *MonitorContext, g gossip.Gossip_object) {
+	c.StoreObject(g)
 	//This handles the STHS
 	if g.Type == gossip.STH {
 		// Send an unsigned copy to the gossiper if the STH is from the logger
@@ -367,10 +368,10 @@ func Process_valid_object(c *MonitorContext, g gossip.Gossip_object) {
 		return
 	}
 	// ACCUSATION_POM, CONFLICT_POM, STH_FULL, REV_FULL should be stored
-	if g.Type == gossip.ACCUSATION_POM || g.Type == gossip.CONFLICT_POM || g.Type == gossip.STH_FULL || g.Type == gossip.REV_FULL{
-		c.StoreObject(g)
-		return
-	}
+	//if g.Type == gossip.ACCUSATION_POM || g.Type == gossip.CONFLICT_POM || g.Type == gossip.STH_FULL || g.Type == gossip.REV_FULL{
+		//c.StoreObject(g)
+		//return
+	//}
 	return
 }
 

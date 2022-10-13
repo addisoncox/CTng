@@ -116,6 +116,7 @@ func handleGossip(c *GossiperContext, w http.ResponseWriter, r *http.Request) {
 	} else {
 		//fmt.Println(util.GREEN+"Received new, valid", TypeString(gossip_obj.Type), "from "+util.GetSenderURL(r)+".", util.RESET)
 		fmt.Println(util.GREEN,"Received new, valid ",TypeString(gossip_obj.Type), "signed by ",gossip_obj.Signer, " at Period ",gossip_obj.Period," .", util.RESET)
+		//fmt.Println(gossip_obj.Signature)
 		ProcessValidObject(c, gossip_obj)
 		c.SaveStorage()
 	}
