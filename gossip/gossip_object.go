@@ -114,6 +114,7 @@ func GetCurrentTimestamp() string {
 	return time.Now().UTC().Format(time.RFC3339)
 }
 
+//we are using 1 minitue to simulate 1 day in real life, this is subject to change 
 func GetCurrentPeriod() string{
 	timerfc := time.Now().UTC().Format(time.RFC3339)
 	Miniutes, err := strconv.Atoi(timerfc[14:16])
@@ -122,6 +123,18 @@ func GetCurrentPeriod() string{
 	}
 	return Periodnum
 }
+
+//this function needs to change with GetCurrentPeriod()
+//this function makes sure that all monitors start querying at the beginning of each period
+func Getwaitingtime() int{
+	timerfc := time.Now().UTC().Format(time.RFC3339)
+	Seconds, err := strconv.Atoi(timerfc[17:19])	
+	if err != nil {
+	}
+	Seconds = 60-Seconds
+	return Seconds
+}
+
 func Verify_gossip_pom(g Gossip_object, c *crypto.CryptoConfig) error {
 	if g.Type == CONFLICT_POM {
 		var err1, err2 error

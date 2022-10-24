@@ -377,6 +377,8 @@ func Process_valid_object(c *MonitorContext, g gossip.Gossip_object) {
 
 func StartMonitorServer(c *MonitorContext) {
 	// Check if the storage file exists in this directory
+	time_wait := gossip.Getwaitingtime();
+	time.Sleep(time.Duration(time_wait)*time.Second);
 	InitializeMonitorStorage(c)
 	err := c.LoadStorage()
 	if err != nil {
