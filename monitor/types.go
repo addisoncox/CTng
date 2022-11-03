@@ -1,9 +1,9 @@
 package monitor
 
 import (
-	"CTngv1/config"
-	"CTngv1/gossip"
-	"CTngv1/util"
+	"CTng/config"
+	"CTng/gossip"
+	"CTng/util"
 	"encoding/json"
 	"net/http"
 	"errors"

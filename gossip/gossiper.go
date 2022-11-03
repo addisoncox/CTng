@@ -2,12 +2,12 @@ package gossip
 
 
 import (
-	"CTngv1/util"
+	"CTng/util"
 	"bytes"
 	"encoding/json"
 	"fmt"
 	"strings"
-	"CTngv1/crypto"
+	"CTng/crypto"
 	"log"
 	"net/http"
 	"os"

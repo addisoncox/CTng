@@ -1,7 +1,7 @@
 package gossip
 import (
 	"fmt"
-	"CTngv1/crypto"
+	"CTng/crypto"
 	"errors"
 	"time"
 	"strconv"

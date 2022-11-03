@@ -1,7 +1,7 @@
 package config
 
 import (
-	"CTngv1/crypto"
+	"CTng/crypto"
 	"math/big"
 )
 

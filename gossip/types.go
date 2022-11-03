@@ -1,9 +1,9 @@
 package gossip
 
 import (
-	"CTngv1/config"
-	"CTngv1/util"
-	"CTngv1/crypto"
+	"CTng/config"
+	"CTng/util"
+	"CTng/crypto"
 	"encoding/json"
 	"net/http"	
 	"reflect"

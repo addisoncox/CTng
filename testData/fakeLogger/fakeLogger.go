@@ -1,8 +1,8 @@
 package fakeLogger
 import (
-	"CTngv1/crypto"
-	"CTngv1/gossip"
-	"CTngv1/util"
+	"CTng/crypto"
+	"CTng/gossip"
+	"CTng/util"
 	"crypto/rsa"
 	"encoding/hex"
 	"encoding/json"

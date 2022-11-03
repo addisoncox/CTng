@@ -1,7 +1,7 @@
 package crypto
 
 import (
-	"CTngv1/util"
+	"CTng/util"
 	"crypto/rsa"
 	"encoding/json"
 	"fmt"

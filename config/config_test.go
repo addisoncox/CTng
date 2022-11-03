@@ -1,7 +1,7 @@
 package config
 
 import (
-	crypto "CTngv1/crypto"
+	crypto "CTng/crypto"
 	"fmt"
 	"reflect"
 	"testing"

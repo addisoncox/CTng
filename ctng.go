@@ -5,11 +5,12 @@ Code Ownership:
 Finn - Made main function
 */
 import (
-	"CTngv1/config"
-	"CTngv1/gossip"
-	"CTngv1/monitor"
-	"CTngv1/testData/fakeCA"
-	"CTngv1/testData/fakeLogger"
+	"CTng/config"
+	"CTng/gossip"
+	"CTng/monitor"
+	"CTng/testData/fakeCA"
+	"CTng/testData/fakeLogger"
+	"CTng/Logger"
 	"fmt"
 	"os"
 )
@@ -80,6 +81,8 @@ func main() {
 		fakeLogger.RunFakeLogger(os.Args[2])
 	case "ca":
 		fakeCA.RunFakeCA(os.Args[2])
+	case "testlogger":
+	    Logger.RunLogger("Logger/logger.json")
 	default:
 		fmt.Println(helpText)
 	}

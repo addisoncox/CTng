@@ -1,0 +1,7 @@
+{
+    "Monitor_URLs": ["localhost:8080", "localhost:8082"],
+    "MaxMonitor":2,
+    "Crypto": "client/Client_Testconfig/ClientCrypto.json",
+    "Port": "9500",
+    "MMD": 60
+}

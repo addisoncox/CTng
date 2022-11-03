@@ -1,10 +1,10 @@
 package fakeCA
 
 import (
-	//"CTngv1/GZip"
-	"CTngv1/crypto"
-	"CTngv1/gossip"
-	"CTngv1/util"
+	//"CTng/GZip"
+	"CTng/crypto"
+	"CTng/gossip"
+	"CTng/util"
 	"crypto/rsa"
 	"encoding/json"
 	"fmt"
