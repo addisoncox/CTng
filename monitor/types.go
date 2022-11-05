@@ -32,6 +32,7 @@ type MonitorContext struct {
 	// Therefore, a monitor can only accuse once per Period. I believe this is a temporary solution.
 	Verbose    bool
 	Client     *http.Client
+	GossipTypeCounts map[string]uint64
 }
 
 func (c *MonitorContext) Clean_Conflicting_Object(){

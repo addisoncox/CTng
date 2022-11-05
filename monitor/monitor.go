@@ -1,8 +1,8 @@
 package monitor
 
 import (
-	"CTng/gossip"
 	"CTng/crypto"
+	"CTng/gossip"
 	"CTng/util"
 	"bytes"
 	"encoding/json"
@@ -10,13 +10,15 @@ import (
 	"io/ioutil"
 	"log"
 	"net/http"
-	"time"
-	"strings"
 	"strconv"
+	"strings"
+	"time"
+
 	"github.com/gorilla/mux"
 )
 
 const PROTOCOL = "http://"
+
 func bindMonitorContext(context *MonitorContext, fn func(context *MonitorContext, w http.ResponseWriter, r *http.Request)) func(w http.ResponseWriter, r *http.Request) {
 	return func(w http.ResponseWriter, r *http.Request) {
 		fn(context, w, r)
@@ -36,71 +38,72 @@ func handleMonitorRequests(c *MonitorContext) {
 	log.Fatal(http.ListenAndServe(":"+c.Config.Port, nil))
 }
 
-type Clientupdate struct{
-	STHs *gossip.Gossip_Storage
-	REVs *gossip.Gossip_Storage
-	PoMs *gossip.Gossip_Storage
+type Clientupdate struct {
+	STHs      *gossip.Gossip_Storage
+	REVs      *gossip.Gossip_Storage
+	PoMs      *gossip.Gossip_Storage
 	MonitorID string
-	//Period here means the update period, the client udpate object can contain more information than just the period 
+	//Period here means the update period, the client udpate object can contain more information than just the period
 	Period string
 	PoMsig string
 }
 
-type Clientquery struct{
-	Client_URL string
+type Clientquery struct {
+	Client_URL       string
 	LastUpdatePeriod string
 }
+
 //This function should be invoked after the monitor-gossiper system converges in this period
-func PrepareClientupdate(c *MonitorContext,LastUpdatePeriod string) Clientupdate{
+func PrepareClientupdate(c *MonitorContext, LastUpdatePeriod string) Clientupdate {
 	LastUpdatePeriodint, _ := strconv.Atoi(LastUpdatePeriod)
-	CurrentPeriodint, _:= strconv.Atoi(gossip.GetCurrentPeriod())
+	CurrentPeriodint, _ := strconv.Atoi(gossip.GetCurrentPeriod())
 	//intialize some storages
 	storage_conflict_pom := new(gossip.Gossip_Storage)
-	*storage_conflict_pom  = make(gossip.Gossip_Storage)
+	*storage_conflict_pom = make(gossip.Gossip_Storage)
 	storage_sth_full := new(gossip.Gossip_Storage)
-	*storage_sth_full  = make(gossip.Gossip_Storage)
+	*storage_sth_full = make(gossip.Gossip_Storage)
 	storage_rev_full := new(gossip.Gossip_Storage)
-	*storage_rev_full  = make(gossip.Gossip_Storage)
+	*storage_rev_full = make(gossip.Gossip_Storage)
 	//load all poms and sign on it
-	for _, gossipObject := range *storage_conflict_pom{
+	for _, gossipObject := range *storage_conflict_pom {
 		(*storage_conflict_pom)[gossipObject.GetID()] = gossipObject
 	}
-	payload,_ := json.Marshal(*storage_conflict_pom)
+	payload, _ := json.Marshal(*storage_conflict_pom)
 	signature, _ := crypto.RSASign([]byte(payload), &c.Config.Crypto.RSAPrivateKey, c.Config.Crypto.SelfID)
 	//load all STHs (Fully Threshold signed) from lastUpdatePeriod to the current period
-	for _, gossipObject := range *storage_sth_full{
+	for _, gossipObject := range *storage_sth_full {
 		for i := LastUpdatePeriodint; i < CurrentPeriodint; i++ {
-			if gossipObject.Period == strconv.Itoa(i){
+			if gossipObject.Period == strconv.Itoa(i) {
 				(*storage_sth_full)[gossipObject.GetID()] = gossipObject
 			}
 		}
 	}
 	//load all REVs (Fully Threshold signed) from LastUpdatePeriod to the current period
-	for _, gossipObject := range *storage_rev_full{
+	for _, gossipObject := range *storage_rev_full {
 		for i := LastUpdatePeriodint; i < CurrentPeriodint; i++ {
-			if gossipObject.Period == strconv.Itoa(i){
+			if gossipObject.Period == strconv.Itoa(i) {
 				(*storage_rev_full)[gossipObject.GetID()] = gossipObject
 			}
 		}
 	}
 	CTupdate := Clientupdate{
-		STHs: storage_sth_full,
-		REVs: storage_rev_full,
-		PoMs: storage_conflict_pom,
+		STHs:      storage_sth_full,
+		REVs:      storage_rev_full,
+		PoMs:      storage_conflict_pom,
 		MonitorID: c.Config.Signer,
-		Period: gossip.GetCurrentPeriod(),
-		PoMsig: signature.String(),
+		Period:    gossip.GetCurrentPeriod(),
+		PoMsig:    signature.String(),
 	}
 	return CTupdate
 }
 
-func requestupdate(c *MonitorContext, w http.ResponseWriter, r *http.Request){
+func requestupdate(c *MonitorContext, w http.ResponseWriter, r *http.Request) {
 	var ticket Clientquery
 	err := json.NewDecoder(r.Body).Decode(&ticket)
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusBadRequest)
 	}
-	var ctupdate = PrepareClientupdate(c,ticket.LastUpdatePeriod)
+	var ctupdate = PrepareClientupdate(c, ticket.LastUpdatePeriod)
 	msg, _ := json.Marshal(ctupdate)
 	resp, postErr := c.Client.Post("http://"+ticket.Client_URL+"/receive-updates", "application/json", bytes.NewBuffer(msg))
 	if postErr != nil {
@@ -137,13 +140,13 @@ func receiveGossip(c *MonitorContext, w http.ResponseWriter, r *http.Request) {
 	}
 }
 
-func handle_gossip_from_gossiper(c *MonitorContext, w http.ResponseWriter, r *http.Request){
+func handle_gossip_from_gossiper(c *MonitorContext, w http.ResponseWriter, r *http.Request) {
 	var gossip_obj gossip.Gossip_object
 	err := json.NewDecoder(r.Body).Decode(&gossip_obj)
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusBadRequest)
 	}
-	if c.IsDuplicate(gossip_obj){
+	if c.IsDuplicate(gossip_obj) {
 		// If the object is already stored, still return OK.{
 		//fmt.Println("Duplicate:", gossip.TypeString(gossip_obj.Type), util.GetSenderURL(r)+".")
 		http.Error(w, "Gossip object already stored.", http.StatusOK)
@@ -171,33 +174,31 @@ func handle_gossip(c *MonitorContext, w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	// Check for duplicate object.
-	if c.IsDuplicate(gossip_obj){
+	if c.IsDuplicate(gossip_obj) {
 		// If the object is already stored, still return OK.{
 		//fmt.Println("Duplicate:", gossip.TypeString(gossip_obj.Type), util.GetSenderURL(r)+".")
 		http.Error(w, "Gossip object already stored.", http.StatusOK)
 		// processDuplicateObject(c, gossip_obj, stored_obj)
 		return
 	} else {
-		fmt.Println("Recieved new, valid", gossip_obj.Type,".")
+		fmt.Println("Recieved new, valid", gossip_obj.Type, ".")
 		Process_valid_object(c, gossip_obj)
 		c.SaveStorage()
 	}
 	http.Error(w, "Gossip object Processed.", http.StatusOK)
 }
 
-
 func QueryLoggers(c *MonitorContext) {
 	for _, logger := range c.Config.Logger_URLs {
 		// var today = time.Now().UTC().Format(time.RFC3339)[0:10]
-		if Check_entity_pom(c, logger){
-			fmt.Println(util.RED,"There is a PoM against this Logger. Query will not be initiated",util.RESET)
-		}else
-		{
+		if Check_entity_pom(c, logger) {
+			fmt.Println(util.RED, "There is a PoM against this Logger. Query will not be initiated", util.RESET)
+		} else {
 			fmt.Println(util.GREEN + "Querying Logger Initiated" + util.RESET)
 			sthResp, err := http.Get(PROTOCOL + logger + "/ctng/v2/get-sth/")
 			if err != nil {
 				//log.Println(util.RED+"Query Logger Failed: "+err.Error(), util.RESET)
-				log.Println(util.RED+"Query Logger Failed, connection refused.",util.RESET)
+				log.Println(util.RED+"Query Logger Failed, connection refused.", util.RESET)
 				AccuseEntity(c, logger)
 				continue
 			}
@@ -231,15 +232,14 @@ func QueryAuthorities(c *MonitorContext) {
 		// Get today's revocation information from CA.
 		// Get today's date in format YYYY-MM-DD
 		// var today = time.Now().UTC().Format(time.RFC3339)[0:10]
-		if Check_entity_pom(c, CA){
-			fmt.Println(util.RED,"There is a PoM against this CA. Query will not be initiated",util.RESET)
-		}else
-		{
+		if Check_entity_pom(c, CA) {
+			fmt.Println(util.RED, "There is a PoM against this CA. Query will not be initiated", util.RESET)
+		} else {
 			fmt.Println(util.GREEN + "Querying CA Initiated" + util.RESET)
 			revResp, err := http.Get(PROTOCOL + CA + "/ctng/v2/get-revocation/")
 			if err != nil {
 				//log.Println(util.RED+"Query CA failed: "+err.Error(), util.RESET)
-				log.Println(util.RED+"Query CA Failed, connection refused.",util.RESET)
+				log.Println(util.RED+"Query CA Failed, connection refused.", util.RESET)
 				AccuseEntity(c, CA)
 				continue
 			}
@@ -275,7 +275,7 @@ func QueryAuthorities(c *MonitorContext) {
 //It is called when the gossip object received is not valid, or the monitor didn't get response when querying the logger or the CA
 //Accused = Domain name of the accused entity (logger etc.)
 func AccuseEntity(c *MonitorContext, Accused string) {
-	if Check_entity_pom(c,Accused){
+	if Check_entity_pom(c, Accused) {
 		return
 	}
 	msg := Accused
@@ -283,21 +283,21 @@ func AccuseEntity(c *MonitorContext, Accused string) {
 	payloadarray[0] = msg
 	payloadarray[1] = ""
 	payloadarray[2] = ""
-	signature, _ := c.Config.Crypto.ThresholdSign(payloadarray[0]+payloadarray[1]+payloadarray[2])
+	signature, _ := c.Config.Crypto.ThresholdSign(payloadarray[0] + payloadarray[1] + payloadarray[2])
 	var sigarray [2]string
 	sigarray[0] = signature.String()
 	sigarray[1] = ""
 	accusation := gossip.Gossip_object{
-		Application: "CTng",
-		Type:        gossip.ACC_FRAG,
-		Period:      gossip.GetCurrentPeriod(),
-		Signer:      c.Config.Crypto.SelfID.String(),
-		Timestamp:   gossip.GetCurrentTimestamp(),
-		Signature:   sigarray,
+		Application:   "CTng",
+		Type:          gossip.ACC_FRAG,
+		Period:        gossip.GetCurrentPeriod(),
+		Signer:        c.Config.Crypto.SelfID.String(),
+		Timestamp:     gossip.GetCurrentTimestamp(),
+		Signature:     sigarray,
 		Crypto_Scheme: "BLS",
-		Payload:     payloadarray,
+		Payload:       payloadarray,
 	}
-	fmt.Println(util.BLUE+"New accusation generated, Sending to gossiper"+util.RESET)
+	fmt.Println(util.BLUE + "New accusation generated, Sending to gossiper" + util.RESET)
 	Send_to_gossiper(c, accusation)
 }
 
@@ -311,7 +311,7 @@ func Send_to_gossiper(c *MonitorContext, g gossip.Gossip_object) {
 	// Send the gossip object to the gossiper.
 	resp, postErr := c.Client.Post(PROTOCOL+c.Config.Gossiper_URL+"/gossip/gossip-data", "application/json", bytes.NewBuffer(msg))
 	if postErr != nil {
-		fmt.Println(util.RED+"Error sending object to Gossiper: ", postErr.Error(),util.RESET)
+		fmt.Println(util.RED+"Error sending object to Gossiper: ", postErr.Error(), util.RESET)
 	} else {
 		// Close the response, mentioned by http.Post
 		// Alernatively, we could return the response from this function.
@@ -325,21 +325,21 @@ func Send_to_gossiper(c *MonitorContext, g gossip.Gossip_object) {
 //this should be invoked after the monitor receives the information from its loggers and CAs prior to threshold signning it
 func Check_entity_pom(c *MonitorContext, Accused string) bool {
 	GID := gossip.Gossip_ID{
-		Period: gossip.GetCurrentPeriod(),
-		Type: gossip.ACCUSATION_POM,
+		Period:     gossip.GetCurrentPeriod(),
+		Type:       gossip.ACCUSATION_POM,
 		Entity_URL: Accused,
 	}
-	if _,ok := (*c.Storage_ACCUSATION_POM)[GID]; ok{
-		fmt.Println(util.BLUE+"Entity has Accusation_PoM on file, no need for more accusations."+util.RESET)
+	if _, ok := (*c.Storage_ACCUSATION_POM)[GID]; ok {
+		fmt.Println(util.BLUE + "Entity has Accusation_PoM on file, no need for more accusations." + util.RESET)
 		return true
 	}
 	GID2 := gossip.Gossip_ID{
-		Period: "0",
-		Type: gossip.CONFLICT_POM,
+		Period:     "0",
+		Type:       gossip.CONFLICT_POM,
 		Entity_URL: Accused,
 	}
-	if _,ok := (*c.Storage_CONFLICT_POM)[GID2]; ok{
-		fmt.Println(util.BLUE+"Entity has Conflict_PoM on file, no need for more accusations."+util.RESET)
+	if _, ok := (*c.Storage_CONFLICT_POM)[GID2]; ok {
+		fmt.Println(util.BLUE + "Entity has Conflict_PoM on file, no need for more accusations." + util.RESET)
 		return true
 	}
 	return false
@@ -381,16 +381,16 @@ func PeriodicTasks(c *MonitorContext) {
 	//time.Sleep(10*time.Second);
 }
 
-func InitializeMonitorStorage(c *MonitorContext){
-	c.StorageDirectory = "testData/monitordata/"+c.StorageID+"/"
-	c.StorageFile_CONFLICT_POM  = "CONFLICT_POM.json"
+func InitializeMonitorStorage(c *MonitorContext) {
+	c.StorageDirectory = "testData/monitordata/" + c.StorageID + "/"
+	c.StorageFile_CONFLICT_POM = "CONFLICT_POM.json"
 	c.StorageFile_ACCUSATION_POM = "ACCUSATION_POM.json"
 	c.StorageFile_STH_FULL = "STH_FULL.json"
-	c.StorageFile_REV_FULL = "REV_FULL.json" 
-	util.CreateFile(c.StorageDirectory+c.StorageFile_CONFLICT_POM)
-	util.CreateFile(c.StorageDirectory+c.StorageFile_ACCUSATION_POM)
-	util.CreateFile(c.StorageDirectory+c.StorageFile_STH_FULL)
-	util.CreateFile(c.StorageDirectory+c.StorageFile_REV_FULL)
+	c.StorageFile_REV_FULL = "REV_FULL.json"
+	util.CreateFile(c.StorageDirectory + c.StorageFile_CONFLICT_POM)
+	util.CreateFile(c.StorageDirectory + c.StorageFile_ACCUSATION_POM)
+	util.CreateFile(c.StorageDirectory + c.StorageFile_STH_FULL)
+	util.CreateFile(c.StorageDirectory + c.StorageFile_REV_FULL)
 
 }
 
@@ -398,15 +398,22 @@ func InitializeMonitorStorage(c *MonitorContext){
 //It will be called if the gossip object is validated
 func Process_valid_object(c *MonitorContext, g gossip.Gossip_object) {
 	c.StoreObject(g)
+	gossipTypeString := gossip.TypeString(g.Type)
+	if _, ok := c.GossipTypeCounts[gossipTypeString]; ok {
+		c.GossipTypeCounts[gossipTypeString]++
+	} else {
+		c.GossipTypeCounts[gossipTypeString] = 1
+	}
+	util.LogIfTraceEnabled(fmt.Sprint(c.GossipTypeCounts))
 	//This handles the STHS
 	if g.Type == gossip.STH {
 		// Send an unsigned copy to the gossiper if the STH is from the logger
-		if IsLogger(c, g.Signer){
+		if IsLogger(c, g.Signer) {
 			Send_to_gossiper(c, g)
 		}
 		// The below function for creates the SIG_FRAG object
 		f := func() {
-			sig_frag, err := c.Config.Crypto.ThresholdSign(g.Payload[0]+g.Payload[1]+g.Payload[2])
+			sig_frag, err := c.Config.Crypto.ThresholdSign(g.Payload[0] + g.Payload[1] + g.Payload[2])
 			if err != nil {
 				fmt.Println(err.Error())
 			}
@@ -429,13 +436,13 @@ func Process_valid_object(c *MonitorContext, g gossip.Gossip_object) {
 	}
 	//if the object is from a CA, revocation information
 	//this handles revocation information
-	if  g.Type == gossip.REV{
+	if g.Type == gossip.REV {
 		// Send an unsigned copy to the gossiper if the REV is received from a CA
-		if IsAuthority(c, g.Signer){
+		if IsAuthority(c, g.Signer) {
 			Send_to_gossiper(c, g)
 		}
 		f := func() {
-			sig_frag, err := c.Config.Crypto.ThresholdSign(g.Payload[0]+g.Payload[1]+g.Payload[2])
+			sig_frag, err := c.Config.Crypto.ThresholdSign(g.Payload[0] + g.Payload[1] + g.Payload[2])
 			if err != nil {
 				fmt.Println(err.Error())
 			}
@@ -454,16 +461,16 @@ func Process_valid_object(c *MonitorContext, g gossip.Gossip_object) {
 	}
 	// ACCUSATION_POM, CONFLICT_POM, STH_FULL, REV_FULL should be stored
 	//if g.Type == gossip.ACCUSATION_POM || g.Type == gossip.CONFLICT_POM || g.Type == gossip.STH_FULL || g.Type == gossip.REV_FULL{
-		//c.StoreObject(g)
-		//return
+	//c.StoreObject(g)
+	//return
 	//}
 	return
 }
 
 func StartMonitorServer(c *MonitorContext) {
 	// Check if the storage file exists in this directory
-	time_wait := gossip.Getwaitingtime();
-	time.Sleep(time.Duration(time_wait)*time.Second);
+	time_wait := gossip.Getwaitingtime()
+	time.Sleep(time.Duration(time_wait) * time.Second)
 	InitializeMonitorStorage(c)
 	err := c.LoadStorage()
 	if err != nil {

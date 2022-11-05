@@ -5,12 +5,12 @@ Code Ownership:
 Finn - Made main function
 */
 import (
+	"CTng/Logger"
 	"CTng/config"
 	"CTng/gossip"
 	"CTng/monitor"
 	"CTng/testData/fakeCA"
 	"CTng/testData/fakeLogger"
-	"CTng/Logger"
 	"fmt"
 	"os"
 )
@@ -20,10 +20,15 @@ import (
 // Currently unimplemented: Different object_storage locations than ./gossiper_data.json and ./monitor_data.json
 // This field could be defined within the configuration files to make this more modular.
 func main() {
-	helpText := "Usage:\n ./CTng [gossiper|monitor] <public_config_file_path> <private_config_file_path> <crypto_config_path>\n ./Ctng [logger|ca] <fakeentity_config_path>"
+	helpText := "Usage:\n ./CTng [gossiper|monitor] <public_config_file_path> <private_config_file_path> <crypto_config_path>\n ./Ctng [logger|ca] <fakeentity_config_path> [--enable-tracing]"
 	if len(os.Args) < 3 {
 		fmt.Println(helpText)
 		os.Exit(1)
+	}
+	for _, arg := range os.Args {
+		if arg == "--enable-tracing" {
+			os.Setenv("CTNGTRACINGENABLED", "TRUE")
+		}
 	}
 	switch os.Args[1] {
 	case "gossiper":
@@ -41,7 +46,7 @@ func main() {
 		ctx := gossip.GossiperContext{
 			Config:      &conf,
 			Storage:     storage,
-			Obj_TSS_DB: gossip_object_TSS_DB,
+			Obj_TSS_DB:  gossip_object_TSS_DB,
 			StorageFile: "gossiper_data.json", // could be a parameter in the future.
 			StorageID:   os.Args[5],
 		}
@@ -57,23 +62,24 @@ func main() {
 		}
 		// Space is allocated for all storage fields, and then make is run to initialize these spaces.
 		storage_temp := new(gossip.Gossip_Storage)
-		*storage_temp  = make(gossip.Gossip_Storage)
+		*storage_temp = make(gossip.Gossip_Storage)
 		storage_conflict_pom := new(gossip.Gossip_Storage)
-		*storage_conflict_pom  = make(gossip.Gossip_Storage)
+		*storage_conflict_pom = make(gossip.Gossip_Storage)
 		storage_accusation_pom := new(gossip.Gossip_Storage)
-		*storage_accusation_pom  = make(gossip.Gossip_Storage)
+		*storage_accusation_pom = make(gossip.Gossip_Storage)
 		storage_sth_full := new(gossip.Gossip_Storage)
-		*storage_sth_full  = make(gossip.Gossip_Storage)
+		*storage_sth_full = make(gossip.Gossip_Storage)
 		storage_rev_full := new(gossip.Gossip_Storage)
-		*storage_rev_full  = make(gossip.Gossip_Storage)
+		*storage_rev_full = make(gossip.Gossip_Storage)
 		ctx := monitor.MonitorContext{
-			Config:      &conf,
-			Storage_TEMP: storage_temp,
-			Storage_CONFLICT_POM:  storage_conflict_pom,
+			Config:                 &conf,
+			Storage_TEMP:           storage_temp,
+			Storage_CONFLICT_POM:   storage_conflict_pom,
 			Storage_ACCUSATION_POM: storage_accusation_pom,
-			Storage_STH_FULL: storage_sth_full,
-			Storage_REV_FULL: storage_rev_full,
-			StorageID:   os.Args[5],
+			Storage_STH_FULL:       storage_sth_full,
+			Storage_REV_FULL:       storage_rev_full,
+			StorageID:              os.Args[5],
+			GossipTypeCounts:       make(map[string]uint64),
 		}
 		ctx.Config = &conf
 		monitor.StartMonitorServer(&ctx)
@@ -82,7 +88,7 @@ func main() {
 	case "ca":
 		fakeCA.RunFakeCA(os.Args[2])
 	case "testlogger":
-	    Logger.RunLogger("Logger/logger.json")
+		Logger.RunLogger("Logger/logger.json")
 	default:
 		fmt.Println(helpText)
 	}

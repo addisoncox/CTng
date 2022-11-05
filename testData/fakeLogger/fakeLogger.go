@@ -1,4 +1,5 @@
 package fakeLogger
+
 import (
 	"CTng/crypto"
 	"CTng/gossip"
@@ -8,8 +9,9 @@ import (
 	"encoding/json"
 	"fmt"
 	"net/http"
-	"time"
 	"strconv"
+	"time"
+
 	"github.com/gorilla/mux"
 )
 
@@ -54,14 +56,14 @@ func generateSTH(loggerType int, Period_num int) gossip.Gossip_object {
 	payload2 := ""
 	signature, _ := crypto.RSASign([]byte(payload0+payload1+payload2), &config.Private, config.Signer)
 	gossipSTH := gossip.Gossip_object{
-		Application: "CTng",
-		Type:        gossip.STH,
-		Period:      strconv.Itoa(Period_num),
-		Signer:      string(config.Signer),
-		Timestamp:   STH1.Timestamp,
-		Signature:   [2]string{signature.String(), ""},
+		Application:   "CTng",
+		Type:          gossip.STH,
+		Period:        strconv.Itoa(Period_num),
+		Signer:        string(config.Signer),
+		Timestamp:     STH1.Timestamp,
+		Signature:     [2]string{signature.String(), ""},
 		Crypto_Scheme: "RSA",
-		Payload:     [3]string{payload0, payload1, payload2},
+		Payload:       [3]string{payload0, payload1, payload2},
 	}
 	return gossipSTH
 }
@@ -76,41 +78,42 @@ func periodicTasks() {
 	fmt.Println("Logger Running Tasks at Period ", cperiod)
 	currentPeriod++
 }
-func fill_with_data(){
+func fill_with_data() {
 	STHS = STHS[:0]
 	fakeSTHs = fakeSTHs[:0]
-	for i:=0; i<60; i++{
-		sth1 := generateSTH(1,i)
-		fakeSTH1 := generateSTH(loggerType,i)
+	for i := 0; i < 60; i++ {
+		sth1 := generateSTH(1, i)
+		fakeSTH1 := generateSTH(loggerType, i)
 		STHS = append(STHS, sth1)
-	    fakeSTHs = append(fakeSTHs, fakeSTH1)
+		fakeSTHs = append(fakeSTHs, fakeSTH1)
 	}
 }
-func requestSTH(w http.ResponseWriter, r *http.Request){
-	STH_index,err := strconv.Atoi(gossip.GetCurrentPeriod())
+func requestSTH(w http.ResponseWriter, r *http.Request) {
+	STH_index, err := strconv.Atoi(gossip.GetCurrentPeriod())
 	//Disconnecting logger
-	if loggerType == 4{
+	if loggerType == 4 {
 		request_count++
-		fmt.Println(util.RED,"Not sending Any STHS",util.RESET)
+		fmt.Println(util.RED, "Not sending Any STHS", util.RESET)
 		return
 	}
 	if loggerType == 3 && request_count%config.MisbehaviorInterval == 0 {
 		// No response or any bad request response should trigger the accusation
 		request_count++
-		fmt.Println(util.RED,"Not sending Any STHS",util.RESET)
+		fmt.Println(util.RED, "Not sending Any STHS", util.RESET)
 		return
 	}
 	//Split-World Logger
-	if loggerType == 2 && request_count%config.MisbehaviorInterval == 0{
+	if loggerType == 2 && request_count%config.MisbehaviorInterval == 0 {
 		json.NewEncoder(w).Encode(fakeSTHs[STH_index])
 		request_count++
-		fmt.Println(util.RED,"FakeSTH sent.",fakeSTHs[STH_index].GetID(),"sig: ", fakeSTHs[STH_index].Signature[0],util.RESET)
+		fmt.Println(util.RED, "FakeSTH sent.", fakeSTHs[STH_index].GetID(), "sig: ", fakeSTHs[STH_index].Signature[0], util.RESET)
 		return
 	}
 	// Normal logger
-	if err == nil{}
+	if err == nil {
+	}
 	json.NewEncoder(w).Encode(STHS[STH_index])
-	fmt.Println(util.GREEN,"STH sent",STHS[STH_index].GetID(),"sig: ", STHS[STH_index].Signature[0], util.RESET)
+	fmt.Println(util.GREEN, "STH sent", STHS[STH_index].GetID(), "sig: ", STHS[STH_index].Signature[0], util.RESET)
 	request_count++
 }
 

@@ -1,9 +1,12 @@
 package util
 
 import (
+	"log"
 	"net/http"
+	"os"
 	"strings"
 )
+
 func GetSenderURL(r *http.Request) string {
 	forwarded := r.Header.Get("X-FORWARDED-FOR")
 	if forwarded != "" {
@@ -27,4 +30,10 @@ func IsOwner(ownerURL string, parsedURL string) bool {
 		}
 	}
 	return ownerURL == parsedURL
+}
+
+func LogIfTraceEnabled(msg string) {
+	if os.Getenv("CTNGTRACINGENABLED") == "TRUE" {
+		log.Println(msg)
+	}
 }
