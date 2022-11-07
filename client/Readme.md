@@ -1,1 +1,1 @@
-![Documentation](https://github.com/jik18001/CTng/edit/main/client/client.pdf)
+![Documentation](https://github.com/jik18001/CTng/edit/main/client/Client.pdf)
