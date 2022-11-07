@@ -30,23 +30,44 @@ func QueryMonitors(c *ClientContext){
 	// Convert gossip object to JSON
 	msg, _ := json.Marshal(c.LastUpdatePeriod)
 	// Send the gossip object to all connected gossipers.
-	for _, url := range  c.Config.Monitor_URLs {
-		//fmt.Println("Attempting to sending data to", url)
-		// HTTP POST the data to the url or IP address.
-		resp, err := c.Client.Post("http://"+url+"/monitor/get-updates/", "application/json", bytes.NewBuffer(msg))
-		if err != nil {
-			if strings.Contains(err.Error(), "Client.Timeout") ||
-				strings.Contains(err.Error(), "connection refused") {
-				fmt.Println(util.RED+"Connection failed to "+url+".", util.RESET)
-			} else {
-				fmt.Println(util.RED+err.Error(), "sending to "+url+".", util.RESET)
+	//fmt.Println("Attempting to sending data to", url)
+	// HTTP POST the data to the url or IP address.
+	resp, err := c.Client.Post("http://"+c.Config.Default_update_monitor+"/monitor/get-updates/", "application/json", bytes.NewBuffer(msg))
+	if err != nil {
+		for _, url := range  c.Config.Monitor_URLs {
+			//fmt.Println("Attempting to sending data to", url)
+			// HTTP POST the data to the url or IP address.
+			_, err := c.Client.Post("http://"+url+"/monitor/get-updates/", "application/json", bytes.NewBuffer(msg))
+			if err != nil {
+				if strings.Contains(err.Error(), "Client.Timeout") ||
+					strings.Contains(err.Error(), "connection refused") {
+					fmt.Println(util.RED+"Connection failed to "+url+".", util.RESET)
+				} else {
+					fmt.Println(util.RED+err.Error(), "sending to "+url+".", util.RESET)
+				}
+				continue
+			}else{
+				break
 			}
-			continue
 		}
-		defer resp.Body.Close()
 	}
+	defer resp.Body.Close()
+
 }
 
+func PushtoMonitor (c *ClientContext,sp SignedPoMs){
+	msg, _ := json.Marshal(sp)
+	resp, err := c.Client.Post("http://"+c.Config.Default_check_monitor+"/monitor/checkforme/", "application/json", bytes.NewBuffer(msg))
+	if err != nil {
+		if strings.Contains(err.Error(), "Client.Timeout") ||
+			strings.Contains(err.Error(), "connection refused") {
+			fmt.Println(util.RED+"Connection failed to "+c.Config.Default_check_monitor+".", util.RESET)
+		} else {
+			fmt.Println(util.RED+err.Error(), "sending to "+c.Config.Default_check_monitor+".", util.RESET)
+		}
+	}
+	defer resp.Body.Close()
+}
 
 func Handleupdates(c *ClientContext, w http.ResponseWriter, r *http.Request){
 
@@ -55,12 +76,45 @@ func Handleupdates(c *ClientContext, w http.ResponseWriter, r *http.Request){
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusBadRequest)
 	}
+
+	HandleSTHs(c,update.STHs)
+	HandleREVs(c,update.REVs)
 	HandlePoMs(c,update.PoMs,update.PoMsig)
-	//HandleSTHs(c,update.STHs)
-	//HandleREVs(c,update.REVs)
+	//update the last update Period
+	c.LastUpdatePeriod = update.Period
+	
 }
 
-func HandlePoMs(c *ClientContext, poms *gossip.Gossip_Storage, sig string)error{
+func HandleSTHs(c *ClientContext, STHs *gossip.Gossip_Storage){
+	for _, gossipObject := range *STHs{
+		err := gossipObject.Verify(c.Config.Crypto)
+		if err == nil{
+			(*c.Storage_STH_FULL)[gossipObject.GetID()] = gossipObject
+		}
+	}
+}
+
+func HandleREVs(c *ClientContext, REVs *gossip.Gossip_Storage){
+	for _, gossipObject := range *REVs{
+		err := gossipObject.Verify(c.Config.Crypto)
+		if err == nil{
+			(*c.Storage_REV_FULL)[gossipObject.GetID()] = gossipObject
+		}
+	}
+}
+
+func HandlePoMs(c *ClientContext, poms *gossip.Gossip_Storage, sig string){
+	err := VerifyPoMs(c, poms,sig)
+	if err!= nil{
+		for _, gossipObject := range *poms{
+			(*c.Storage_CONFLICT_POM)[gossipObject.GetID()] = gossipObject
+		}
+	}else{
+		fmt.Println(err)
+	}
+}
+
+func VerifyPoMs(c *ClientContext, poms *gossip.Gossip_Storage, sig string)error{
 	rsasig, err := crypto.RSASigFromString(sig)
 	if err != nil {
 		return errors.New("No_Sig_Match")
@@ -68,17 +122,18 @@ func HandlePoMs(c *ClientContext, poms *gossip.Gossip_Storage, sig string)error{
 	payload, _:= json.Marshal(*poms)
 	var cryptoconf = *c.Config.Crypto 
 	result := cryptoconf.Verify([]byte(payload), rsasig)
-	if result != nil{
-		fmt.Println(result)
-		return result
-	}
+	fmt.Println(result)
+	return result
 }
+
 
 func handleClientRequests(c *ClientContext) {
 	// MUX which routes HTTP directories to functions.
 	gorillaRouter := mux.NewRouter().StrictSlash(true)
 	// POST functions
 	gorillaRouter.HandleFunc("/receive-updates", bindClientContext(c, Handleupdates)).Methods("POST")
+	gorillaRouter.HandleFunc("/receive-confiction", bindClientContext(c, Handleupdates)).Methods("POST")
+	gorillaRouter.HandleFunc("/receive-cert",bindClientContext(c, Handleupdates)).Methods("Get")
 	// Start the HTTP server.
 	http.Handle("/", gorillaRouter)
 	// Listen on port set by config until server is stopped.
@@ -116,23 +171,3 @@ func StartClientServer(c *ClientContext) {
 }
 
 
-/*
-func QueryMonitors(c *ClientContext){
-	for _, m := range c.Config.Monitor_URLs{
-		fmt.Println(util.GREEN + "Querying Monitors Initiated" + util.RESET)
-		sthResp, err := http.GET(PROTOCOL + m + "/monitor/get-updates/")
-		if err != nil {
-			log.Println(util.RED+"Query Monitor Failed, connection refused.",util.RESET)
-			continue
-		}
-		UpBody, err := ioutil.ReadAll(sthResp.Body)
-		var update monitor.Clientupdate
-		err = json.Unmarshal(UpBody, &UpBody)
-		if err != nil {
-			log.Println(util.RED+err.Error(), util.RESET)
-		}else{
-			Process_valid_update(c,update)
-		}
-
-	}
-}*/

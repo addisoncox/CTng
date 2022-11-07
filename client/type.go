@@ -7,10 +7,17 @@ import(
 	"github.com/Workiva/go-datastructures/bitarray"
 	//"github.com/gorilla/mux"
 	"net/http"
+	"encoding/json"
 )
 
 type Client_config struct {
+	//This will be used if the Queried monitor is not responding or if the Queired monitor is convicted by the Threshold signed PoM 
+	//Avoid adding 2 default monitor to this list
 	Monitor_URLs            []string
+	//This is the URL of the monitor where the client will get the information from
+	Default_update_monitor  string
+	//This is the URL of the monitor where the client will periodically send PoMs to (to make sure the queried monitor is not sending missing poms)
+	Default_check_monitor  string
 	MaxMonitor             int
 	Port                   string
 	Crypto                 *crypto.CryptoConfig
@@ -32,6 +39,36 @@ type Clientquery struct{
 	LastUpdatePeriod string
 }
 
+type CRVRecord struct
+{
+	CAID string
+	CRV bitarray.BitArray
+	Length int
+}
+type SignedPoMs struct
+{
+	PoMs gossip.Gossip_Storage
+	Period string
+	Sig string
+}
+
+type SRH struct {
+	RootHash string
+	TreeSize int
+	Period   string
+}
+type Revocation struct {
+	//This is computed by bitarray.Bitarray.toNums
+	Delta_CRV []int
+	SRH       SRH
+}
+
+func GetRootHash (g gossip.Gossip_object)string{
+	var REV1 Revocation 
+	json.Unmarshal([]byte(g.Payload[2]), &REV1)
+	return REV1.SRH.RootHash
+}
+
 func LoadClientConfig(path string, cryptopath string) (Client_config, error) {
 	c := new(Client_config)
 	config.LoadConfiguration(c, path)
@@ -41,13 +78,6 @@ func LoadClientConfig(path string, cryptopath string) (Client_config, error) {
 		return *c, err
 	}
 	return *c, nil
-}
-
-type CRVRecord struct
-{
-	CAID string
-	CRV bitarray.BitArray
-	Length int
 }
 
 //the key would be the CA ID 
