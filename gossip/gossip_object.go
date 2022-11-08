@@ -124,6 +124,14 @@ func GetCurrentPeriod() string{
 	return Periodnum
 }
 
+func GetPrevPeriod() string{
+	timerfc := time.Now().UTC().Format(time.RFC3339)
+	Miniutes, err := strconv.Atoi(timerfc[14:16])
+	Periodnum := strconv.Itoa(Miniutes-1)
+	if err != nil {
+	}
+	return Periodnum
+}
 //this function needs to change with GetCurrentPeriod()
 //this function makes sure that all monitors start querying at the beginning of each period
 func Getwaitingtime() int{

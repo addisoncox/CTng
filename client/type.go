@@ -19,6 +19,7 @@ type Client_config struct {
 	//This is the URL of the monitor where the client will periodically send PoMs to (to make sure the queried monitor is not sending missing poms)
 	Default_check_monitor  string
 	MaxMonitor             int
+	Client_URL             string
 	Port                   string
 	Crypto                 *crypto.CryptoConfig
 	Crypto_config_path     string

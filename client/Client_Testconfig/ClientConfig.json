@@ -1,9 +1,10 @@
 {
-    "Monitor_URLs": ["localhost:8081", "localhost:8083"],
-    "Default_update_monitor": "localhost:8080",
-    "Default_check_monitor": "localhost:8082",
+    "Monitor_URLs": ["localhost:8181", "localhost:8183"],
+    "Default_update_monitor": "localhost:8180",
+    "Default_check_monitor": "localhost:8182",
     "MaxMonitor":2,
     "Crypto_config_path": "client/Client_Testconfig/ClientCrypto.json",
-    "Port": "9500",
+    "Client_URL": "localhost:8280",
+    "Port": "8280",
     "MMD": 60
 }

@@ -3,7 +3,7 @@ package monitor
 import (
 	"CTng/gossip"
 	"CTng/crypto"
-	//"CTng/util"
+	"CTng/util"
 	"bytes"
 	"encoding/json"
 	"fmt"
@@ -77,11 +77,13 @@ func PrepareClientupdate(c *MonitorContext,LastUpdatePeriod string) Clientupdate
 
 func requestupdate(c *MonitorContext, w http.ResponseWriter, r *http.Request){
 	var ticket Clientquery
+	fmt.Println(util.GREEN+"Client ticket received"+util.RESET)
 	err := json.NewDecoder(r.Body).Decode(&ticket)
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusBadRequest)
 	}
 	var ctupdate = PrepareClientupdate(c,ticket.LastUpdatePeriod)
+	fmt.Println(ctupdate.Period)
 	msg, _ := json.Marshal(ctupdate)
 	resp, postErr := c.Client.Post("http://"+ticket.Client_URL+"/receive-updates", "application/json", bytes.NewBuffer(msg))
 	if postErr != nil {
@@ -93,5 +95,6 @@ func requestupdate(c *MonitorContext, w http.ResponseWriter, r *http.Request){
 		if c.Verbose {
 			fmt.Println("Client responded with " + resp.Status)
 		}
+		fmt.Println(util.GREEN+"Client update Sent"+util.RESET)
 	}
 }
