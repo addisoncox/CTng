@@ -26,13 +26,14 @@ func bindClientContext(context *ClientContext, fn func(context *ClientContext, w
 //post method
 //We ask the monitor to post the update by giving them the last update period
 //the monitor will then send us all the missing updates
+//it will go to next monitor if the default update monitor is at fault or is not responding
 func QueryMonitors(c *ClientContext){
 	// Convert gossip object to JSON
 	msg, _ := json.Marshal(c.LastUpdatePeriod)
 	// Send the gossip object to all connected gossipers.
 	//fmt.Println("Attempting to sending data to", url)
 	// HTTP POST the data to the url or IP address.
-	resp, err := c.Client.Post("http://"+c.Config.Default_update_monitor+"/monitor/get-updates/", "application/json", bytes.NewBuffer(msg))
+	_, err := c.Client.Post("http://"+c.Config.Default_update_monitor+"/monitor/get-updates/", "application/json", bytes.NewBuffer(msg))
 	if err != nil {
 		for _, url := range  c.Config.Monitor_URLs {
 			//fmt.Println("Attempting to sending data to", url)
@@ -51,11 +52,10 @@ func QueryMonitors(c *ClientContext){
 			}
 		}
 	}
-	defer resp.Body.Close()
-
+	//defer resp.Body.Close()
 }
 
-func PushtoMonitor (c *ClientContext,sp SignedPoMs){
+func PushtoMonitor(c *ClientContext,sp SignedPoMs){
 	msg, _ := json.Marshal(sp)
 	resp, err := c.Client.Post("http://"+c.Config.Default_check_monitor+"/monitor/checkforme/", "application/json", bytes.NewBuffer(msg))
 	if err != nil {
@@ -69,6 +69,14 @@ func PushtoMonitor (c *ClientContext,sp SignedPoMs){
 	defer resp.Body.Close()
 }
 
+func GetSignedPoMs(c* ClientContext, mc monitor.Clientupdate) SignedPoMs{
+	poms_signed := SignedPoMs{
+		PoMs:   *mc.PoMs,
+		Period: mc.Period,
+		Sig: mc.PoMsig,
+	}
+	return poms_signed
+}
 func Handleupdates(c *ClientContext, w http.ResponseWriter, r *http.Request){
 
 	var update monitor.Clientupdate
@@ -82,7 +90,9 @@ func Handleupdates(c *ClientContext, w http.ResponseWriter, r *http.Request){
 	HandlePoMs(c,update.PoMs,update.PoMsig)
 	//update the last update Period
 	c.LastUpdatePeriod = update.Period
-	
+	//Push the received Signed PoMs to the checking monitor for integrity check
+	var pom_signed SignedPoMs = GetSignedPoMs(c, update)
+	PushtoMonitor(c, pom_signed)
 }
 
 func HandleSTHs(c *ClientContext, STHs *gossip.Gossip_Storage){
@@ -132,13 +142,22 @@ func handleClientRequests(c *ClientContext) {
 	gorillaRouter := mux.NewRouter().StrictSlash(true)
 	// POST functions
 	gorillaRouter.HandleFunc("/receive-updates", bindClientContext(c, Handleupdates)).Methods("POST")
-	gorillaRouter.HandleFunc("/receive-confiction", bindClientContext(c, Handleupdates)).Methods("POST")
-	gorillaRouter.HandleFunc("/receive-cert",bindClientContext(c, Handleupdates)).Methods("Get")
+	gorillaRouter.HandleFunc("/receive-confiction", bindClientContext(c, Handleconviction)).Methods("POST")
+	gorillaRouter.HandleFunc("/receive-cert",bindClientContext(c, Handlesubjects)).Methods("Get")
 	// Start the HTTP server.
 	http.Handle("/", gorillaRouter)
 	// Listen on port set by config until server is stopped.
 	log.Fatal(http.ListenAndServe(":"+c.Config.Port, nil))
 }
+
+
+//will finish these 2 after the client is working as intended 
+func Handlesubjects(c *ClientContext, w http.ResponseWriter, r *http.Request){
+}
+
+func Handleconviction(c *ClientContext, w http.ResponseWriter, r *http.Request){	
+}
+
 
 
 func PeriodicTasks(c *ClientContext) {
@@ -158,8 +177,10 @@ func PeriodicTasks(c *ClientContext) {
 func StartClientServer(c *ClientContext) {
 	//Warning: the time wait here is hard coded to be 10 seconds after the beginning of each period
 	//will need to be adjusted according to the network delay
+	fmt.Println("Client sleeping and waiting")
 	time_wait := gossip.Getwaitingtime()+10;
 	time.Sleep(time.Duration(time_wait)*time.Second);
+	fmt.Println("Client Initiated")
 	tr := &http.Transport{}
 	c.Client = &http.Client{
 		Transport: tr,

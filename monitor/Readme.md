@@ -1,7 +1,10 @@
 # Monitor Implementation 
 
 ## Contents
-- `types.go`: type declarations for monitor context and some basic monitor methods definitions
+- `types.go`: type declarations for monitor context and monitor context related methods
+- `monitor-server.go`: monitor HTTP request routing
+- `client-check-monitor.go`: Client-CheckMonitor functions
+- `client-update-monitor.go`: Client-UpdateMonitor functions
 - `monitor.go`: implementation of monitor functions
 
 ## types.go

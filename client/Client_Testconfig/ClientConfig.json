@@ -3,7 +3,7 @@
     "Default_update_monitor": "localhost:8080",
     "Default_check_monitor": "localhost:8082",
     "MaxMonitor":2,
-    "Crypto": "client/Client_Testconfig/ClientCrypto.json",
+    "Crypto_config_path": "client/Client_Testconfig/ClientCrypto.json",
     "Port": "9500",
     "MMD": 60
 }

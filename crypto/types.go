@@ -291,5 +291,5 @@ type StoredCryptoConfig struct {
 	SignaturePublicMap RSAPublicMap      // map of entityID to RSA public key
 	RSAPrivateKey      rsa.PrivateKey    // RSA private key
 	ThresholdPublicMap map[string][]byte // mapping of BLS IDs to public keys
-	ThresholdSecretKey []byte            //
+	ThresholdSecretKey []byte            
 }

@@ -11,6 +11,7 @@ import (
 	"CTng/testData/fakeCA"
 	"CTng/testData/fakeLogger"
 	"CTng/Logger"
+	"CTng/Client"
 	"fmt"
 	"os"
 )
@@ -83,6 +84,28 @@ func main() {
 		fakeCA.RunFakeCA(os.Args[2])
 	case "testlogger":
 	    Logger.RunLogger("Logger/logger.json")
+	case "client":
+		conf,err := client.LoadClientConfig(os.Args[2], os.Args[3])
+		if err != nil {
+			fmt.Println(helpText)
+			panic(err)
+		}
+		storage_conflict_pom := new(gossip.Gossip_Storage)
+		*storage_conflict_pom  = make(gossip.Gossip_Storage)
+		storage_sth_full := new(gossip.Gossip_Storage)
+		*storage_sth_full  = make(gossip.Gossip_Storage)
+		storage_rev_full := new(gossip.Gossip_Storage)
+		*storage_rev_full  = make(gossip.Gossip_Storage)
+		storage_crv := new(client.CRV_Storage)
+		*storage_crv  = make(client.CRV_Storage)
+		ctx := client.ClientContext{
+			Storage_STH_FULL: storage_sth_full,
+			Storage_REV_FULL: storage_rev_full,
+			Storage_CONFLICT_POM: storage_conflict_pom,
+			Storage_CRVRECORD: storage_crv,
+			Config: &conf,
+		}
+		client.StartClientServer(&ctx)
 	default:
 		fmt.Println(helpText)
 	}

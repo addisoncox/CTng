@@ -21,6 +21,7 @@ type Client_config struct {
 	MaxMonitor             int
 	Port                   string
 	Crypto                 *crypto.CryptoConfig
+	Crypto_config_path     string
 	MMD                    int
 }
 
