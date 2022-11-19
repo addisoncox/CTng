@@ -1,5 +1,5 @@
 {
-  "SelfID": "localhost:8180",
+  "SelfID": "localhost:8080",
   "Threshold": 2,
   "N": 4,
   "HashScheme": 4,
@@ -63,10 +63,10 @@
    }
   },
   "ThresholdPublicMap": {
-   "localhost:8180": "CVXQ0BnRgtMa065g0WVaKoVaoxAGPxiscPuh52L7YmL7/2NHVnyci1h7JWNAXtkEnRkVHtQpQRK0FuIkRQNd/z/79a/mLu3g/6Dc70YonzBoVgei+aONSyyRh8Y/ickY",
-   "localhost:8181": "yWyzozTKhLPE19dXboXw0EcM38lnPuYzJskNtSJcVlYiCLRICPLBS0rwQ79o60YAfrEyxPiY6MqQV4/d1ljz3CC1yg+ImVDsM3OEPWzDPR9N7l9LxLK3Z/HECERivPcN",
-   "localhost:8182": "XhdRWvxPlYrsKM9Bd6JiIzuQcDirkZY5K8F8DXBa7gSY99fyvrVsyzKjUQnTn5wUrhDG8WSDRX6dehDG53OVi0PccLvDEMnsr1DkHYeL6qYWhXh+XCNcVeA0N9OXW8CE",
-   "localhost:8183": "+inwuRxXL/JdP7OKG3CQUhyiHQCsz1TjC616iPszq2U6Fzjefb8duI45WgDy72MThg3/RyNeRa3tH/1i3tVmWpFlTIVq9o4nawUy98ncGNb/QJxIxD8PuthSLE7zmd8I"
+   "localhost:8080": "CVXQ0BnRgtMa065g0WVaKoVaoxAGPxiscPuh52L7YmL7/2NHVnyci1h7JWNAXtkEnRkVHtQpQRK0FuIkRQNd/z/79a/mLu3g/6Dc70YonzBoVgei+aONSyyRh8Y/ickY",
+   "localhost:8081": "yWyzozTKhLPE19dXboXw0EcM38lnPuYzJskNtSJcVlYiCLRICPLBS0rwQ79o60YAfrEyxPiY6MqQV4/d1ljz3CC1yg+ImVDsM3OEPWzDPR9N7l9LxLK3Z/HECERivPcN",
+   "localhost:8082": "XhdRWvxPlYrsKM9Bd6JiIzuQcDirkZY5K8F8DXBa7gSY99fyvrVsyzKjUQnTn5wUrhDG8WSDRX6dehDG53OVi0PccLvDEMnsr1DkHYeL6qYWhXh+XCNcVeA0N9OXW8CE",
+   "localhost:8083": "+inwuRxXL/JdP7OKG3CQUhyiHQCsz1TjC616iPszq2U6Fzjefb8duI45WgDy72MThg3/RyNeRa3tH/1i3tVmWpFlTIVq9o4nawUy98ncGNb/QJxIxD8PuthSLE7zmd8I"
   },
   "ThresholdSecretKey": "uLd74pgY85gpQi1MIM41k0OmMbem95tAD/Eb4CY8QmU="
  }

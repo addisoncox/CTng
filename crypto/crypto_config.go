@@ -1,6 +1,7 @@
 package crypto
 
 import "errors"
+//import "fmt"
 
 // CryptoConfig Method Versions of all crypto functions.
 // In each entity, these methods should be used when working with any crypto.
@@ -40,6 +41,7 @@ func (c *CryptoConfig) Sign(msg []byte) (RSASig, error) {
 func (c *CryptoConfig) Verify(msg []byte, sig RSASig) error {
 	if c.SignScheme == "rsa" {
 		pub := c.SignaturePublicMap[sig.ID]
+		//fmt.Println("PublicKey Found: ",pub)
 		return RSAVerify(msg, sig, &pub)
 	}
 	return errors.New("Sign Scheme not supported")

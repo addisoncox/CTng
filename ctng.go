@@ -34,6 +34,8 @@ func main() {
 			fmt.Println(helpText)
 			panic(err)
 		}
+		ctx := gossip.Gossip_Context_Init(&conf,os.Args[5])
+		/*
 		// Space is allocated for all storage fields, and then make is run to initialize these spaces.
 		storage := new(gossip.Gossip_Storage)
 		*storage = make(gossip.Gossip_Storage)
@@ -46,8 +48,8 @@ func main() {
 			StorageFile: "gossiper_data.json", // could be a parameter in the future.
 			StorageID:   os.Args[5],
 		}
-		ctx.Config = &conf
-		gossip.StartGossiperServer(&ctx)
+		ctx.Config = &conf*/
+		gossip.StartGossiperServer(ctx)
 		// break // break unneeded in  go.
 	case "monitor":
 		// make the config object.

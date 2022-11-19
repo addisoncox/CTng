@@ -6,7 +6,7 @@ import (
 	//"CTng/util"
 	//"bytes"
 	//"encoding/json"
-	//"fmt"
+	"fmt"
 	//"io/ioutil"
 	"log"
 	"net/http"
@@ -39,8 +39,15 @@ func handleMonitorRequests(c *MonitorContext) {
 
 func StartMonitorServer(c *MonitorContext) {
 	// Check if the storage file exists in this directory
+	monitortype := 1
+	fmt.Println("What type of Monitor would you like to use?")
+	fmt.Println("1. Normal, Sync monitor")
+	fmt.Println("2. 0 wait monitor for testing")
+	fmt.Scanln(&monitortype)
+	if monitortype == 1{
 	time_wait := gossip.Getwaitingtime();
 	time.Sleep(time.Duration(time_wait)*time.Second);
+	}
 	InitializeMonitorStorage(c)
 	err := c.LoadStorage()
 	if err != nil {

@@ -184,21 +184,21 @@ func AccuseEntity(c *MonitorContext, Accused string) {
 	payloadarray[0] = msg
 	payloadarray[1] = ""
 	payloadarray[2] = ""
-	signature, _ := c.Config.Crypto.ThresholdSign(payloadarray[0]+payloadarray[1]+payloadarray[2])
+	signature, _ := c.Config.Crypto.Sign([]byte(payloadarray[0]+payloadarray[1]+payloadarray[2]))
 	var sigarray [2]string
 	sigarray[0] = signature.String()
 	sigarray[1] = ""
 	accusation := gossip.Gossip_object{
 		Application: "CTng",
-		Type:        gossip.ACC_FRAG,
+		Type:        gossip.ACC,
 		Period:      gossip.GetCurrentPeriod(),
 		Signer:      c.Config.Crypto.SelfID.String(),
 		Timestamp:   gossip.GetCurrentTimestamp(),
 		Signature:   sigarray,
-		Crypto_Scheme: "BLS",
+		Crypto_Scheme: "RSA",
 		Payload:     payloadarray,
 	}
-	fmt.Println(util.BLUE+"New accusation generated, Sending to gossiper"+util.RESET)
+	//fmt.Println(util.BLUE+"New accusation from ",accusation.Signer, c.Config.Crypto.SignaturePublicMap[signature.ID], "generated, Sending to gossiper"+util.RESET)
 	Send_to_gossiper(c, accusation)
 }
 
@@ -227,7 +227,7 @@ func Send_to_gossiper(c *MonitorContext, g gossip.Gossip_object) {
 func Check_entity_pom(c *MonitorContext, Accused string) bool {
 	GID := gossip.Gossip_ID{
 		Period: gossip.GetCurrentPeriod(),
-		Type: gossip.ACCUSATION_POM,
+		Type: gossip.ACC_FULL,
 		Entity_URL: Accused,
 	}
 	if _,ok := (*c.Storage_ACCUSATION_POM)[GID]; ok{
@@ -236,7 +236,7 @@ func Check_entity_pom(c *MonitorContext, Accused string) bool {
 	}
 	GID2 := gossip.Gossip_ID{
 		Period: "0",
-		Type: gossip.CONFLICT_POM,
+		Type: gossip.CON_FULL,
 		Entity_URL: Accused,
 	}
 	if _,ok := (*c.Storage_CONFLICT_POM)[GID2]; ok{
@@ -292,72 +292,25 @@ func InitializeMonitorStorage(c *MonitorContext){
 	util.CreateFile(c.StorageDirectory+c.StorageFile_ACCUSATION_POM)
 	util.CreateFile(c.StorageDirectory+c.StorageFile_STH_FULL)
 	util.CreateFile(c.StorageDirectory+c.StorageFile_REV_FULL)
-
 }
 
 //This function is called by handle_gossip in monitor_server.go under the server folder
 //It will be called if the gossip object is validated
 func Process_valid_object(c *MonitorContext, g gossip.Gossip_object) {
-	c.StoreObject(g)
-	//This handles the STHS
-	if g.Type == gossip.STH {
+	//This handles the STHS from querying loggers
+	if g.Type == gossip.STH && IsLogger(c, g.Signer){
 		// Send an unsigned copy to the gossiper if the STH is from the logger
-		if IsLogger(c, g.Signer){
-			Send_to_gossiper(c, g)
-		}
-		// The below function for creates the SIG_FRAG object
-		f := func() {
-			sig_frag, err := c.Config.Crypto.ThresholdSign(g.Payload[0]+g.Payload[1]+g.Payload[2])
-			if err != nil {
-				fmt.Println(err.Error())
-			}
-			pom_err := Check_entity_pom(c, g.Signer)
-			//if there is no conflicting information/PoM send the Threshold signed version to the gossiper
-			if pom_err == false {
-				fmt.Println(util.BLUE, "Signing STH of", g.Signer, util.RESET)
-				g.Type = gossip.STH_FRAG
-				g.Signature[0] = sig_frag.String()
-				g.Signer = c.Config.Crypto.SelfID.String()
-				Send_to_gossiper(c, g)
-			} else {
-				fmt.Println(util.RED, "Conflicting information/PoM found, not sending STH_FRAG", util.RESET)
-			}
-
-		}
-		// Delay the calling of f until gossip_wait_time has passed.
-		time.AfterFunc(time.Duration(c.Config.Public.Gossip_wait_time)*time.Second, f)
-		return
+		//fmt.Println(g.Signature[0])
+		Send_to_gossiper(c, g)
 	}
-	//if the object is from a CA, revocation information
-	//this handles revocation information
-	if  g.Type == gossip.REV{
+	//this handles revocation information from querying CAs
+	if  g.Type == gossip.REV && IsAuthority(c, g.Signer){
 		// Send an unsigned copy to the gossiper if the REV is received from a CA
-		if IsAuthority(c, g.Signer){
-			Send_to_gossiper(c, g)
-		}
-		f := func() {
-			sig_frag, err := c.Config.Crypto.ThresholdSign(g.Payload[0]+g.Payload[1]+g.Payload[2])
-			if err != nil {
-				fmt.Println(err.Error())
-			}
-			fmt.Println(util.BLUE, "Signing Revocation of", g.Signer, util.RESET)
-			pom_err := Check_entity_pom(c, g.Signer)
-			if pom_err == false {
-				g.Type = gossip.REV_FRAG
-				g.Signature[0] = sig_frag.String()
-				g.Signer = c.Config.Crypto.SelfID.String()
-				Send_to_gossiper(c, g)
-			}
-
-		}
-		time.AfterFunc(time.Duration(c.Config.Public.Gossip_wait_time)*time.Second, f)
-		return
+		Send_to_gossiper(c, g)
 	}
-	// ACCUSATION_POM, CONFLICT_POM, STH_FULL, REV_FULL should be stored
-	//if g.Type == gossip.ACCUSATION_POM || g.Type == gossip.CONFLICT_POM || g.Type == gossip.STH_FULL || g.Type == gossip.REV_FULL{
-		//c.StoreObject(g)
-		//return
-	//}
+	//this handles processed gossip object from the gossiper, verfications will be added when if needed
+	if g.Type == gossip.ACC_FULL || g.Type == gossip.CON_FULL || g.Type == gossip.STH_FULL || g.Type == gossip.REV_FULL{
+		c.StoreObject(g)
+	}
 	return
 }
-

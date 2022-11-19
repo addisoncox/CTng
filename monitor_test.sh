@@ -6,4 +6,4 @@ then
     exit 1
 fi
 
-go run . monitor ./testData/monitorNetworkTest/monitor_pub_config.json ./testData/monitorNetworkTest/$1/monitor_priv_config.json ./testData/gossiperNetworkTest/$1/gossiperCrypto.json $1
+go run . monitor ./testData/monitorNetworkTest/monitor_pub_config.json ./testData/monitorNetworkTest/$1/monitor_priv_config.json ./testData/monitorNetworkTest/$1/monitorCrypto.json $1

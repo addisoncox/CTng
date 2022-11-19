@@ -18,6 +18,7 @@ type Monitor_public_config struct {
 
 type Gossiper_public_config struct {
 	Communiation_delay int
+	Gossip_wait_time   int
 	Max_push_size      int
 	Period_interval    int64
 	Expiration_time    int // if 0, no expiration.

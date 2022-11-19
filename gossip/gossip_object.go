@@ -5,6 +5,7 @@ import (
 	"errors"
 	"time"
 	"strconv"
+	"CTng/util"
 )
 
 
@@ -15,13 +16,16 @@ const CTNG_APPLICATION = "CTng"
 const (
 	STH      = "http://ctng.uconn.edu/101"
 	REV      = "http://ctng.uconn.edu/102"
+	ACC      = "http://ctng.uconn.edu/103"
+	CON      = "http://ctng.uconn.edu/104"
 	STH_FRAG = "http://ctng.uconn.edu/201"
 	REV_FRAG = "http://ctng.uconn.edu/202"
 	ACC_FRAG = "http://ctng.uconn.edu/203"
+	CON_FRAG = "http://ctng.uconn.edu/204"
 	STH_FULL = "http://ctng.uconn.edu/301" 
 	REV_FULL = "http://ctng.uconn.edu/302" 
-	ACCUSATION_POM  = "http://ctng.uconn.edu/303"
-	CONFLICT_POM = "http://ctng.uconn.edu/304"
+	ACC_FULL = "http://ctng.uconn.edu/303"
+	CON_FULL = "http://ctng.uconn.edu/304"
 )
 
 // This function prints the "name string" of each Gossip object type. It's used when printing this info to console.
@@ -31,20 +35,26 @@ func TypeString(t string) string {
 		return "STH"
 	case REV:
 		return "REV"
+	case ACC:
+		return "ACC"
+	case CON:
+		return "CON"
 	case STH_FRAG:
 		return "STH_FRAG"
 	case REV_FRAG:
 		return "REV_FRAG"
 	case ACC_FRAG:
 		return "ACC_FRAG"
+	case CON_FRAG:
+		return "CON_FRAG"
 	case STH_FULL:
 		return "STH_FULL"
 	case REV_FULL:
 		return "REV_FULL"
-	case ACCUSATION_POM:
-		return "ACCUSATION_POM"
-	case CONFLICT_POM:
-		return "CONGLICT_POM"
+	case ACC_FULL:
+		return "ACC_FULL"
+	case CON_FULL:
+		return "CON_FULL"
 	default:
 		return "UNKNOWN"
 	}
@@ -72,6 +82,14 @@ func EntityString(t string) string{
 		return "Monitor 3"
 	case "localhost: 8183":
 		return "Monitor 4"
+	case "localhost:8080":
+		return "Gossiper 1"
+	case "localhost:8081":
+		return "Gossiper 2"
+	case "localhost:8082":
+		return "Gossiper 3"
+	case "localhost:8083":
+		return "Gossiper 4"
 	default:
 		return "UNKNOWN"
 	}
@@ -96,6 +114,13 @@ type Gossip_ID struct{
 	Entity_URL string `json:"entity_URL"`
 }
 
+type Gossip_Counter_ID struct{
+	Period     string `json:"period"`
+	Type       string `json:"type"`
+	Entity_URL string `json:"entity_URL"`
+	Signer     string `json:"signer"`
+}
+
 
 //This returns the ID of a gossip object, which is the primary key in our Gossip_Object_TSS_DB, and in our Gossip Storage
 func (g Gossip_object) GetID() Gossip_ID{
@@ -107,8 +132,19 @@ func (g Gossip_object) GetID() Gossip_ID{
 	return new_ID
 }
 
+func (g Gossip_object) Get_Counter_ID() Gossip_Counter_ID{
+	new_ID := Gossip_Counter_ID{
+		Period: g.Period,
+		Type: g.Type,
+		Entity_URL: g.Payload[0],
+		Signer : g.Signer,
+	}
+	return new_ID
+}
+
 //Gossip Storage
 type Gossip_Storage map[Gossip_ID]Gossip_object
+type Gossip_Storage_Counter map[Gossip_Counter_ID]Gossip_object
 
 func GetCurrentTimestamp() string {
 	return time.Now().UTC().Format(time.RFC3339)
@@ -143,8 +179,27 @@ func Getwaitingtime() int{
 	return Seconds
 }
 
+func Verify_CON(g Gossip_object, c *crypto.CryptoConfig) error{
+	rsaSig1, sigerr1 := crypto.RSASigFromString(g.Signature[0])
+	rsaSig2, sigerr2 := crypto.RSASigFromString(g.Signature[1])
+	// Verify the signatures were made successfully
+	if sigerr1 == nil && sigerr2 == nil {
+		err1 := c.Verify([]byte(g.Payload[1]), rsaSig1)
+		err2 := c.Verify([]byte(g.Payload[2]), rsaSig2)
+		fmt.Print(util.YELLOW, err1, err2, util.RESET)
+		if err1 == nil && err2 == nil {
+			return nil
+		} else {
+			return errors.New("Message Signature Mismatch" + fmt.Sprint(err1) + fmt.Sprint(err2))
+		}
+	}else{
+		fmt.Println(util.RED, "RSAsigConversionerror",util.RESET)
+	}
+	return errors.New("Message Signature Mismatch" + fmt.Sprint(sigerr1) + fmt.Sprint(sigerr2))
+}
+/*
 func Verify_gossip_pom(g Gossip_object, c *crypto.CryptoConfig) error {
-	if g.Type == CONFLICT_POM {
+	if g.Type == CON_FRAG || g.Type == CON_FULL {
 		var err1, err2 error
 		if g.Signature[0] != g.Signature[1] {
 			if g.Crypto_Scheme == "BLS"{
@@ -174,7 +229,7 @@ func Verify_gossip_pom(g Gossip_object, c *crypto.CryptoConfig) error {
 			return errors.New("This is not a valid gossip pom")
 		}
 }
-
+*/
 //verifies signature fragments match with payload
 func Verify_PayloadFrag(g Gossip_object, c *crypto.CryptoConfig) error {
 	if g.Signature[0] != "" && g.Payload[0] != "" {
@@ -228,20 +283,26 @@ func (g Gossip_object) Verify(c *crypto.CryptoConfig) error {
 		return Verify_RSAPayload(g, c)
 	case REV:
 		return Verify_RSAPayload(g, c)
+	case ACC:
+		return Verify_RSAPayload(g, c)
+	case CON:
+		return Verify_CON(g,c)
 	case STH_FRAG:
 		return Verify_PayloadFrag(g, c)
 	case REV_FRAG:
 		return Verify_PayloadFrag(g, c)
 	case ACC_FRAG:
 		return Verify_PayloadFrag(g, c)
+	case CON_FRAG:
+		return Verify_PayloadFrag(g, c)
 	case STH_FULL:
 		return Verify_PayloadThreshold(g, c)
 	case REV_FULL:
 		return Verify_PayloadThreshold(g, c)
-	case ACCUSATION_POM:
+	case ACC_FULL:
 		return Verify_PayloadThreshold(g, c)
-	case CONFLICT_POM:
-		return Verify_gossip_pom(g, c)
+	case CON_FULL:
+		return Verify_PayloadThreshold(g, c)
 	default:
 		return errors.New(Invalid_Type)
 	}

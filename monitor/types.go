@@ -39,7 +39,7 @@ func (c *MonitorContext) Clean_Conflicting_Object(){
 	for key, _ := range *c.Storage_STH_FULL{
 		GID = gossip.Gossip_ID{
 			Period: "0",
-			Type: gossip.CONFLICT_POM,
+			Type: gossip.CON_FULL,
 			Entity_URL: key.Entity_URL,
 		}
 		if _,ok := (*c.Storage_CONFLICT_POM)[GID]; ok{
@@ -50,7 +50,7 @@ func (c *MonitorContext) Clean_Conflicting_Object(){
 	for key, _ := range *c.Storage_REV_FULL{
 		GID = gossip.Gossip_ID{
 			Period: "0",
-			Type: gossip.CONFLICT_POM,
+			Type: gossip.CON_FULL,
 			Entity_URL: key.Entity_URL,
 		}
 		if _,ok := (*c.Storage_CONFLICT_POM)[GID]; ok{
@@ -101,7 +101,7 @@ func (c *MonitorContext) SaveStorage() error{
 func (c *MonitorContext) LoadOneStorage(name string) error {
 	storageList := []gossip.Gossip_object{}
 	switch name{
-	case gossip.CONFLICT_POM:
+	case gossip.CON_FULL:
 		bytes, err := util.ReadByte(c.StorageFile_CONFLICT_POM)
 		if err != nil {
 			return err
@@ -113,7 +113,7 @@ func (c *MonitorContext) LoadOneStorage(name string) error {
 		for _, gossipObject := range storageList {
 			(*c.Storage_CONFLICT_POM)[gossipObject.GetID()] = gossipObject
 		}
-	case gossip.ACCUSATION_POM:
+	case gossip.ACC_FULL:
 		bytes, err := util.ReadByte(c.StorageFile_ACCUSATION_POM);
 		if err != nil {
 			return err
@@ -154,7 +154,7 @@ func (c *MonitorContext) LoadOneStorage(name string) error {
 }
 
 func (c *MonitorContext) LoadStorage() error{
-	err := c.LoadOneStorage(gossip.CONFLICT_POM)
+	err := c.LoadOneStorage(gossip.CON_FULL)
 	if err != nil {
 		return err
 	}
@@ -174,10 +174,10 @@ func (c *MonitorContext) LoadStorage() error{
 func (c *MonitorContext) GetObject(id gossip.Gossip_ID) gossip.Gossip_object{
 	GType := id.Type
 	switch GType{
-	case gossip.CONFLICT_POM: 
+	case gossip.CON_FULL: 
 		obj := (*c.Storage_CONFLICT_POM)[id]
 		return obj
-	case gossip.ACCUSATION_POM:
+	case gossip.ACC_FULL:
 		obj := (*c.Storage_ACCUSATION_POM)[id]
 		return obj
 	case gossip.STH_FULL:
@@ -205,10 +205,10 @@ func (c *MonitorContext) IsDuplicate(g gossip.Gossip_object) bool {
 
 func (c *MonitorContext) StoreObject(o gossip.Gossip_object) {
 	switch o.Type{
-		case gossip.CONFLICT_POM: 
+		case gossip.CON_FULL: 
 			(*c.Storage_CONFLICT_POM)[o.GetID()] = o
 			fmt.Println(util.BLUE,"CONFLICT_POM Stored",util.RESET)
-		case gossip.ACCUSATION_POM:
+		case gossip.ACC_FULL:
 			//ACCUSATION POM does not need to be stored, but this function is here for testing purposes
 			(*c.Storage_ACCUSATION_POM)[o.GetID()] = o
 			fmt.Println(util.BLUE,"ACCUSATION_POM Stored",util.RESET)

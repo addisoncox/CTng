@@ -1,1 +1,23 @@
-[]
+[
+  {
+   "application": "CTng",
+   "period": "19",
+   "type": "http://ctng.uconn.edu/304",
+   "signer": "",
+   "signers": {
+    "0": "localhost:8082",
+    "1": "localhost:8080"
+   },
+   "signature": [
+    "{\"sign\":\"e9a1b16c66c61da6b33343c9d642c8f51a7a0466fbecfab16f3dbf8d5ea0e174683c994d2ed191c9fc1200245915468e\", \"ids\":[\"localhost:8080\",\"localhost:8082\"]}",
+    ""
+   ],
+   "timestamp": "2022-11-19T01:19:03Z",
+   "crypto_scheme": "BLS",
+   "payload": [
+    "localhost:9000",
+    "localhost:9000{\"Timestamp\":\"19\",\"RootHash\":\"713093d50fc27c3be8c590403e65007e9082bacf27f4b1cecdaa9aa9454a4fea\",\"TreeSize\":0}",
+    "localhost:9000{\"Timestamp\":\"19\",\"RootHash\":\"dcb0af8decba5d53d0bd9f6067953f9cbeeb49075e92aa7018ed6574a94c42a6\",\"TreeSize\":0}"
+   ]
+  }
+ ]
