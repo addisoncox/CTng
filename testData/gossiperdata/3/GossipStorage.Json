@@ -1,7 +1,7 @@
 {
-  "18": {
+  "33": {
    "Gossiper_URL": "localhost:8082",
-   "Period": "18",
+   "Period": "33",
    "Num_sth": 0,
    "Num_rev": 0,
    "Num_acc": 0,
@@ -15,9 +15,9 @@
    "Num_ACC_FULL": 0,
    "Num_CON_FULL": 0
   },
-  "19": {
+  "34": {
    "Gossiper_URL": "localhost:8082",
-   "Period": "19",
+   "Period": "34",
    "Num_sth": 1,
    "Num_rev": 1,
    "Num_acc": 4,
@@ -31,20 +31,20 @@
    "Num_ACC_FULL": 2,
    "Num_CON_FULL": 1
   },
-  "20": {
+  "35": {
    "Gossiper_URL": "localhost:8082",
-   "Period": "20",
-   "Num_sth": 2,
+   "Period": "35",
+   "Num_sth": 1,
    "Num_rev": 2,
    "Num_acc": 8,
-   "Num_con": 4,
+   "Num_con": 2,
    "Num_sth_frag": 0,
    "Num_rev_frag": 4,
    "Num_acc_frag": 4,
-   "Num_con_frag": 4,
+   "Num_con_frag": 2,
    "Num_STH_FULL": 0,
    "Num_REV_FULL": 2,
    "Num_ACC_FULL": 4,
-   "Num_CON_FULL": 2
+   "Num_CON_FULL": 1
   }
  }

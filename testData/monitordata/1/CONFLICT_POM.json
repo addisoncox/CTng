@@ -1,7 +1,7 @@
 [
   {
    "application": "CTng",
-   "period": "19",
+   "period": "0",
    "type": "http://ctng.uconn.edu/304",
    "signer": "",
    "signers": {
@@ -9,15 +9,15 @@
     "1": "localhost:8080"
    },
    "signature": [
-    "{\"sign\":\"e9a1b16c66c61da6b33343c9d642c8f51a7a0466fbecfab16f3dbf8d5ea0e174683c994d2ed191c9fc1200245915468e\", \"ids\":[\"localhost:8080\",\"localhost:8082\"]}",
+    "{\"sign\":\"921791199f1d019b19e12a1da2cd314cd0ebdbb455e8e83e0312768d7cc26c591e3c597050961ca3b473c2ed822fe910\", \"ids\":[\"localhost:8080\",\"localhost:8082\"]}",
     ""
    ],
-   "timestamp": "2022-11-19T01:19:03Z",
+   "timestamp": "2022-11-22T03:34:02Z",
    "crypto_scheme": "BLS",
    "payload": [
     "localhost:9000",
-    "localhost:9000{\"Timestamp\":\"19\",\"RootHash\":\"713093d50fc27c3be8c590403e65007e9082bacf27f4b1cecdaa9aa9454a4fea\",\"TreeSize\":0}",
-    "localhost:9000{\"Timestamp\":\"19\",\"RootHash\":\"dcb0af8decba5d53d0bd9f6067953f9cbeeb49075e92aa7018ed6574a94c42a6\",\"TreeSize\":0}"
+    "localhost:9000{\"Timestamp\":\"34\",\"RootHash\":\"e4fde9a570548f076a99e1d66e88ad80379a61970f9320f1880b922c17742829\",\"TreeSize\":0}",
+    "localhost:9000{\"Timestamp\":\"34\",\"RootHash\":\"dca5e67dfff5ccba1f6aed0b75d9f28f2005d6685f37805c362f0ee2d0c4cabc\",\"TreeSize\":0}"
    ]
   }
  ]

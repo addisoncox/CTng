@@ -495,10 +495,16 @@ func Process_TSS_Object(gc *GossiperContext, new_obj Gossip_object, target_type 
 			for i := 0; i<c.Threshold; i++{
 				signermap[i] = val.Signers[i]
 			}
+			TSS_period := "0"
+			//Set CON_FULL Period Number to 0 so that the monitor can search for it
+			//Also this is fine because we only need 1 conflict_pom for each convicted entity
+			if target_type != CON_FULL{
+				TSS_period = new_obj.Period
+			}
 			TSS_FULL_obj := Gossip_object{
 				Application: new_obj.Application,
 				Type:        target_type,
-				Period:      new_obj.Period,
+				Period:      TSS_period,
 				Signer:      "",
 				Signers:     signermap,
 				Timestamp:   GetCurrentTimestamp(),
