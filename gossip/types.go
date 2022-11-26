@@ -8,6 +8,7 @@ import (
 	"net/http"	
 	"reflect"
 	"fmt"
+	"sync"
 )
 
 
@@ -46,6 +47,8 @@ type Conflict_DB map[Gossip_ID]*PoM_PreTSS_Counter
 type GossiperContext struct {
 	Config      *config.Gossiper_config
 	StorageID   string
+	//RWlock
+	RWlock sync.RWMutex
 	//STH + REV + ACC
 	Storage_RAW  *Gossip_Storage_Counter
 	//STH_FRAG + REV_FRAG + ACC_FRAG + CON_FRAG
@@ -111,6 +114,7 @@ func Gossip_Context_Init(config *config.Gossiper_config,Storage_ID string) *Goss
 	*g_log = make(Gossiper_log) 
 	ctx := GossiperContext{
 		Config:      config,
+		RWlock: sync.RWMutex{},
 		//STH + REV + ACC + CON
 		Storage_RAW:  storage_raw,
 		//STH_FRAG + REV_FRAG + ACC_FRAG + CON_FRAG
@@ -282,20 +286,34 @@ func (c *GossiperContext) StoreObject(o Gossip_object) {
 func (c *GossiperContext) StoreObject(o Gossip_object){
 	switch o.Type{
 	case STH,REV,ACC:
+		c.RWlock.Lock()
 		(*c.Storage_RAW)[o.Get_Counter_ID()] = o
+		c.RWlock.Unlock()
 	case CON:
+		c.RWlock.Lock()
 		(*c.Storage_RAW)[o.Get_Counter_ID()] = o
 		(*c.Storage_POM_TEMP)[o.GetID()] = o
+		c.RWlock.Unlock()
 	case STH_FRAG,REV_FRAG,ACC_FRAG:
+		c.RWlock.Lock()
 		(*c.Storage_FRAG)[o.Get_Counter_ID()] = o
+		c.RWlock.Unlock()
 	case CON_FRAG:
+		c.RWlock.Lock()
 		(*c.Storage_FRAG)[o.Get_Counter_ID()] = o
+		c.RWlock.Unlock()
 	case STH_FULL,REV_FULL:
+		c.RWlock.Lock()
 		(*c.Storage_FULL)[o.GetID()] = o
+		c.RWlock.Unlock()
 	case ACC_FULL:
+		c.RWlock.Lock()
 		(*c.Storage_POM_TEMP)[o.GetID()] = o
+		c.RWlock.Unlock()
 	case CON_FULL:
+		c.RWlock.Lock()
 		(*c.Storage_POM)[o.GetID()] = o
+		c.RWlock.Unlock()
 	}
 }
 

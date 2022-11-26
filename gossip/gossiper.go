@@ -14,7 +14,7 @@ import (
 	"github.com/gorilla/mux"
 	"time"
 	//"reflect"
-	"math/rand"
+	//"math/rand"
 	//"math"
 	"encoding/binary"
 )
@@ -347,9 +347,11 @@ func Handle_FULL(c* GossiperContext, g Gossip_object){
 // This function assumes you are passing valid data. ALWAYS CHECK BEFORE CALLING THIS FUNCTION.
 func GossipData(c *GossiperContext, gossip_obj Gossip_object) error {
 	//desync
+	/*
 	rand.Seed(time.Now().UnixNano())
     n := rand.Intn(100) // n will be between 0 and 10
     time.Sleep(time.Duration(n)*time.Millisecond)
+	*/
 	// Convert gossip object to JSON
 	msg, err := json.Marshal(gossip_obj)
 	if err != nil {
