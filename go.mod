@@ -9,4 +9,7 @@ require (
 	github.com/herumi/bls-go-binary v1.28.2
 )
 
-require golang.org/x/crypto v0.0.0-20220411220226-7b82a4e95df4 // indirect
+require (
+	github.com/nipuntalukdar/bitset v0.0.0-20160807074401-fe3394f72438 // indirect
+	golang.org/x/crypto v0.0.0-20220411220226-7b82a4e95df4 // indirect
+)
