@@ -7,7 +7,10 @@ import (
 	"crypto/rand"
 	"fmt"
 	"crypto/x509/pkix"
-	"crypto/x509"
+	//"crypto/x509"
+	//"encoding/asn1"
+	//"encoding/json"
+	//"reflect"
 	//"crypto"
 
 )
@@ -26,8 +29,28 @@ var (
 )
 */
 
+func Test_precert_and_selfsign(t *testing.T){
+	serialNumber := 0;
+	//Certifcate lasting time
+	validFor := 365 * 24 * time.Hour
+	//Used to generate root certificate
+	//use the Serial number of the subject as the Revocation ID
+	testserver := pkix.Name{
+		Country:[]string{"US"},
+		Organization:[]string{"CTng Deleveoper's Team"}, 
+		OrganizationalUnit: []string{"001"},
+		CommonName: "CA_Logger 1",
+		SerialNumber: fmt.Sprint(serialNumber),
+	}
+	serialNumber++
+	ctx := TestServer_Context_init()
+	cert := Genrate_PreCert_CTng("testserver", validFor, true,testserver, testserver,ctx)
+	cert_signed := Sign_certificate(cert,cert, true,&ctx.Config.Public, &ctx.Config.Private)
+	ctng_ext := Parse_CTng_extension(cert_signed)
+	fmt.Println("CTng extension: ", ctng_ext)
+}
 
-func Test_generate_cert(t *testing.T){
+func Test_signing(t *testing.T){
 	serialNumber := 0;
 	//Certifcate lasting time
 	validFor := 365 * 24 * time.Hour
@@ -51,44 +74,24 @@ func Test_generate_cert(t *testing.T){
 		SerialNumber: fmt.Sprint(serialNumber),
 	}
 	serialNumber++
-	//Privatekey and Public key for the CA
+	
+	//generate the key pair for the test subject
 	priv, err := rsa.GenerateKey(rand.Reader, 2048)
 	if err != nil {
 		fmt.Println("rsa keygen failed")
 	}
 	pub := publicKey(priv)
-
-	//fmt.Println(pub)
-	//Generate_cert uses the private key of the CA
-	//The Public key of the subject
-	emptycert := new(x509.Certificate)
-	cert := Generate_Cert("testserver", validFor, true, priv, pub,testserver, testserver, true, emptycert)
-	fmt.Println("RootCert Generated")
-	fmt.Println("Subject Name: ", (*cert).Subject.CommonName)
-	fmt.Println("Revocation ID: ", (*cert).Subject.SerialNumber)
-	fmt.Println("Issuer Name: ", (*cert).Issuer.CommonName)
-	fmt.Println("Subject DNS: ", (*cert).DNSNames)
-	//PK1 := ((*cert).PublicKey).(*rsa.PublicKey)
-	//fmt.Println(PK1.Equal(pub))
-	fmt.Println("Extra Extension (should be empty for pre-cert): ", (*cert).ExtraExtensions)
-	fmt.Println("----------------------------------------------------------------")
-	
-
-
-	priv1, err := rsa.GenerateKey(rand.Reader, 2048)
-	if err != nil {
-		fmt.Println("rsa keygen failed")
-	}
-	pub1 := publicKey(priv1)
-	//fmt.Println(pub1)
-	cert1 := Generate_Cert("testsubject001", validFor, false, priv, pub1,testserver, subject, false, cert)
-	fmt.Println("SubjectCert Generated")
-	fmt.Println("Subject Name: ", (*cert1).Subject.CommonName)
-	fmt.Println("Revocation ID: ", (*cert1).Subject.SerialNumber)
-	fmt.Println("Issuer Name: ", (*cert1).Issuer.CommonName)
-	fmt.Println("Subject DNS: ", (*cert1).DNSNames)
-	//PK2 := ((*cert1).PublicKey).(*rsa.PublicKey)
-	//fmt.Println(PK2.Equal(pub1))
-	//fmt.Println(PK2.Equal(pub))
-	fmt.Println("Extra Extension (should be empty for pre-cert): ", (*cert1).ExtraExtensions)
+	//read the key pair for CA from config
+	ctx := TestServer_Context_init()
+	root_cert := Genrate_PreCert_CTng("testserver", validFor, true,testserver, testserver,ctx)
+	root_cert_signed := Sign_certificate(root_cert,root_cert, true,&ctx.Config.Public, &ctx.Config.Private)
+	subject_cert := Genrate_PreCert_CTng("testsubject001", validFor, false, testserver, subject, ctx)
+	sub_cert_signed := Sign_certificate(subject_cert,root_cert_signed, false,pub, &ctx.Config.Private)
+	fmt.Println(root_cert_signed.Issuer.CommonName, root_cert_signed.Subject.CommonName, sub_cert_signed.Signature != nil)
+	fmt.Println(sub_cert_signed.Issuer.CommonName, sub_cert_signed.Subject.CommonName, sub_cert_signed.Signature != nil)
 }
+
+/*
+func Test_generate_temp(t *testing.T){
+	Generate_config_template()
+}*/
