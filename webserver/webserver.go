@@ -1,4 +1,4 @@
-package main
+package webserver
 
 import (
 	"crypto/tls"
@@ -10,7 +10,7 @@ import (
 // 1. A normal, valid certificate on port 8000
 // 2. A revoked certificate on port 8001
 // 3. A certificate from an entity that has a proof of misbehavior (POM) against them on port 8002
-func main() {
+func Start() {
 	normalCert, revokedCert, pomCert := getCertificates()
 
 	normalMux := http.NewServeMux()
@@ -68,15 +68,15 @@ func main() {
 
 // Get the certificates to be used by the server
 func getCertificates() (tls.Certificate, tls.Certificate, tls.Certificate) {
-	normalCert, err := tls.LoadX509KeyPair("test/normal.crt", "test/normal.key")
+	normalCert, err := tls.LoadX509KeyPair("webserver/test/normal.crt", "webserver/test/normal.key")
 	if err != nil {
 		panic(err)
 	}
-	revokedCert, err := tls.LoadX509KeyPair("test/revoked.crt", "test/revoked.key")
+	revokedCert, err := tls.LoadX509KeyPair("webserver/test/revoked.crt", "webserver/test/revoked.key")
 	if err != nil {
 		panic(err)
 	}
-	pomCert, err := tls.LoadX509KeyPair("test/pom.crt", "test/pom.key")
+	pomCert, err := tls.LoadX509KeyPair("webserver/test/pom.crt", "webserver/test/pom.key")
 	if err != nil {
 		panic(err)
 	}
