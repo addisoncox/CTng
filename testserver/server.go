@@ -17,7 +17,7 @@ import (
 
 
 // Unsigned Pre-certificate with Revocation ID, empty STH and POI
-func Genrate_PreCert_CTng(host string, validFor time.Duration, isCA bool, issuer pkix.Name, subject pkix.Name, c *TestServerContext) *x509.Certificate{
+func Genrate_Unsigned_PreCert_CTng(host string, validFor time.Duration, isCA bool, issuer pkix.Name, subject pkix.Name, c *TestServerContext) *x509.Certificate{
 	keyUsage := x509.KeyUsageDigitalSignature
 	// Only RSA subject keys should have the KeyEncipherment KeyUsage bits set. In
 	// the context of TLS this KeyUsage is particular to RSA key exchange and

@@ -30,23 +30,22 @@ var (
 */
 
 func Test_precert_and_selfsign(t *testing.T){
-	serialNumber := 0;
 	//Certifcate lasting time
 	validFor := 365 * 24 * time.Hour
 	//Used to generate root certificate
-	//use the Serial number of the subject as the Revocation ID
 	testserver := pkix.Name{
 		Country:[]string{"US"},
 		Organization:[]string{"CTng Deleveoper's Team"}, 
 		OrganizationalUnit: []string{"001"},
 		CommonName: "CA_Logger 1",
-		SerialNumber: fmt.Sprint(serialNumber),
 	}
-	serialNumber++
 	ctx := TestServer_Context_init()
-	cert := Genrate_PreCert_CTng("testserver", validFor, true,testserver, testserver,ctx)
+	cert := Genrate_Unsigned_PreCert_CTng("testserver", validFor, true,testserver, testserver,ctx)
+	//We need to sign the precert and send to logger 
 	cert_signed := Sign_certificate(cert,cert, true,&ctx.Config.Public, &ctx.Config.Private)
-	ctng_ext := Parse_CTng_extension(cert_signed)
+	//After we get the CTng extension from the logger, we need to sign it again
+	cert_signagain := Sign_certificate(cert_signed,cert_signed, true,&ctx.Config.Public, &ctx.Config.Private)
+	ctng_ext := Parse_CTng_extension(cert_signagain)
 	fmt.Println("CTng extension: ", ctng_ext)
 }
 
@@ -83,9 +82,9 @@ func Test_signing(t *testing.T){
 	pub := publicKey(priv)
 	//read the key pair for CA from config
 	ctx := TestServer_Context_init()
-	root_cert := Genrate_PreCert_CTng("testserver", validFor, true,testserver, testserver,ctx)
+	root_cert := Genrate_Unsigned_PreCert_CTng("testserver", validFor, true,testserver, testserver,ctx)
 	root_cert_signed := Sign_certificate(root_cert,root_cert, true,&ctx.Config.Public, &ctx.Config.Private)
-	subject_cert := Genrate_PreCert_CTng("testsubject001", validFor, false, testserver, subject, ctx)
+	subject_cert := Genrate_Unsigned_PreCert_CTng("testsubject001", validFor, false, testserver, subject, ctx)
 	sub_cert_signed := Sign_certificate(subject_cert,root_cert_signed, false,pub, &ctx.Config.Private)
 	fmt.Println(root_cert_signed.Issuer.CommonName, root_cert_signed.Subject.CommonName, sub_cert_signed.Signature != nil)
 	fmt.Println(sub_cert_signed.Issuer.CommonName, sub_cert_signed.Subject.CommonName, sub_cert_signed.Signature != nil)

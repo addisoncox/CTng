@@ -21,6 +21,7 @@ type TestServerContext struct {
 	Client            *http.Client
 	CRVsize           int
 	CRV               *bitset.Bitset
+	SerialNumber      int
 	Config            *TestServerConfig
 }
 
@@ -92,6 +93,7 @@ func TestServer_Context_init() *TestServerContext{
 	ctx := TestServerContext{
 		CRV: bitset.NewBitset(2048),
 		CRVsize: 0,
+		SerialNumber: 1,
 		Config: conf,
 	}
 	tr := &http.Transport{}
