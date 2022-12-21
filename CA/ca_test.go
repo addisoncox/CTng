@@ -1,102 +1,69 @@
 package CA
 
+
 import (
-	//crypto "CTng/crypto"
-	"fmt"
-	//"reflect"
-	"CTng/gossip"
-    "CTng/util"
-	"CTng/config"
-	"CTng/crypto"
+	//"CTng/gossip"
+	//"CTng/crypto"
+	//"CTng/util"
+	//"bytes"
 	"encoding/json"
-	"net/http"
+	"fmt"
+	"io/ioutil"
+	"log"
+	//"net/http"
 	"testing"
-	"github.com/Workiva/go-datastructures/bitarray"
-	"github.com/google/certificate-transparency-go/tls"
+	"time"
+	//"strings"
+	//"strconv"
+	//"github.com/gorilla/mux"
 )
-
-func TestAddCertificateTest(t *testing.T){
-	conf, err := config.LoadCAConfig("ca_testconfigs/ca_pub_config.json","ca_testconfigs/ca_priv_config.json","ca_testconfigs/caCrypto.json")
-	if err != nil {
-		panic(err)
+// test generate CA config
+func testGenerateCAConfig(t *testing.T) {
+	for i := 0;i < 2;i++{
+		// generate CA config
+		caConfig := GenerateCAConfig()
+		// Intialize logger list
+		caConfig.Loggers = make(map[string]string)
+		// Logger 1: localhost:9100
+		caConfig.Loggers["Logger 1"] = "localhost:9100"
+		// Logger 2: localhost:9101
+		caConfig.Loggers["Logger 2"] = "localhost:9101"
+		// write CA config to file, use marshall indent to make it human readable
+		caConfigBytes, err := json.MarshalIndent(caConfig, "", "  ")
+		if err != nil {
+			log.Fatal(err)
+		}
+		err = ioutil.WriteFile("ca_testconfig/" + fmt.Sprint(i+1)+ "/ca_config.json", caConfigBytes, 0644)
+		if err != nil {
+			log.Fatal(err)
+		}
 	}
-	SRHs := make([]gossip.Gossip_object, 0, 20)
-	var revoc Revocator = &CRV{
-		Vector:   bitarray.NewBitArray(1),
-		DeltaVec: bitarray.NewBitArray(1),
-		CASign: tls.DigitallySigned{
-			Algorithm: tls.SignatureAndHashAlgorithm{
-				Hash:      tls.SHA256,
-				Signature: tls.RSA,
-			},
-			Signature: []byte("0"),
-		},
-		LoggerSign: tls.DigitallySigned{
-			Algorithm: tls.SignatureAndHashAlgorithm{
-				Hash:      tls.SHA256,
-				Signature: tls.RSA,
-			},
-			Signature: []byte("0"),
-		},
-		Length: conf.Public.Length,
-	}
-	revocators := []*Revocator{&revoc}
-	certs := NewCertPool()
-
-	ctx := CAContext{
-		Config:         &conf,
-		SRHs:           SRHs,
-		Revocators:     revocators,
-		Request_Count:  0,
-		Current_Period: 0,
-		Certificates:   certs,
-	}
-	issuerCert, err := GenerateSelfSigned(&ctx)
-	if err != nil {
-		fmt.Println(err)
-		return
-	}
-	ctx.IssuerCertificate = *issuerCert
-
-	//fmt.Println("started ca server")
-	//StartCAServer(&ctx)
-	tr := &http.Transport{}
-	ctx.Client = &http.Client{
-		Transport: tr,
-	}
-	fmt.Println(gossip.EntityString(ctx.Config.Signer))
-	//fmt.Println(Certificates.GetSizeOfCertPool())
-	cert, _, err := GeneratePrecert("google.com", false, &ctx)
-	if err != nil {
-		fmt.Println((err))
-	}
-	fmt.Println(cert.UnhandledCriticalExtensions)
-	fmt.Println(cert.Subject.CommonName)
-	//fmt.Println(cert.NotBefore)
-	//fmt.Println(cert.NotAfter)
-	var p *util.Place = util.FindRevokePlace(cert)
-	println("vector: ", p.Vector, "Index: ",p.Index)
-	msg, err := json.Marshal(cert)
-	if err != nil {
-		fmt.Println(err)
-	}
-	//fmt.Println(string(msg))
-	hashmsg := string(msg)
-	hash, _ := crypto.GenerateSHA256([]byte(hashmsg))
-	fmt.Println("Hash is ",string(hash))
-	// Send the gossip object to the gossiper.
-	//resp, postErr := c.Client.Post(PROTOCOL+c.Config.Gossiper_URL+"/gossip/gossip-data", "application/json", bytes.NewBuffer(msg))
-	fmt.Println("current size of the certpool is: ", ctx.Certificates.GetSizeOfCertPool())
-	for _,logger :=  range(ctx.Config.Logger_URLs){
-		println(logger)
-	}
-	SendCert(&ctx,cert)
-	cert, _, err = GeneratePrecert("ynet.co.il", false, &ctx)
-	if err != nil {
-		fmt.Println((err))
-	}
-	fmt.Println(cert.Subject.CommonName)
-	p = util.FindRevokePlace(cert)
-	println("vector: ", p.Vector, "Index: ",p.Index)
-	fmt.Println("current size of the certpool is: ", ctx.Certificates.GetSizeOfCertPool())
 }
+
+//test initialize CA context
+func testContext(t *testing.T) {
+	// initialize CA context
+	ctx := InitializeCAContext("ca_testconfig/1/ca_config.json")
+	fmt.Println("CA context initialized",(*ctx.Config).Loggers)
+}
+
+//test CertGen
+func TestCertGen(t *testing.T) {
+	// initialize CA context
+	ctx := InitializeCAContext("ca_testconfig/1/ca_config.json")
+	// generate issuer
+	issuer := Generate_Issuer("CA 1")
+	// generate host
+	host := "CA 1"
+	// generate valid duration
+	validFor := 365 * 24 * time.Hour
+	isCA := false
+	// generate 64 certificates
+	certs := Generate_N_Signed_PreCert(64, host, validFor, isCA, issuer, ctx.Rootcert, false, &ctx.Config.Public, &ctx.Config.Private)
+	fmt.Println(len(certs))
+	// print the common name of the first 10 certificate
+	for i := 0;i < 10;i++{
+		fmt.Println(certs[i].Subject.CommonName)
+	}
+}
+

@@ -1,191 +1,164 @@
 package CA
 
 import (
-	"CTng/config"
-	//"CTng/crypto"
-	"CTng/gossip"
+	//"github.com/nipuntalukdar/bitset"
 	"net/http"
-	"github.com/Workiva/go-datastructures/bitarray"
-	"github.com/google/certificate-transparency-go/tls"
-	"github.com/google/certificate-transparency-go/x509"
-	"encoding/pem"
+	"crypto/rsa"
+	//"crypto/ecdsa"
+	//"crypto/ed25519"
+	"CTng/util"
+	//"CTng/crypto"
+	"crypto/rand"
+	"CTng/gossip"
+	"CTng/config"
+	"crypto/x509"
+	"fmt"
+	"encoding/json"
+	"io/ioutil"
+	//"encoding/pem"
+	//"CTng/config"
+	//"encoding/asn1"
+	//"crypto/x509/pkix"
+	//"math/big"
+	//"encoding/json"
+
 )
 
 type CAContext struct {
-	Config            *config.CA_config
-	SRHs              []gossip.Gossip_object
-	Revocators        []*Revocator           // array of all the CRV's
-	Certificates      *CertPool       //pool of all the certificates the CA generated
-	IssuerCertificate x509.Certificate       // the certificate that the ca can sign on pther certifiactes with
-	Request_Count     int
-	Current_Period    int
 	Client            *http.Client
+	SerialNumber      int
+	Config            *CAConfig
+	CurrentCertificatePool   *CTngCertificatePool
+	CertPoolStorage   *CTngCertPoolStorage
+	Rootcert *x509.Certificate
 }
 
-type Place struct {
-	Vector int
-	Index  int
+type CAConfig struct{
+	Signer string
+	Port string
+	Private rsa.PrivateKey
+	Public rsa.PublicKey
+	Certnumber int
+	Loggers map[string]string
+	LoggersPublicKeys map[string] rsa.PublicKey
 }
 
-type Revocator interface {
-	GetRevInfo() bitarray.BitArray                                 // returns current updated revocation information (newest CRV)
-	RevokeCertificate(crt *x509.Certificate)                       // set the recieved certificate as revoked
-	IsRevoked(crt *x509.Certificate) (bool, error)                 //
-	GetDelta() bitarray.BitArray                                   // returns the current delta vector
-	CalculateChanges(deltaVec bitarray.BitArray) bitarray.BitArray // gets delta vector and returns the new vector
-	UpdateChanges(deltaVec bitarray.BitArray)                      // gets delta vector and updates the current vector with it
-	UpdateCASign(sign tls.DigitallySigned)                         // gets CA signature on the vector????????
-	UpdateLoggerSign(sign tls.DigitallySigned)                     // gets Logger signature on the vector and saves it
-	GetDeltaVector() bitarray.BitArray
-	GetVector() bitarray.BitArray
+type CTngExtension struct{
+	STH gossip.Gossip_object
+	POI []string
+	RID int
 }
 
-type Revocation struct {
-	Signer       string
-	Delta_CRV    [][]byte
-	Vectors_Hash []byte
-	Timestamp    string
-	Period       int
+type CTngCertificatePool struct{
+	Certificates map[string] x509.Certificate
 }
 
-type CertPool struct {
-	bySubjectKeyId map[string][]int
-	byName         map[string][]int
-	certs          []*x509.Certificate
+type CTngCertPoolStorage struct{
+	Certpools map[string] CTngCertificatePool
 }
 
-func (s *CertPool) GetSizeOfCertPool() uint64 {
-	return uint64(len(s.certs))
+// add to certificate pool
+func (c *CTngCertificatePool) AddCertificate(cert x509.Certificate) {
+	c.Certificates[cert.SerialNumber.String()] = cert
 }
 
-// NewCertPool returns a new, empty CertPool.
-func NewCertPool() *CertPool {
-	return &CertPool{
-		bySubjectKeyId: make(map[string][]int),
-		byName:         make(map[string][]int),
+// add all certificate from a certificate list to certificate pool
+func (c *CTngCertificatePool) AddCertificateList(certList []x509.Certificate) {
+	for _, cert := range certList {
+		c.AddCertificate(cert)
 	}
 }
 
-func (s *CertPool) copy() *CertPool {
-	p := &CertPool{
-		bySubjectKeyId: make(map[string][]int, len(s.bySubjectKeyId)),
-		byName:         make(map[string][]int, len(s.byName)),
-		certs:          make([]*x509.Certificate, len(s.certs)),
-	}
-	for k, v := range s.bySubjectKeyId {
-		indexes := make([]int, len(v))
-		copy(indexes, v)
-		p.bySubjectKeyId[k] = indexes
-	}
-	for k, v := range s.byName {
-		indexes := make([]int, len(v))
-		copy(indexes, v)
-		p.byName[k] = indexes
-	}
-	copy(p.certs, s.certs)
-	return p
+// add certpool to certpool storage by Period Number
+func (c *CTngCertPoolStorage) AddCertPoolByPeriodNumber(periodNumber int, certPool CTngCertificatePool) {
+	c.Certpools[fmt.Sprintf("%d", periodNumber)] = certPool
 }
 
-// findPotentialParents returns the indexes of certificates in s which might
-// have signed cert. The caller must not modify the returned slice.
-func (s *CertPool) findPotentialParents(cert *x509.Certificate) []int {
-	if s == nil {
-		return nil
-	}
-
-	var candidates []int
-	if len(cert.AuthorityKeyId) > 0 {
-		candidates = s.bySubjectKeyId[string(cert.AuthorityKeyId)]
-	}
-	if len(candidates) == 0 {
-		candidates = s.byName[cert.Issuer.CommonName]
-	}
-	return candidates
+// Clear current certificate pool
+func (c *CTngCertificatePool) Clear() {
+	c.Certificates = make(map[string] x509.Certificate)
 }
 
-func (s *CertPool) Contains(cert *x509.Certificate) bool {
-	if s == nil {
-		return false
-	}
+//get certificate from pool by subject common name, return empty certificate if not found
 
-	candidates := s.byName[cert.Subject.CommonName]
-	for _, c := range candidates {
-		if s.certs[c].Equal(cert) {
-			return true
+func (c *CTngCertificatePool) GetCertificateBySubjectCommonName(commonName string) x509.Certificate {
+	for _, cert := range c.Certificates {
+		if cert.Subject.CommonName == commonName {
+			return cert
 		}
 	}
-
-	return false
+	return x509.Certificate{}
 }
 
-// AddCert adds a certificate to a pool.
-func (s *CertPool) AddCert(cert *x509.Certificate) {
-	if cert == nil {
-		panic("adding nil Certificate to CertPool")
-	}
-
-	// Check that the certificate isn't being added twice.
-	if s.Contains(cert) {
-		return
-	}
-
-	n := len(s.certs)
-	s.certs = append(s.certs, cert)
-
-	if len(cert.SubjectKeyId) > 0 {
-		keyId := string(cert.SubjectKeyId)
-		s.bySubjectKeyId[keyId] = append(s.bySubjectKeyId[keyId], n)
-	}
-	name := cert.Subject.CommonName
-	s.byName[name] = append(s.byName[name], n)
+//get cert pool size
+func (c *CTngCertificatePool) GetSize() int {
+	return len(c.Certificates)
 }
 
-// AppendCertsFromPEM attempts to parse a series of PEM encoded certificates.
-// It appends any certificates found to s and reports whether any certificates
-// were successfully parsed.
-//
-// On many Linux systems, /etc/ssl/cert.pem will contain the system wide set
-// of root CAs in a format suitable for this function.
-func (s *CertPool) AppendCertsFromPEM(pemCerts []byte) (ok bool) {
-	for len(pemCerts) > 0 {
-		var block *pem.Block
-		block, pemCerts = pem.Decode(pemCerts)
-		if block == nil {
-			break
-		}
-		if block.Type != "CERTIFICATE" || len(block.Headers) != 0 {
-			continue
-		}
-
-		cert, err := x509.ParseCertificate(block.Bytes)
-		if x509.IsFatal(err) {
-			continue
-		}
-
-		s.AddCert(cert)
-		ok = true
+// Generate CAConfig template
+func GenerateCAConfigTemplate() *CAConfig {
+	return &CAConfig{
+		Signer: "",
+		Port: "",
+		Private: rsa.PrivateKey{},
+		Public: rsa.PublicKey{},
+		Certnumber: 0,
+		Loggers: map[string]string{},
+		LoggersPublicKeys: map[string] rsa.PublicKey{},
 	}
-
-	return
 }
 
-// Subjects returns a list of the DER-encoded subjects of
-// all of the certificates in the pool.
-func (s *CertPool) Subjects() []string {
-	res := make([]string, len(s.certs))
-	for i, c := range s.certs {
-		res[i] = c.Subject.CommonName
+
+// Generate a public key from a private key
+func publicKey(priv *rsa.PrivateKey) rsa.PublicKey {
+	return priv.PublicKey
+}
+// Gererate RSA key pair
+func GenerateRSAKeyPair() (rsa.PrivateKey, rsa.PublicKey) {
+	priv, err := rsa.GenerateKey(rand.Reader, 2048)
+	if err != nil {
+		fmt.Println("rsa keygen failed")
 	}
-	return res
+	pub := publicKey(priv)
+	return *priv,pub
 }
 
-// find the first cert for this subject in the cert pool
-func (s *CertPool) GetCertByName(subjectName string) *x509.Certificate {
-	// check if exist certificate for this subject in the cert pool
-	index, isPresent := s.byName[subjectName]
-	if isPresent {
-		return s.certs[index[0]]
-	} else {
-		return nil
+// Generate CAConfig with a random RSA key pair
+func GenerateCAConfig() *CAConfig {
+	config := GenerateCAConfigTemplate()
+	config.Private, config.Public = GenerateRSAKeyPair()
+	return config
+}
+
+// write CAConfig to file path
+func WriteCAConfigToFile(config *CAConfig, filepath string) {
+	util.CreateFile(filepath)
+	filename := filepath + "CAConfig.json"
+	jsonConfig, err := json.Marshal(config)
+	if err != nil {
+		fmt.Println("json marshal failed")
 	}
+	err = ioutil.WriteFile(filename, jsonConfig, 0644)
+	if err != nil {
+		fmt.Println("write file failed")
+	}
+}
+
+
+// Initialize CAContext
+func InitializeCAContext(filepath string) *CAContext {
+	conf := new(CAConfig)
+	config.LoadConfiguration(&conf, filepath)
+	caContext := &CAContext{
+		SerialNumber: 0,
+		Config: conf,
+		CurrentCertificatePool: &CTngCertificatePool{Certificates: make(map[string] x509.Certificate)},
+		CertPoolStorage: &CTngCertPoolStorage{Certpools: make(map[string] CTngCertificatePool)},
+	}	
+	tr := &http.Transport{}
+	caContext.Client = &http.Client{
+		Transport: tr,
+	}
+	caContext.Rootcert = Generate_Root_Certificate(caContext.Config)
+	return caContext
 }
