@@ -138,35 +138,48 @@ func Unmarshall_Signed_PreCert_From_Json(precert []byte) *x509.Certificate{
 	return cert
 }
 
-//Send a signed precert to all loggers in the list
-func Send_Signed_PreCert_To_Loggers(c *CAContext,precert *x509.Certificate, loggers []string){
-	for i:=0;i<len(loggers);i++{
-		precert_json := Marshall_Signed_PreCert_To_Json(precert)
-		//fmt.Println(precert_json)
-		//fmt.Println(loggers[i])
-		//fmt.Println(precert_json)
-		resp, err := c.Client.Post(PROTOCOL+ loggers[i]+"/logger/receive-precert", "application/json", bytes.NewBuffer(precert_json))
+//send a signed precert to a logger
+func Send_Signed_PreCert_To_Logger(c *CAContext,precert *x509.Certificate, logger string){
+	precert_json := Marshall_Signed_PreCert_To_Json(precert)
+	//fmt.Println(precert_json)
+	//fmt.Println(logger)
+	//fmt.Println(precert_json)
+	resp, err := c.Client.Post(PROTOCOL+ logger+"/logger/receive-precert", "application/json", bytes.NewBuffer(precert_json))
+	if err != nil {
+		log.Fatalf("Failed to send precert to loggers: %v", err)
+	}
+	defer resp.Body.Close()
+}
+
+
+//Send a list of signed precerts to all loggers in the map
+func Send_Signed_PreCerts_To_Loggers_Map(c *CAContext, precerts []*x509.Certificate, loggers_map map[string]string){
+	for i:=0;i<len(loggers_map);i++{
+		precerts_json, err := json.Marshal(precerts)
+		if err != nil {
+			log.Fatalf("Failed to marshall certificate: %v", err)
+		}
+		//fmt.Println(precerts_json)
+		resp, err := c.Client.Post(PROTOCOL+ loggers_map["Logger "+ fmt.Sprint(i)]+"/logger/receive-precerts", "application/json", bytes.NewBuffer(precerts_json))
 		if err != nil {
 			log.Fatalf("Failed to send precert to loggers: %v", err)
 		}
 		defer resp.Body.Close()
-		//fmt.Println(resp.Status)
 	}
 }
 
-//Send a x509.Certificate map to all loggers in the map
-func Send_Certificate_Map_To_Loggers_Map(c *CAContext, cert_map map[string]*x509.Certificate, loggers_map map[string]string){
+// send a map of signed precerts to all loggers in the map
+func Send_Signed_PreCerts_Map_To_Loggers_Map(c *CAContext, precerts_map map[string]*x509.Certificate, loggers_map map[string]string){
 	for i:=0;i<len(loggers_map);i++{
-		cert_map_json, err := json.Marshal(cert_map)
+		precerts_map_json, err := json.Marshal(precerts_map)
 		if err != nil {
 			log.Fatalf("Failed to marshall certificate: %v", err)
 		}
-		//fmt.Println(cert_map_json)
-		resp, err := c.Client.Post(PROTOCOL+ loggers_map[fmt.Sprint(i)]+"/logger/receive-cert-map", "application/json", bytes.NewBuffer(cert_map_json))
+		//fmt.Println(precerts_map_json)
+		resp, err := c.Client.Post(PROTOCOL+ loggers_map[fmt.Sprint(i)]+"/logger/receive-precert-map", "application/json", bytes.NewBuffer(precerts_map_json))
 		if err != nil {
-			log.Fatalf("Failed to send cert map to loggers: %v", err)
+			log.Fatalf("Failed to send precert to loggers: %v", err)
 		}
 		defer resp.Body.Close()
-		//fmt.Println(resp.Status)
 	}
 }

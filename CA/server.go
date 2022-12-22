@@ -13,9 +13,9 @@ import (
 	"crypto/x509"
 	"log"
 	"net/http"
-	//"time"
+	"time"
 	//"strings"
-	//"strconv"
+	"strconv"
 	"github.com/gorilla/mux"
 )
 
@@ -44,14 +44,6 @@ func handleCARequests(c *CAContext) {
 	log.Fatal(http.ListenAndServe(":"+c.Config.Port, nil))
 }
 
-func StartCA(c *CAContext) {
-	tr := &http.Transport{}
-	c.Client = &http.Client{
-		Transport: tr,
-	}
-	// Start HTTP server loop on the main thread
-	handleCARequests(c)
-}
 
 // receive certificate from logger
 func receive_certificate(c *CAContext, w http.ResponseWriter, r *http.Request) {
@@ -83,4 +75,60 @@ func receive_certificate_list(c *CAContext, w http.ResponseWriter, r *http.Reque
 		// add to certificate pool
 		c.CurrentCertificatePool.AddCertificate(*signedcert)
 	}
+}
+
+func GetCurrentPeriod() string{
+	timerfc := time.Now().UTC().Format(time.RFC3339)
+	Miniutes, err := strconv.Atoi(timerfc[14:16])
+	Periodnum := strconv.Itoa(Miniutes)
+	if err != nil {
+	}
+	return Periodnum
+}
+
+func GerCurrentSecond() string{
+	timerfc := time.Now().UTC().Format(time.RFC3339)
+	Second, err := strconv.Atoi(timerfc[17:19])
+	Secondnum := strconv.Itoa(Second)
+	if err != nil {
+	}
+	return Secondnum
+}
+
+func PeriodicTask(ctx *CAContext) {
+	//Generate N signed pre-certificates
+	// generate issuer
+	issuer := Generate_Issuer("CA 1")
+	// generate host
+	host := "CA 1"
+	// generate valid duration
+	validFor := 365 * 24 * time.Hour
+	isCA := false
+	// generate pre-certificates
+	certs := Generate_N_Signed_PreCert(64, host, validFor, isCA, issuer, ctx.Rootcert, false, &ctx.Config.Public, &ctx.Config.Private)
+	//Add the pre-certificates to the pool
+	for _, cert := range certs {
+		ctx.CurrentCertificatePool.AddCertificate(*cert)
+	}
+	//Send the pre-certificates to the log
+	Send_Signed_PreCerts_To_Loggers_Map(ctx, certs, ctx.Config.Loggers)
+}
+
+
+// Our CA does not create certificate by requests
+// The purpose of the CA is for testing purposes only
+func StartCA(c *CAContext) {
+	currentsecond := GerCurrentSecond()
+	// if current second greater than 50, wait for 10 seconds
+	if currentsecond > "50" {
+		time.Sleep(10 * time.Second)
+	}
+	// Initialize CA context
+	tr := &http.Transport{}
+	c.Client = &http.Client{
+		Transport: tr,
+	}
+	// Start HTTP server loop on the main thread
+	go PeriodicTask(c)
+	handleCARequests(c)
 }
