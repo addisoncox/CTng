@@ -58,16 +58,37 @@ type CTngCertPoolStorage struct{
 }
 
 // add to certificate pool
-func (c *CTngCertificatePool) AddCertificate(cert x509.Certificate) {
-	c.Certificates[cert.SerialNumber.String()] = cert
+func (c *CTngCertificatePool) AddCertificate(cert x509.Certificate, ctx *CAContext) {
+	// if cert is already in pool, check CRL distribution point, if not the same, add the new one to the CRL distribution point list
+	if _, ok := c.Certificates[cert.Subject.CommonName]; ok {
+		// check CRL distribution point
+
+		for _, items := range c.Certificates[cert.Subject.CommonName].CRLDistributionPoints {
+			// CRL distribution point [0] is the same, do nothing
+			if cert.CRLDistributionPoints[0] == items {
+				return
+			}
+		}
+		// add new CRL distribution point to the list
+		newlist := c.Certificates[cert.Subject.CommonName].CRLDistributionPoints
+		newlist = append(newlist, cert.CRLDistributionPoints[0])
+		cert.CRLDistributionPoints = newlist
+		// sign the new certificate
+		signedcert := Sign_certificate(&cert, ctx.Rootcert, false, &ctx.Config.Public, &ctx.Config.Private)
+		c.Certificates[cert.Subject.CommonName] = *signedcert
+		return
+	}else {
+			c.Certificates[cert.Subject.CommonName] = cert
+	}
 }
 
 // add all certificate from a certificate list to certificate pool
-func (c *CTngCertificatePool) AddCertificateList(certList []x509.Certificate) {
+func (c *CTngCertificatePool) AddCertificateList(certList []x509.Certificate, ctx *CAContext){
 	for _, cert := range certList {
-		c.AddCertificate(cert)
+		c.AddCertificate(cert, ctx)
 	}
 }
+
 
 // add certpool to certpool storage by Period Number
 func (c *CTngCertPoolStorage) AddCertPoolByPeriodNumber(periodNumber int, certPool CTngCertificatePool) {

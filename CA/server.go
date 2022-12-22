@@ -57,7 +57,7 @@ func receive_certificate(c *CAContext, w http.ResponseWriter, r *http.Request) {
 	// use sign certificate to sign the certificate
 	signedcert := Sign_certificate(&cert, c.Rootcert, false, &c.Config.Public, &c.Config.Private)
 	// add to certificate pool
-	c.CurrentCertificatePool.AddCertificate(*signedcert)
+	c.CurrentCertificatePool.AddCertificate(*signedcert, c)
 }
 
 // receive a list of certificates from logger
@@ -73,7 +73,7 @@ func receive_certificate_list(c *CAContext, w http.ResponseWriter, r *http.Reque
 	for _, cert := range certList {
 		signedcert := Sign_certificate(&cert, c.Rootcert, false, &c.Config.Public, &c.Config.Private)
 		// add to certificate pool
-		c.CurrentCertificatePool.AddCertificate(*signedcert)
+		c.CurrentCertificatePool.AddCertificate(*signedcert,c)
 	}
 }
 
@@ -108,7 +108,7 @@ func PeriodicTask(ctx *CAContext) {
 	certs := Generate_N_Signed_PreCert(64, host, validFor, isCA, issuer, ctx.Rootcert, false, &ctx.Config.Public, &ctx.Config.Private)
 	//Add the pre-certificates to the pool
 	for _, cert := range certs {
-		ctx.CurrentCertificatePool.AddCertificate(*cert)
+		ctx.CurrentCertificatePool.AddCertificate(*cert, ctx)
 	}
 	//Send the pre-certificates to the log
 	Send_Signed_PreCerts_To_Loggers_Map(ctx, certs, ctx.Config.Loggers)
