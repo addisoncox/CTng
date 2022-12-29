@@ -1,7 +1,6 @@
-package merkle
+package Logger
 
 import (
-	"CTng/Logger"
 	"CTng/crypto"
 	"CTng/gossip"
 	"crypto/sha256"
@@ -33,7 +32,7 @@ type MerkleNode struct {
 	rid      RevocationID
 }
 
-func buildMerkleTreeFromCerts(certs []x509.Certificate, config Logger.LoggerConfig, periodNum int) MerkleNode {
+func buildMerkleTreeFromCerts(certs []x509.Certificate, config LoggerConfig, periodNum int) MerkleNode {
 	n := len(certs)
 	nodes := make([]MerkleNode, n)
 	for i := 0; i < n; i++ {
@@ -69,7 +68,7 @@ func buildMerkleTreeFromCerts(certs []x509.Certificate, config Logger.LoggerConf
 	return root
 }
 
-func buildMerkleTreeFromBytes(dataBlocks [][]byte, config Logger.LoggerConfig, periodNum int) MerkleNode {
+func buildMerkleTreeFromBytes(dataBlocks [][]byte, config LoggerConfig, periodNum int) MerkleNode {
 	n := len(dataBlocks)
 	nodes := make([]MerkleNode, n)
 	for i := 0; i < n; i++ {
