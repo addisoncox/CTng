@@ -119,9 +119,13 @@ func PeriodicTask(ctx *CAContext) {
 // The purpose of the CA is for testing purposes only
 func StartCA(c *CAContext) {
 	currentsecond := GerCurrentSecond()
-	// if current second greater than 50, wait for 10 seconds
-	if currentsecond > "50" {
-		time.Sleep(10 * time.Second)
+	// convert string to int
+	second, err := strconv.Atoi(currentsecond)
+	if err != nil {
+	}
+	// if current second is not 0, wait till the next minute
+	if second != 0 {
+		time.Sleep(time.Duration(60-second) * time.Second)
 	}
 	// Initialize CA context
 	tr := &http.Transport{}

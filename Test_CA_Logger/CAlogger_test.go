@@ -138,3 +138,22 @@ func TestKeyExchange (t *testing.T){
 	}
 	err = ioutil.WriteFile("logger_testconfig/1/logger_config.json", logger1_configBytes, 0644)
 }
+
+func TestLogger(t *testing.T) {
+	// initialize loggercontext for logger1
+	logger1_context := Logger.InitializeLoggerContextWithConfigFile("logger_testconfig/1/logger_config.json")
+	fmt.Println((*logger1_context).Config.Signer,"Context initialized")
+	// initialize loggercontext for logger2
+	logger2_context := Logger.InitializeLoggerContextWithConfigFile("logger_testconfig/2/logger_config.json")
+	fmt.Println((*logger2_context).Config.Signer,"Context initialized")
+	
+}
+
+func TestCA(t *testing.T) {
+	// initialize cacontext for ca1
+	ca1_context := CA.InitializeCAContext("ca_testconfig/1/ca_config.json")
+	fmt.Println((*ca1_context).Config.Signer,"Context initialized")
+	// initialize cacontext for ca2
+	ca2_context := CA.InitializeCAContext("ca_testconfig/2/ca_config.json")
+	fmt.Println((*ca2_context).Config.Signer,"Context initialized")
+}
