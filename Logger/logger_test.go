@@ -1,7 +1,5 @@
 package Logger
 
-
-
 import (
 	"CTng/CA"
 	//"CTng/crypto"
@@ -11,17 +9,20 @@ import (
 	"fmt"
 	"io/ioutil"
 	"log"
+
 	//"net/http"
-	"testing"
 	"os"
+	"testing"
+
 	//"strings"
 	//"strconv"
 	//"github.com/gorilla/mux"
+	"github.com/google/certificate-transparency-go/x509"
 )
 
 // Test generate Logger config
 func TestGenerateLoggerConfig(t *testing.T) {
-	for i := 0;i < 2;i++{
+	for i := 0; i < 2; i++ {
 		// generate Logger config
 		loggerConfig := GenerateLoggerConfig()
 		// Intialize CA list
@@ -36,25 +37,25 @@ func TestGenerateLoggerConfig(t *testing.T) {
 			log.Fatal(err)
 		}
 		os.Create("logger_testconfig/" + fmt.Sprint(i+1))
-		err = ioutil.WriteFile("logger_testconfig/" + fmt.Sprint(i+1)+ "/logger_config.json", loggerConfigBytes, 0644)
+		err = ioutil.WriteFile("logger_testconfig/"+fmt.Sprint(i+1)+"/logger_config.json", loggerConfigBytes, 0644)
 		if err != nil {
 			log.Fatal(err)
 		}
 	}
 }
+
 // test initialize Logger context
 func TestContext(t *testing.T) {
 	// initialize Logger context
 	ctx := InitializeLoggerContextWithConfigFile("logger_testconfig/1/logger_config.json")
-	fmt.Println("Logger context initialized",(*ctx.Config).CAs)
+	fmt.Println("Logger context initialized", (*ctx.Config).CAs)
 }
 
-
-func CTngExtensions_to_Strings(extensions []CA.CTngExtension) []string{
+func CTngExtensions_to_Strings(extensions []CA.CTngExtension) []string {
 	// initialize CTng extension string list
 	extensions_str := make([]string, len(extensions))
 	// convert ctng extensions to strings
-	for i := 0;i < len(extensions);i++{
+	for i := 0; i < len(extensions); i++ {
 		// Marshal CTng extension to json
 		extension_bytes, err := json.Marshal(extensions[i])
 		if err != nil {
@@ -66,3 +67,21 @@ func CTngExtensions_to_Strings(extensions []CA.CTngExtension) []string{
 	return extensions_str
 }
 
+func GenerateTestLoggerConfig() *LoggerConfig {
+
+	loggerConfig := GenerateLoggerConfig()
+	loggerConfig.CAs = make(map[string]string)
+	loggerConfig.CAs["CA 1"] = "localhost:9000"
+	loggerConfig.CAs["CA 2"] = "localhost:9001"
+	return loggerConfig
+}
+
+func TestBuildMerkleTreeFromCerts(t *testing.T) {
+	certs := make([]x509.Certificate, 0)
+	for i := 0; i < 10; i++ {
+		certs = append(certs, x509.Certificate{})
+	}
+	periodNum := 0
+	config := GenerateTestLoggerConfig()
+	buildMerkleTreeFromCerts(certs, *config, periodNum)
+}
