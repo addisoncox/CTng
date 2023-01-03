@@ -1,15 +1,15 @@
 package Logger
 
 import (
-	"crypto"
 	"crypto/rsa"
+	"CTng/crypto"
 	"net/http"
 	"crypto/x509"
 	"CTng/config"
 	"CTng/CA"
 )
 type LoggerConfig struct {
-	Signer              string
+	Signer              crypto.CTngID
 	Port                string
 	MMD                 int
 	Public			    rsa.PublicKey
@@ -51,10 +51,13 @@ func Verifyprecert (precert x509.Certificate, ctx LoggerContext) bool {
 	issuerPublicKey := ctx.Config.CAsPublicKeys[issuer]
 	//retrieve the signature of the precert
 	signature := precert.Signature
+	rsasig := new(crypto.RSASig)
+	(*rsasig).Sig = signature
+	(*rsasig).ID = crypto.CTngID(issuer)
 	//check if the signature is valid
-	if err := rsa.VerifyPKCS1v15(&issuerPublicKey, crypto.SHA256, precert.RawTBSCertificate, signature); err != nil {
+	if err := crypto.RSAVerify(precert.RawTBSCertificate, *rsasig, &issuerPublicKey); err != nil {
 		return false
-	}
+	}	
 	return true
 }
 

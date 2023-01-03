@@ -36,6 +36,7 @@ type CAContext struct {
 type CAConfig struct{
 	Signer string
 	Port string
+	MMD int
 	Private rsa.PrivateKey
 	Public rsa.PublicKey
 	Certnumber int

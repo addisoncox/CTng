@@ -10,6 +10,7 @@ import (
 	"CTng/gossip"
 	"CTng/logger"
 	"CTng/monitor"
+	"CTng/CA"
 	"CTng/testData/fakeCA"
 	"CTng/testData/fakeLogger"
 	"CTng/webserver"
@@ -92,8 +93,14 @@ func main() {
 		fakeLogger.RunFakeLogger(os.Args[2])
 	case "ca":
 		fakeCA.RunFakeCA(os.Args[2])
-	case "testlogger":
-		logger.RunLogger("Logger/logger.json")
+	case "CTng_CA":
+		ctx := CA.InitializeCAContext(os.Args[2])
+		// start the CA server
+		CA.StartCA(ctx)
+	case "CTng_Logger":
+		ctx := Logger.InitializeLoggerContextWithConfigFile(os.Args[2])
+		// start the logger server
+		Logger.StartLogger(ctx)
 	case "client":
 		conf, err := client.LoadClientConfig(os.Args[2], os.Args[3])
 		if err != nil {

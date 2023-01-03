@@ -3,7 +3,7 @@ import (
 	"CTng/CA"
 	"CTng/Logger"
 	"CTng/config"
-	//"CTng/crypto"
+	"CTng/crypto"
 	//"CTng/util"
 	//"bytes"
 	"encoding/json"
@@ -34,8 +34,10 @@ func TestGenerateLoggerConfig(t *testing.T) {
 		loggerConfig.CAs["CA 1"] = "localhost:9100"
 		// CA 2: localhost:9001
 		loggerConfig.CAs["CA 2"] = "localhost:9101"
+		// set MMD to 60 seconds
+		loggerConfig.MMD = 60
 		// Signer
-		loggerConfig.Signer = "localhost:900"+fmt.Sprint(i+1)
+		loggerConfig.Signer = crypto.CTngID("localhost:900"+fmt.Sprint(i))
 		// Port
 		loggerConfig.Port = "900"+fmt.Sprint(i+1)
 		// write Logger config to file, use marshall indent to make it human readable
@@ -65,10 +67,12 @@ func TestGenerateCAConfig(t *testing.T) {
 		caConfig.Loggers["Logger 1"] = "localhost:9000"
 		// Logger 2: localhost:9001
 		caConfig.Loggers["Logger 2"] = "localhost:9001"
+		// set MMD to 60 seconds
+		caConfig.MMD = 60
 		// Signer
-		caConfig.Signer = "localhost:910"+fmt.Sprint(i+1)
+		caConfig.Signer = "localhost:910"+fmt.Sprint(i)
 		// Port
-		caConfig.Port = "910"+fmt.Sprint(i+1)
+		caConfig.Port = "910"+fmt.Sprint(i)
 		// write CA config to file, use marshall indent to make it human readable
 		caConfigBytes, err := json.MarshalIndent(caConfig, "", "  ")
 		if err != nil {
@@ -100,12 +104,12 @@ func TestKeyExchange (t *testing.T){
 	
 	// fill ca1_config with loggers public key
 	ca1_config.LoggersPublicKeys = make(map[string]rsa.PublicKey)
-	ca1_config.LoggersPublicKeys[logger1_config.Signer] = logger1_config.Public
-	ca1_config.LoggersPublicKeys[logger2_config.Signer] = logger2_config.Public
+	ca1_config.LoggersPublicKeys[logger1_config.Signer.String()] = logger1_config.Public
+	ca1_config.LoggersPublicKeys[logger2_config.Signer.String()] = logger2_config.Public
 	// fill ca2_config with loggers public key
 	ca2_config.LoggersPublicKeys = make(map[string]rsa.PublicKey)
-	ca2_config.LoggersPublicKeys[logger1_config.Signer] = logger1_config.Public
-	ca2_config.LoggersPublicKeys[logger2_config.Signer] = logger2_config.Public
+	ca2_config.LoggersPublicKeys[logger1_config.Signer.String()] = logger1_config.Public
+	ca2_config.LoggersPublicKeys[logger2_config.Signer.String()] = logger2_config.Public
 	// fill logger1_config with cas public key
 	logger1_config.CAsPublicKeys = make(map[string]rsa.PublicKey)
 	logger1_config.CAsPublicKeys[ca1_config.Signer] = ca1_config.Public
@@ -139,21 +143,20 @@ func TestKeyExchange (t *testing.T){
 	err = ioutil.WriteFile("logger_testconfig/1/logger_config.json", logger1_configBytes, 0644)
 }
 
-func TestLogger(t *testing.T) {
-	// initialize loggercontext for logger1
-	logger1_context := Logger.InitializeLoggerContextWithConfigFile("logger_testconfig/1/logger_config.json")
-	fmt.Println((*logger1_context).Config.Signer,"Context initialized")
-	// initialize loggercontext for logger2
-	logger2_context := Logger.InitializeLoggerContextWithConfigFile("logger_testconfig/2/logger_config.json")
-	fmt.Println((*logger2_context).Config.Signer,"Context initialized")
-	
-}
-
-func TestCA(t *testing.T) {
+func TestCAServer(t *testing.T){
 	// initialize cacontext for ca1
 	ca1_context := CA.InitializeCAContext("ca_testconfig/1/ca_config.json")
 	fmt.Println((*ca1_context).Config.Signer,"Context initialized")
 	// initialize cacontext for ca2
 	ca2_context := CA.InitializeCAContext("ca_testconfig/2/ca_config.json")
 	fmt.Println((*ca2_context).Config.Signer,"Context initialized")
+}
+
+func TestLoggerServer(t *testing.T){
+	// initialize loggercontext for logger1
+	logger1_context := Logger.InitializeLoggerContextWithConfigFile("logger_testconfig/1/logger_config.json")
+	fmt.Println((*logger1_context).Config.Signer,"Context initialized")
+	// initialize loggercontext for logger2
+	logger2_context := Logger.InitializeLoggerContextWithConfigFile("logger_testconfig/2/logger_config.json")
+	fmt.Println((*logger2_context).Config.Signer,"Context initialized")
 }

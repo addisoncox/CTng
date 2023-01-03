@@ -31,6 +31,8 @@ func TestGenerateLoggerConfig(t *testing.T) {
 		loggerConfig.CAs["CA 1"] = "localhost:9000"
 		// CA 2: localhost:9001
 		loggerConfig.CAs["CA 2"] = "localhost:9001"
+		// set MMD to 60 seconds
+		loggerConfig.MMD = 60
 		// write Logger config to file, use marshall indent to make it human readable
 		loggerConfigBytes, err := json.MarshalIndent(loggerConfig, "", "  ")
 		if err != nil {

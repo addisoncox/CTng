@@ -37,8 +37,6 @@ func handleLoggerRequests(c *LoggerContext) {
 	
 	// receive precerts from CA
 	gorillaRouter.HandleFunc("/Logger/receive-precerts", bindLoggerContext(c, receive_pre_cert)).Methods("POST")
-	// receive a map of precerts from CA
-	gorillaRouter.HandleFunc("/Logger/receive-precert-map", bindLoggerContext(c, receive_pre_cert_map)).Methods("POST")
 	//start the HTTP server
 	http.Handle("/", gorillaRouter)
 	// Listen on port set by config until server is stopped.
@@ -56,23 +54,9 @@ func receive_pre_cert(c *LoggerContext, w http.ResponseWriter, r *http.Request) 
 	}
 	// add to precert pool
 	c.CurrentPrecertPool.AddPrecert(precert)
+	fmt.Println("Received precert from CA")
 }
 
-// receive a map of precerts from CA
-func receive_pre_cert_map(c *LoggerContext, w http.ResponseWriter, r *http.Request) {
-	// Unmarshal the request body into a map of precerts
-	var precertMap map[string]x509.Certificate
-	decoder := json.NewDecoder(r.Body)
-	err := decoder.Decode(&precertMap)
-	if err != nil {
-		panic(err)
-	}
-	// add to precert pool
-	// for each precert in the map
-	for _, precert := range precertMap {
-		c.CurrentPrecertPool.AddPrecert(precert)
-	}
-}
 
 func GetCurrentPeriod() string{
 	timerfc := time.Now().UTC().Format(time.RFC3339)
@@ -98,17 +82,13 @@ func PeriodicTask(ctx *LoggerContext) {
 		PeriodicTask(ctx)
 	}
 	time.AfterFunc(time.Duration(ctx.Config.MMD)*time.Second, f)
-	if (*ctx).OnlinePeriod == 0 {
-		f := func() {
-			PeriodicTask(ctx)
-		}
-		time.AfterFunc(time.Duration(ctx.Config.MMD-5)*time.Second, f)
+	f1 := func() {
+		fmt.Println(GerCurrentSecond())
+		fmt.Println(time.Now().UTC().Format(time.RFC3339))
+		fmt.Println("Logger Periodic Task", GetCurrentPeriod(), "has been online for", ctx.OnlinePeriod, "periods")
+		ctx.OnlinePeriod = ctx.OnlinePeriod + 1
 	}
-	// TODO
-	// Compute Merkle Tree
-	// Send certs to CA
-	fmt.Println("Logger Periodic Task", GetCurrentPeriod(), "has been online for", ctx.OnlinePeriod, "periods")
-	ctx.OnlinePeriod = ctx.OnlinePeriod + 1
+	time.AfterFunc(time.Duration(ctx.Config.MMD-5)*time.Second, f1)
 }
 
 
@@ -128,7 +108,9 @@ func StartLogger(c *LoggerContext) {
 		if err != nil {
 		}
 		second = 60 - second
-		time.Sleep(time.Duration(second) * time.Second)
+		//print wait time
+		fmt.Println("Logger will start after", second, "seconds")
+		//time.Sleep(time.Duration(second) * time.Second)
 	}
 	// handle request and wait 55 seconds
 	go PeriodicTask(c)
