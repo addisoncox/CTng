@@ -18,7 +18,7 @@ func Start() {
 		handleFileRequest(w, r, "testData/monitordata/1/REV_FULL.json")
 	})
 	http.HandleFunc("/pom", func(w http.ResponseWriter, r *http.Request) {
-		handleFileRequest(w, r, "testData/monitordata/1/ACCUSATION_POM.json")
+		handleFileRequest(w, r, "testData/monitordata/1/CONFLICT_POM.json")
 	})
 	fmt.Println("Monitor listening on port 3000...")
 	if err := http.ListenAndServe("localhost:3000", nil); err != nil {
