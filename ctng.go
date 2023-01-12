@@ -5,12 +5,13 @@ Code Ownership:
 Finn - Made main function
 */
 import (
+	"CTng/CA"
 	"CTng/client"
 	"CTng/config"
 	"CTng/gossip"
 	"CTng/logger"
+	"CTng/minimon"
 	"CTng/monitor"
-	"CTng/CA"
 	"CTng/testData/fakeCA"
 	"CTng/testData/fakeLogger"
 	"CTng/webserver"
@@ -25,16 +26,16 @@ import (
 func main() {
 	helpText := "Usage:\n ./CTng [gossiper|monitor] <public_config_file_path> <private_config_file_path> <crypto_config_path>\n ./Ctng [logger|ca] <fakeentity_config_path>\n ./CTng web"
 
-	if len(os.Args) == 2 && os.Args[1] == "web" {
-		webserver.Start()
-		return
-	}
-
-	if len(os.Args) < 3 {
+	if len(os.Args) < 2 {
 		fmt.Println(helpText)
 		os.Exit(1)
 	}
+
 	switch os.Args[1] {
+	case "web":
+		webserver.Start()
+	case "minimon":
+		minimon.Start()
 	case "gossiper":
 		// make the config object.
 		conf, err := config.LoadGossiperConfig(os.Args[2], os.Args[3], os.Args[4])
