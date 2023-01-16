@@ -32,7 +32,17 @@ type MerkleNode struct {
 	rid      RevocationID
 }
 
-func buildMerkleTreeFromCerts(certs []x509.Certificate, config LoggerConfig, periodNum int) MerkleNode {
+func poiAndSthContainsCert(sth STH, poi ProofOfInclusion, cert x509.Certificate) bool {
+	n := len(poi.siblingHashes)
+	certBytes, _ := json.Marshal(cert)
+	certHash := hash(certBytes)
+	for i := n - 1; i >= 0; i-- {
+		certHash = hash(append(certHash, poi.siblingHashes[i]...))
+	}
+	return string(certHash) == sth.RootHash
+}
+
+func buildMerkleTreeFromCerts(certs []x509.Certificate, config LoggerConfig, periodNum int) (map[RevocationID]MerkleNode, STH) {
 	n := len(certs)
 	nodes := make([]MerkleNode, n)
 	for i := 0; i < n; i++ {
@@ -65,7 +75,11 @@ func buildMerkleTreeFromCerts(certs []x509.Certificate, config LoggerConfig, per
 		Payload:       [3]string{payload0, payload1, payload2},
 	}
 	addPOIAndSTH(root, make([][]byte, 0), gossipSTH)
-	return root
+	var nodeMap map[RevocationID]MerkleNode
+	for i, node := range nodes {
+		nodeMap[RevocationID(i)] = node
+	}
+	return nodeMap, gossipSTH
 }
 
 func buildMerkleTreeFromBytes(dataBlocks [][]byte, config LoggerConfig, periodNum int) MerkleNode {
@@ -109,6 +123,9 @@ func hash(data []byte) []byte {
 
 func addPOIAndSTH(node MerkleNode, siblingHashes [][]byte, sth gossip.Gossip_object) {
 	if node.left == nil && node.right == nil {
+		if node.neighbor != nil {
+			siblingHashes = append(siblingHashes, node.neighbor.hash)
+		}
 		node.poi = ProofOfInclusion{siblingHashes: siblingHashes}
 		node.sth = sth
 		return

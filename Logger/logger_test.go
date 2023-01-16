@@ -81,9 +81,35 @@ func GenerateTestLoggerConfig() *LoggerConfig {
 func TestBuildMerkleTreeFromCerts(t *testing.T) {
 	certs := make([]x509.Certificate, 0)
 	for i := 0; i < 10; i++ {
-		certs = append(certs, x509.Certificate{})
+		certs = append(certs, x509.Certificate{
+			Version: i,
+		})
 	}
 	periodNum := 0
 	config := GenerateTestLoggerConfig()
 	buildMerkleTreeFromCerts(certs, *config, periodNum)
+}
+
+func TestCertificateInMerkleTree(t *testing.T) {
+	certs := make([]x509.Certificate, 0)
+	for i := 0; i < 10; i++ {
+		certs = append(certs, x509.Certificate{
+			Version: i,
+		})
+	}
+	periodNum := 0
+	config := GenerateTestLoggerConfig()
+	nodeMap, sth := buildMerkleTreeFromCerts(certs, *config, periodNum)
+
+	if !poiAndSthContainsCert(sth, nodeMap[0].poi, certs[0]) {
+		log.Fatal("Certificate verification failed")
+	}
+
+	doesNotExistCert := x509.Certificate{
+		Version: 11,
+	}
+
+	if poiAndSthContainsCert(sth, nodeMap[0].poi, doesNotExistCert) {
+		log.Fatal("Certificate verification failed")
+	}
 }
