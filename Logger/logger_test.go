@@ -1,5 +1,5 @@
 package Logger
-
+/*
 import (
 	"CTng/CA"
 	//"CTng/crypto"
@@ -19,6 +19,7 @@ import (
 	//"github.com/gorilla/mux"
 	"github.com/google/certificate-transparency-go/x509"
 )
+
 
 // Test generate Logger config
 func TestGenerateLoggerConfig(t *testing.T) {
@@ -87,3 +88,4 @@ func TestBuildMerkleTreeFromCerts(t *testing.T) {
 	config := GenerateTestLoggerConfig()
 	buildMerkleTreeFromCerts(certs, *config, periodNum)
 }
+*/

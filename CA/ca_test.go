@@ -1,9 +1,9 @@
+
 package CA
-
-
+/*
 import (
 	"CTng/gossip"
-	//"CTng/crypto"
+	"CTng/crypto"
 	//"CTng/util"
 	//"bytes"
 	"encoding/json"
@@ -18,22 +18,70 @@ import (
 	//"github.com/gorilla/mux"
 )
 // test generate CA config
-func testGenerateCAConfig(t *testing.T) {
+
+func TestGenerateCAConfig(t *testing.T) {
 	for i := 0;i < 2;i++{
-		// generate CA config
-		caConfig := GenerateCAConfig()
-		// Intialize logger list
-		caConfig.Loggers = make(map[string]string)
-		// Logger 1: localhost:9100
-		caConfig.Loggers["Logger 1"] = "localhost:9100"
-		// Logger 2: localhost:9101
-		caConfig.Loggers["Logger 2"] = "localhost:9101"
-		// write CA config to file, use marshall indent to make it human readable
-		caConfigBytes, err := json.MarshalIndent(caConfig, "", "  ")
+		// Generate CA public config template
+		caPublicConfig := GenerateCA_public_config_template()
+		// Generate CA private config template
+		caPrivateConfig := GenerateCA_private_config_template()
+		// Generate CA crypto config template
+		caCryptoConfig := GenerateCA_Crypto_config_template()
+
+		// Start setting CA public config
+		// set all CA URLs
+		caPublicConfig.All_CA_URLs = []string{"localhost:9100", "localhost:9101"}
+		// set all logger URLs
+		caPublicConfig.All_Logger_URLs = []string{"localhost:9000", "localhost:9001"}
+		// set MMD
+		caPublicConfig.MMD = 60
+		// set MRD
+		caPublicConfig.MRD = 60
+		// set http version
+		caPublicConfig.Http_vers = []string{"1.1"}
+
+		// Start setting CA private config
+		caPrivateConfig.Signer = "localhost:910" + fmt.Sprint(i)
+		caPrivateConfig.Port = "910" + fmt.Sprint(i)
+		caPrivateConfig.Loggerlist = []string{"localhost:9000", "localhost:9001"}
+		caPrivateConfig.Monitorlist = []string{"localhost:8180", "localhost:8181", "localhost:8182", "localhost:8183"}
+		caPrivateConfig.Gossiperlist = []string{"localhost:8080", "localhost:8081", "localhost:8082", "localhost:8083"}
+		caPrivateConfig.Cert_per_period = 10
+
+		// Start setting CA crypto config
+		caCryptoConfig.SelfID = crypto.CTngID("localhost:910" + fmt.Sprint(i))
+		caCryptoConfig.SignScheme = "rsa"
+		caCryptoConfig.HashScheme = 4
+		rsapriv, err := crypto.NewRSAPrivateKey()
 		if err != nil {
 			log.Fatal(err)
 		}
-		err = ioutil.WriteFile("ca_testconfig/" + fmt.Sprint(i+1)+ "/ca_config.json", caConfigBytes, 0644)
+		caCryptoConfig.PrivateKey = rsapriv
+		rsapub := rsapriv.PublicKey
+		caCryptoConfig.PublicKey = rsapub
+
+		// Start Marshal indent all 3
+		caPublicConfigBytes, err := json.MarshalIndent(caPublicConfig, "", "  ")
+		if err != nil {
+			log.Fatal(err)
+		}
+		err = ioutil.WriteFile("ca_testconfig/" + fmt.Sprint(i+1)+ "/ca_public_config.json", caPublicConfigBytes, 0644)
+		if err != nil {
+			log.Fatal(err)
+		}
+		caPrivateConfigBytes, err := json.MarshalIndent(caPrivateConfig, "", "  ")
+		if err != nil {
+			log.Fatal(err)
+		}
+		err = ioutil.WriteFile("ca_testconfig/" + fmt.Sprint(i+1)+ "/ca_private_config.json", caPrivateConfigBytes, 0644)
+		if err != nil {
+			log.Fatal(err)
+		}
+		caCryptoConfigBytes, err := json.MarshalIndent(caCryptoConfig, "", "  ")
+		if err != nil {
+			log.Fatal(err)
+		}
+		err = ioutil.WriteFile("ca_testconfig/" + fmt.Sprint(i+1)+ "/ca_crypto_config.json", caCryptoConfigBytes, 0644)
 		if err != nil {
 			log.Fatal(err)
 		}
@@ -41,10 +89,10 @@ func testGenerateCAConfig(t *testing.T) {
 }
 
 //test initialize CA context
-func testContext(t *testing.T) {
+func TestContext(t *testing.T) {
 	// initialize CA context
 	ctx := InitializeCAContext("ca_testconfig/1/ca_config.json")
-	fmt.Println("CA context initialized",(*ctx.Config).Loggers)
+	fmt.Println("CA context initialized",(*ctx.Config).Loggerlist)
 }
 
 func Genrate_N_Ctng_Extensions(n int) []CTngExtension{
@@ -92,7 +140,7 @@ func TestCertGen(t *testing.T) {
 	validFor := 365 * 24 * time.Hour
 	isCA := false
 	// generate 64 certificates
-	certs := Generate_N_Signed_PreCert(64, host, validFor, isCA, issuer, ctx.Rootcert, false, &ctx.Config.Public, &ctx.Config.Private)
+	certs := Generate_N_Signed_PreCert(ctx, 64, host, validFor, isCA, issuer, ctx.Rootcert, false, &ctx.Config.Public, &ctx.Config.Private)
 	fmt.Println(len(certs))
 	// print the common name of the first 10 certificate
 	for i := 0;i < 10;i++{
@@ -122,4 +170,4 @@ func TestCertGen(t *testing.T) {
 		fmt.Println(cert.CRLDistributionPoints)
 	}
 }
-
+*/

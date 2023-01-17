@@ -7,48 +7,62 @@ import (
 	"crypto/x509"
 	"CTng/config"
 	"CTng/CA"
+	"fmt"
 )
-type LoggerConfig struct {
-	Signer              crypto.CTngID
-	Port                string
-	MMD                 int
-	Public			    rsa.PublicKey
-	Private             rsa.PrivateKey
-	CAs 				map[string]string
-	CAsPublicKeys 		map[string]rsa.PublicKey
-	MisbehaviorInterval int
+
+type Logger_public_config struct {
+	All_CA_URLs     []string
+	All_Logger_URLs []string
+	MMD             int
+	MRD             int
+	Http_vers       []string
 }
 
+type Logger_private_config struct {
+	Signer                 string
+	Port                   string
+	CAlist 		           []string
+	Monitorlist 		   []string
+	Gossiperlist 		   []string
+}
+
+
 type LoggerContext struct {
-	Config *LoggerConfig
 	Client *http.Client
 	SerialNumber int
-	CurrentPrecertPool *PrecertPool
+	Logger_public_config *Logger_public_config
+	Logger_private_config *Logger_private_config
+	Logger_crypto_config *crypto.CryptoConfig
+	PublicKey rsa.PublicKey
+	PrivateKey rsa.PrivateKey
+	CurrentPrecertPool *CA.CertPool
 	PrecertStorage *PrecertStorage
 	OnlinePeriod int
 }
 
 
-type PrecertPool struct {
-	Precerts map[string] x509.Certificate
+type PrecertStorage struct {
+	PrecertPools map[string] *CA.CertPool
 }
 
-type PrecertStorage struct {
-	PrecertPools map[string] PrecertPool
+//check if an item is in a list
+func inList(item string, list []string) bool {
+	for _, i := range list {
+		if i == item {
+			return true
+		}
+	}
+	return false
 }
 
 func Verifyprecert (precert x509.Certificate, ctx LoggerContext) bool {
 	issuer := precert.Issuer.CommonName
-	//check if issuer is in CAs
-	if _, ok := ctx.Config.CAs[issuer]; !ok {
-		return false
-	}
-	//check if issuer is in CAsPublicKeys
-	if _, ok := ctx.Config.CAsPublicKeys[issuer]; !ok {
+	//check if issuer is in CAlist
+	if !inList(issuer, ctx.Logger_private_config.CAlist) {
 		return false
 	}
 	//retrieve the public key of the issuer
-	issuerPublicKey := ctx.Config.CAsPublicKeys[issuer]
+	issuerPublicKey := ctx.Logger_crypto_config.SignaturePublicMap[crypto.CTngID(issuer)]
 	//retrieve the signature of the precert
 	signature := precert.Signature
 	rsasig := new(crypto.RSASig)
@@ -61,56 +75,72 @@ func Verifyprecert (precert x509.Certificate, ctx LoggerContext) bool {
 	return true
 }
 
-func (pool *PrecertPool) AddPrecert(precert x509.Certificate) {
-	pool.Precerts[precert.Subject.CommonName] = precert
-}
 
-// Get precert pool size
-func (pool *PrecertPool) GetSize() int {
-	return len(pool.Precerts)
-}
 
-// Get precert from pool by name
-func (pool *PrecertPool) GetPrecert(name string) *x509.Certificate {
-	if precert, ok := pool.Precerts[name]; ok {
-		return &precert
+// initialize Logger context
+func InitializeLoggerContext(public_config_path string,private_config_file_path string,crypto_config_path string) *LoggerContext{
+	// Load public config from file
+	pubconf := new(Logger_public_config)
+	config.LoadConfiguration(&pubconf, public_config_path)
+	// Load private config from file
+	privconf := new(Logger_private_config)
+	config.LoadConfiguration(&privconf, private_config_file_path)
+	// Load crypto config from file
+	cryptoconfig, err := crypto.ReadCryptoConfig(crypto_config_path)
+	if err != nil {
+		fmt.Println("read crypto config failed")
 	}
-	return nil
+	// Initialize Logger Context
+	loggerContext := &LoggerContext{
+		SerialNumber: 0,
+		Logger_public_config: pubconf,
+		Logger_private_config: privconf,
+		Logger_crypto_config: cryptoconfig,
+		PublicKey:  cryptoconfig.SignaturePublicMap[cryptoconfig.SelfID],
+		PrivateKey: cryptoconfig.RSAPrivateKey,
+		CurrentPrecertPool: CA.NewCertPool(),
+		PrecertStorage: &PrecertStorage{PrecertPools: make(map[string] *CA.CertPool)},
+		OnlinePeriod: 0,
+	}
+	// Initialize http client
+	tr := &http.Transport{}
+	loggerContext.Client = &http.Client{
+		Transport: tr,
+	}
+	return loggerContext
 }
 
-// Generate Config template
-func GenerateLoggerConfigTemplate() *LoggerConfig {
-	return &LoggerConfig{
+func GenerateLogger_private_config_template() *Logger_private_config{
+	return &Logger_private_config{
 		Signer: "",
 		Port: "",
-		Public: rsa.PublicKey{},
-		Private: rsa.PrivateKey{},
-		CAs: map[string]string{},
-		CAsPublicKeys: map[string] rsa.PublicKey{},
+		CAlist: []string{},
+		Monitorlist: []string{},
+		Gossiperlist: []string{},
 	}
 }
 
-// Generate LoggerConfig with a random RSA key pair
-func GenerateLoggerConfig() *LoggerConfig {
-	config := GenerateLoggerConfigTemplate()
-	config.Private, config.Public = CA.GenerateRSAKeyPair()
-	return config
-}
-
-// Initialize a LoggerContext
-func InitializeLoggerContext(config *LoggerConfig) *LoggerContext {
-	return &LoggerContext{
-		Config: config,
-		Client: &http.Client{},
-		SerialNumber: 0,
-		CurrentPrecertPool: &PrecertPool{Precerts: map[string] x509.Certificate{}},
-		PrecertStorage: &PrecertStorage{PrecertPools: map[string] PrecertPool{}},
+func GenerateLogger_public_config_template() *Logger_public_config{
+	return &Logger_public_config{
+		All_CA_URLs: []string{},
+		All_Logger_URLs: []string{},
+		MMD: 0,
+		MRD: 0,
+		Http_vers: []string{},
 	}
 }
 
-
-func InitializeLoggerContextWithConfigFile(filepath string) *LoggerContext {
-	conf := new(LoggerConfig)
-	config.LoadConfiguration(&conf, filepath)
-	return InitializeLoggerContext(conf)
+func GenerateLogger_crypto_config_template() *crypto.StoredCryptoConfig{
+	return &crypto.StoredCryptoConfig{
+		SelfID: crypto.CTngID("0"),
+		Threshold: 0,
+		N: 0,
+		HashScheme: 0,
+		SignScheme: "",
+		ThresholdScheme: "",
+		SignaturePublicMap: crypto.RSAPublicMap{},
+		RSAPrivateKey: rsa.PrivateKey{},
+		ThresholdPublicMap: map[string][]byte{},
+		ThresholdSecretKey: []byte{},
+	}
 }

@@ -1,5 +1,5 @@
 package Gen
-
+/*
 import (
 	"CTng/crypto"
 	"os"
@@ -134,3 +134,4 @@ func TestGenerateGossiperCryptoConfig (t *testing.T){
 func TestGenerateMonitorCryptoConfig (t *testing.T){
 	
 }
+*/

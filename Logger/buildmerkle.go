@@ -11,6 +11,7 @@ import (
 )
 
 type STH struct {
+	Signer string
 	Timestamp string
 	RootHash  string
 	TreeSize  int
@@ -18,6 +19,11 @@ type STH struct {
 
 type ProofOfInclusion struct {
 	siblingHashes [][]byte
+}
+
+type POI struct {
+	ProofOfInclusion ProofOfInclusion
+	SubjectKeyId string
 }
 
 type RevocationID uint
@@ -30,14 +36,16 @@ type MerkleNode struct {
 	poi      ProofOfInclusion
 	sth      gossip.Gossip_object
 	rid      RevocationID
+	SubjectKeyId string
+	Issuer string
 }
 
-func buildMerkleTreeFromCerts(certs []x509.Certificate, config LoggerConfig, periodNum int) MerkleNode {
+func buildMerkleTreeFromCerts(certs []x509.Certificate, ctx LoggerContext, periodNum int) (MerkleNode, []MerkleNode){
 	n := len(certs)
 	nodes := make([]MerkleNode, n)
 	for i := 0; i < n; i++ {
 		certBytes, _ := json.Marshal(certs[i])
-		nodes[i] = MerkleNode{hash: hash(certBytes), rid: RevocationID(i)}
+		nodes[i] = MerkleNode{hash: hash(certBytes), rid: RevocationID(i), SubjectKeyId: string(certs[i].SubjectKeyId), Issuer: string(certs[i].Issuer.CommonName)}
 	}
 	if len(nodes)%2 == 1 {
 		certBytes, _ := json.Marshal(certs[n-1])
@@ -49,58 +57,25 @@ func buildMerkleTreeFromCerts(certs []x509.Certificate, config LoggerConfig, per
 		RootHash:  string(root.hash),
 		TreeSize:  n,
 	}
-	payload0 := string(config.Signer)
+	payload0 := string(ctx.Logger_private_config.Signer)
 	sth_payload, _ := json.Marshal(STH1)
 	payload1 := string(sth_payload)
 	payload2 := ""
-	signature, _ := crypto.RSASign([]byte(payload0+payload1+payload2), &config.Private, crypto.CTngID(config.Signer))
+	signature, _ := crypto.RSASign([]byte(payload0+payload1+payload2), &ctx.PrivateKey, crypto.CTngID(ctx.Logger_private_config.Signer))
 	gossipSTH := gossip.Gossip_object{
 		Application:   "CTng",
 		Type:          gossip.STH,
 		Period:        strconv.Itoa(periodNum),
-		Signer:        string(config.Signer),
+		Signer:        string(ctx.Logger_private_config.Signer),
 		Timestamp:     STH1.Timestamp,
 		Signature:     [2]string{signature.String(), ""},
 		Crypto_Scheme: "RSA",
 		Payload:       [3]string{payload0, payload1, payload2},
 	}
 	addPOIAndSTH(root, make([][]byte, 0), gossipSTH)
-	return root
+	return root, nodes
 }
 
-func buildMerkleTreeFromBytes(dataBlocks [][]byte, config LoggerConfig, periodNum int) MerkleNode {
-	n := len(dataBlocks)
-	nodes := make([]MerkleNode, n)
-	for i := 0; i < n; i++ {
-		nodes[i] = MerkleNode{hash: hash(dataBlocks[i]), rid: RevocationID(i)}
-	}
-	if len(nodes)%2 == 1 {
-		nodes = append(nodes, MerkleNode{hash: hash(dataBlocks[n-1]), rid: RevocationID(n - 1)})
-	}
-	root := recursiveBuildMerkleTree(nodes)
-	STH1 := STH{
-		Timestamp: gossip.GetCurrentTimestamp(),
-		RootHash:  string(root.hash),
-		TreeSize:  n,
-	}
-	payload0 := string(config.Signer)
-	sth_payload, _ := json.Marshal(STH1)
-	payload1 := string(sth_payload)
-	payload2 := ""
-	signature, _ := crypto.RSASign([]byte(payload0+payload1+payload2), &config.Private, crypto.CTngID(config.Signer))
-	gossipSTH := gossip.Gossip_object{
-		Application:   "CTng",
-		Type:          gossip.STH,
-		Period:        strconv.Itoa(periodNum),
-		Signer:        string(config.Signer),
-		Timestamp:     STH1.Timestamp,
-		Signature:     [2]string{signature.String(), ""},
-		Crypto_Scheme: "RSA",
-		Payload:       [3]string{payload0, payload1, payload2},
-	}
-	addPOIAndSTH(root, make([][]byte, 0), gossipSTH)
-	return root
-}
 
 func hash(data []byte) []byte {
 	hash := sha256.Sum256(data)

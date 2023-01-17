@@ -3,7 +3,7 @@ package CA
 
 
 import (
-	//"CTng/gossip"
+	"CTng/gossip"
 	//"CTng/crypto"
 	//"CTng/util"
 	//"bytes"
@@ -34,49 +34,51 @@ func handleCARequests(c *CAContext) {
 	gorillaRouter := mux.NewRouter().StrictSlash(true)
 	// POST functions
 
-	// receive certificate from logger
-	gorillaRouter.HandleFunc("/CA/receive-certificate", bindCAContext(c, receive_certificate)).Methods("POST")
-	// receive a list of certificates from logger
-	gorillaRouter.HandleFunc("/CA/receive-certificate-list", bindCAContext(c, receive_certificate_list)).Methods("POST")
+	// Comments: RID should be received right after the precert is sent to the logger
+	// STH and POI should be received at the end of each period
+	// receive STH from logger
+	gorillaRouter.HandleFunc("/CA/receive-sth", bindCAContext(c, receive_sth)).Methods("POST")
+	// receive POI from logger
+	gorillaRouter.HandleFunc("/CA/receive-poi", bindCAContext(c, receive_poi)).Methods("POST")
 	
 	// Start the HTTP server.
 	http.Handle("/", gorillaRouter)
 	// Listen on port set by config until server is stopped.
-	log.Fatal(http.ListenAndServe(":"+c.Config.Port, nil))
+	log.Fatal(http.ListenAndServe(":"+c.CA_private_config.Port, nil))
 }
 
-
-// receive certificate from logger
-func receive_certificate(c *CAContext, w http.ResponseWriter, r *http.Request) {
-	// Unmarshal the request body into a certificate
-	var cert x509.Certificate
+// receive STH from logger
+func receive_sth(c *CAContext, w http.ResponseWriter, r *http.Request) {
+	// Unmarshal the request body into a STH
+	// STH should be in the form of gossip.STH
+	var sth gossip.Gossip_object
 	decoder := json.NewDecoder(r.Body)
-	err := decoder.Decode(&cert)
+	err := decoder.Decode(&sth)
 	if err != nil {
 		panic(err)
 	}
-	// use sign certificate to sign the certificate
-	signedcert := Sign_certificate(&cert, c.Rootcert, false, &c.Config.Public, &c.Config.Private)
-	// add to certificate pool
-	c.CurrentCertificatePool.AddCertificate(*signedcert, c)
-}
-
-// receive a list of certificates from logger
-func receive_certificate_list(c *CAContext, w http.ResponseWriter, r *http.Request) {
-	// Unmarshal the request body into a list of certificates
-	var certList []x509.Certificate
-	decoder := json.NewDecoder(r.Body)
-	err := decoder.Decode(&certList)
+	// Verify the STH
+	err = sth.Verify(c.CA_crypto_config)
 	if err != nil {
 		panic(err)
 	}
-	// use sign certificate to sign the certificates
-	for _, cert := range certList {
-		signedcert := Sign_certificate(&cert, c.Rootcert, false, &c.Config.Public, &c.Config.Private)
-		// add to certificate pool
-		c.CurrentCertificatePool.AddCertificate(*signedcert,c)
-	}
+	// Update all STHs in the certificate pool by logger ID
+	// search by STH.LoggerID
+	(*c.CurrentCertificatePool).UpdateCertsByLID(sth.Signer, sth)
 }
+
+// receive POI from logger
+func receive_poi(c *CAContext, w http.ResponseWriter, r *http.Request) {
+	// Unmarshal the request body into [][]byte
+	var poi [][]byte
+	decoder := json.NewDecoder(r.Body)
+	err := decoder.Decode(&poi)
+	if err != nil {
+		panic(err)
+	}
+	// Verify the POI
+}
+
 //send a signed precert to a logger
 func Send_Signed_PreCert_To_Logger(c *CAContext,precert *x509.Certificate, logger string){
 	precert_json := Marshall_Signed_PreCert_To_Json(precert)
@@ -90,22 +92,15 @@ func Send_Signed_PreCert_To_Logger(c *CAContext,precert *x509.Certificate, logge
 	defer resp.Body.Close()
 }
 
-
-//Send a list of signed precerts to all loggers in the map
-func Send_Signed_PreCerts_To_Loggers_Map(c *CAContext, precerts []*x509.Certificate, loggers_map map[string]string){
-	for i:=0;i<len(loggers_map);i++{
-		precerts_json, err := json.Marshal(precerts)
+// send a signed precert to all loggers
+func Send_Signed_PreCert_To_Loggers(c *CAContext, precert *x509.Certificate, loggers []string){
+	for i:=0;i<len(loggers);i++{
+		precert_json := Marshall_Signed_PreCert_To_Json(precert)
+		//fmt.Println(precert_json)
+		//fmt.Println(loggers[i])
+		resp, err := c.Client.Post(PROTOCOL+ loggers[i]+"/logger/receive-precert", "application/json", bytes.NewBuffer(precert_json))
 		if err != nil {
-			log.Fatalf("Failed to marshall certificate: %v", err)
-		}
-		//fmt.Println(precerts_json)
-		fmt.Println(fmt.Sprint(i))
-		fmt.Println(loggers_map["Logger "+ fmt.Sprint(i+1)])
-		resp, err := c.Client.Post(PROTOCOL+ loggers_map["Logger "+ fmt.Sprint(i+1)]+"/logger/receive-precerts", "application/json", bytes.NewBuffer(precerts_json))
-		if err != nil {
-			//just panic dont stop the program
-			log.Println("Failed to send precerts to loggers: ", err)
-			continue
+			log.Fatalf("Failed to send precert to loggers: %v", err)
 		}
 		defer resp.Body.Close()
 	}
@@ -134,19 +129,22 @@ func PeriodicTask(ctx *CAContext) {
 	f := func() {
 		PeriodicTask(ctx)
 	}
-	time.AfterFunc(time.Duration(ctx.Config.MMD)*time.Second, f)
+	time.AfterFunc(time.Duration(ctx.CA_public_config.MMD)*time.Second, f)
 	fmt.Println("CA Running Tasks at Period", GetCurrentPeriod())
 	//Generate N signed pre-certificates
-	issuer := Generate_Issuer(ctx.Config.Signer)
+	issuer := Generate_Issuer(ctx.CA_private_config.Signer)
 	// generate host
 	host := "www.example.com"
 	// generate valid duration
 	validFor := 365 * 24 * time.Hour
 	isCA := false
 	// generate pre-certificates
-	certs := Generate_N_Signed_PreCert(64, host, validFor, isCA, issuer, ctx.Rootcert, false, &ctx.Config.Public, &ctx.Config.Private)
+	certs := Generate_N_Signed_PreCert(ctx,64, host, validFor, isCA, issuer, ctx.Rootcert, false, &ctx.PublicKey, &ctx.PrivateKey)
 	//Send the pre-certificates to the log
-	Send_Signed_PreCerts_To_Loggers_Map(ctx, certs, ctx.Config.Loggers)
+	// iterate over certs
+	for i:=0;i<len(certs);i++{
+		Send_Signed_PreCert_To_Loggers(ctx, certs[i], ctx.CA_private_config.Loggerlist)
+	}
 	fmt.Println("CA Finished Tasks at Period", GetCurrentPeriod())
 }
 
@@ -169,8 +167,6 @@ func StartCA(c *CAContext) {
 	c.Client = &http.Client{
 		Transport: tr,
 	}
-	// print loggers map
-	fmt.Println(c.Config.Loggers)
 	// Start HTTP server loop on the main thread
 	go PeriodicTask(c)
 	handleCARequests(c)

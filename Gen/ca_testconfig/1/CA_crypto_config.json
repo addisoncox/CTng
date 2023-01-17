@@ -1,0 +1,23 @@
+{
+  "SelfID": "localhost:9100",
+  "Threshold": 2,
+  "N": 4,
+  "HashScheme": 4,
+  "SignScheme": "rsa",
+  "ThresholdScheme": "bls",
+  "SignaturePublicMap": null,
+  "RSAPrivateKey": {
+   "N": null,
+   "E": 0,
+   "D": null,
+   "Primes": null,
+   "Precomputed": {
+    "Dp": null,
+    "Dq": null,
+    "Qinv": null,
+    "CRTValues": null
+   }
+  },
+  "ThresholdPublicMap": null,
+  "ThresholdSecretKey": null
+ }

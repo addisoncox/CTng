@@ -2,24 +2,139 @@ package Gen
 import (
 	"CTng/CA"
 	"CTng/Logger"
-	"CTng/config"
+	//"CTng/config"
 	"CTng/crypto"
 	//"CTng/util"
 	//"bytes"
-	"encoding/json"
+	//"encoding/json"
 	"fmt"
-	"io/ioutil"
+	//"io/ioutil"
 	"log"
 	//"net/http"
 	"testing"
 	"os"
-	"crypto/rsa"
+	//"crypto/rsa"
 	//"strings"
 	//"strconv"
 	//"github.com/gorilla/mux"
 )
 
-type CTngID string
+
+func Test_gen_CA_Logger(t *testing.T){
+	num_gossiper := 4
+	num_logger := 2
+	num_ca := 2
+	num_cert := 4
+	Threshold := 2
+	Total := num_gossiper
+	G_list, M_list, C_list, L_list := Generate_all_list(num_gossiper, num_ca, num_logger)
+	// Generate CA public config map
+	ca_public_config := GenerateCA_public_config(C_list, L_list, 60, 60, []string{"1.1"})
+	// Generate CA private config map
+	ca_private_config_map := make(map[string]CA.CA_private_config)
+	ca_private_config_map = GenerateCA_private_config_map(G_list, M_list, L_list, num_cert,num_ca)
+	// Generate CA crypto config map
+	ca_crypto_config_map := make(map[string]crypto.StoredCryptoConfig)
+	ca_crypto_config_map = GenerateCryptoconfig_map(Total,Threshold,"CA")
+	// Create CA directory
+	os.Mkdir("ca_testconfig", 0777)
+	// Generate Logger public config map
+	logger_public_config := GenerateLogger_public_config(C_list, L_list, 60, 60, []string{"1.1"})
+	// Generate Logger private config map
+	logger_private_config_map := make(map[string]Logger.Logger_private_config)
+	logger_private_config_map = GenerateLogger_private_config_map(G_list,M_list,C_list, num_logger)
+	// Generate Logger crypto config map
+	logger_crypto_config_map := make(map[string]crypto.StoredCryptoConfig)
+	logger_crypto_config_map = GenerateCryptoconfig_map(Total,Threshold,"Logger")
+	// Create Logger directory
+	os.Mkdir("logger_testconfig", 0777)
+	// write all CA public config, private config, crypto config to file
+	for i := 0;i < num_ca;i++{
+		// create a new folder for each CA
+		err := os.Mkdir("ca_testconfig/" + fmt.Sprint(i+1), 0777)
+		if err != nil {
+			log.Fatal(err)
+		}
+		filepath := "ca_testconfig/" + fmt.Sprint(i+1) + "/"
+		write_all_configs_to_file(ca_public_config, ca_private_config_map[C_list[i]], ca_crypto_config_map[C_list[i]], filepath, "CA")
+	}
+	// write all Logger public config, private config, crypto config to file
+	for i := 0;i < num_logger;i++{
+		// create a new folder for each Logger
+		err := os.Mkdir("logger_testconfig/" + fmt.Sprint(i+1), 0777)
+		if err != nil {
+			log.Fatal(err)
+		}
+		filepath := "logger_testconfig/" + fmt.Sprint(i+1) + "/"
+		write_all_configs_to_file(logger_public_config, logger_private_config_map[L_list[i]], logger_crypto_config_map[L_list[i]], filepath, "Logger")
+	}
+}
+
+
+/*
+func TestGenerateCAConfig(t *testing.T) {
+	for i := 0;i < 2;i++{
+		// Generate CA public config template
+		caPublicConfig := CA.GenerateCA_public_config_template()
+		// Generate CA private config template
+		caPrivateConfig := CA.GenerateCA_private_config_template()
+		// Generate CA crypto config template
+		caCryptoConfig := CA.GenerateCA_Crypto_config_template()
+
+		// Start setting CA public config
+		// set all CA URLs
+		caPublicConfig.All_CA_URLs = []string{"localhost:9100", "localhost:9101"}
+		// set all logger URLs
+		caPublicConfig.All_Logger_URLs = []string{"localhost:9000", "localhost:9001"}
+		// set MMD
+		caPublicConfig.MMD = 60
+		// set MRD
+		caPublicConfig.MRD = 60
+		// set http version
+		caPublicConfig.Http_vers = []string{"1.1"}
+
+		// Start setting CA private config
+		caPrivateConfig.Signer = "localhost:910" + fmt.Sprint(i)
+		caPrivateConfig.Port = "910" + fmt.Sprint(i)
+		caPrivateConfig.Loggerlist = []string{"localhost:9000", "localhost:9001"}
+		caPrivateConfig.Monitorlist = []string{"localhost:8180", "localhost:8181", "localhost:8182", "localhost:8183"}
+		caPrivateConfig.Gossiperlist = []string{"localhost:8080", "localhost:8081", "localhost:8082", "localhost:8083"}
+		caPrivateConfig.Cert_per_period = 10
+
+		// Start setting CA crypto config
+		caCryptoConfig.SelfID = crypto.CTngID("localhost:910" + fmt.Sprint(i))
+		caCryptoConfig.SignScheme = "rsa"
+		caCryptoConfig.HashScheme = 4
+
+
+
+		// Start Marshal indent all 3
+		caPublicConfigBytes, err := json.MarshalIndent(caPublicConfig, "", "  ")
+		if err != nil {
+			log.Fatal(err)
+		}
+		err = ioutil.WriteFile("ca_testconfig/" + fmt.Sprint(i+1)+ "/ca_public_config.json", caPublicConfigBytes, 0644)
+		if err != nil {
+			log.Fatal(err)
+		}
+		caPrivateConfigBytes, err := json.MarshalIndent(caPrivateConfig, "", "  ")
+		if err != nil {
+			log.Fatal(err)
+		}
+		err = ioutil.WriteFile("ca_testconfig/" + fmt.Sprint(i+1)+ "/ca_private_config.json", caPrivateConfigBytes, 0644)
+		if err != nil {
+			log.Fatal(err)
+		}
+		caCryptoConfigBytes, err := json.MarshalIndent(caCryptoConfig, "", "  ")
+		if err != nil {
+			log.Fatal(err)
+		}
+		err = ioutil.WriteFile("ca_testconfig/" + fmt.Sprint(i+1)+ "/ca_crypto_config.json", caCryptoConfigBytes, 0644)
+		if err != nil {
+			log.Fatal(err)
+		}
+	}
+}
 
 
 
@@ -217,4 +332,4 @@ func TestLoggerServer(t *testing.T){
 	// initialize loggercontext for logger3
 	logger3_context := Logger.InitializeLoggerContextWithConfigFile("logger_testconfig/3/logger_config.json")
 	fmt.Println((*logger3_context).Config.Signer,"Context initialized")
-}
+}*/
