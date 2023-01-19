@@ -7,7 +7,7 @@ import (
 	"crypto/x509"
 	"CTng/config"
 	"CTng/CA"
-	"fmt"
+	//"fmt"
 )
 
 type Logger_public_config struct {
@@ -88,7 +88,7 @@ func InitializeLoggerContext(public_config_path string,private_config_file_path 
 	// Load crypto config from file
 	cryptoconfig, err := crypto.ReadCryptoConfig(crypto_config_path)
 	if err != nil {
-		fmt.Println("read crypto config failed")
+		//fmt.Println("read crypto config failed")
 	}
 	// Initialize Logger Context
 	loggerContext := &LoggerContext{

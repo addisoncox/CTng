@@ -165,7 +165,7 @@ func InitializeCAContext(public_config_path string,private_config_file_path stri
 	// Load crypto config from file
 	cryptoconfig, err := crypto.ReadCryptoConfig(crypto_config_path)
 	if err != nil {
-		fmt.Println("read crypto config failed")
+		//fmt.Println(err)
 	}
 	// Initialize CA Context
 	caContext := &CAContext{

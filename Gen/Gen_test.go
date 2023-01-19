@@ -104,6 +104,8 @@ func Test_gen_CA_Logger(t *testing.T){
 		crypto_config.SignaturePublicMap = RSAPublicMap
 		// update RSA Secret key
 		crypto_config.RSAPrivateKey = *RSAPrivateMap[C_list[i]]
+		// update BLS Secret key with empty byte array
+		crypto_config.ThresholdSecretKey = []byte{}
 		write_all_configs_to_file(ca_public_config, ca_private_config_map[C_list[i]], crypto_config, filepath, "CA")
 	}
 	// write all Logger public config, private config, crypto config to file
@@ -118,6 +120,8 @@ func Test_gen_CA_Logger(t *testing.T){
 		crypto_config.SignaturePublicMap = RSAPublicMap
 		// update RSA Secret key
 		crypto_config.RSAPrivateKey = *RSAPrivateMap[L_list[i]]
+		// update BLS Secret key with empty byte array
+		crypto_config.ThresholdSecretKey = []byte{}
 		write_all_configs_to_file(logger_public_config, logger_private_config_map[L_list[i]], crypto_config, filepath, "Logger")
 	}
 }
@@ -146,6 +150,8 @@ func Test_gen_Monitor_Gossiper(t *testing.T){
 		crypto_config.SignaturePublicMap = RSAPublicMap
 		// update RSA Secret key
 		crypto_config.RSAPrivateKey = *RSAPrivateMap[M_list[i]]
+		// update BLS Secret key with empty byte array
+		crypto_config.ThresholdSecretKey = []byte{}
 		write_all_configs_to_file(monitor_public_config, monitor_private_config, crypto_config, filepath, "Monitor")
 	}
 	// Generate Gossiper public config map
