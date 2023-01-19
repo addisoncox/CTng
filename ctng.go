@@ -5,12 +5,13 @@ Code Ownership:
 Finn - Made main function
 */
 import (
-	"CTng/CA"
+	// "CTng/CA"
 	"CTng/client"
 	"CTng/config"
 	"CTng/gossip"
-	"CTng/logger"
+	// "CTng/logger"
 	"CTng/minimon"
+	"CTng/miniclient"
 	"CTng/monitor"
 	"CTng/testData/fakeCA"
 	"CTng/testData/fakeLogger"
@@ -36,6 +37,8 @@ func main() {
 		webserver.Start()
 	case "minimon":
 		minimon.Start()
+	case "miniclient":
+		miniclient.Start()
 	case "gossiper":
 		// make the config object.
 		conf, err := config.LoadGossiperConfig(os.Args[2], os.Args[3], os.Args[4])
@@ -94,14 +97,14 @@ func main() {
 		fakeLogger.RunFakeLogger(os.Args[2])
 	case "ca":
 		fakeCA.RunFakeCA(os.Args[2])
-	case "CTng_CA":
-		ctx := CA.InitializeCAContext(os.Args[2])
-		// start the CA server
-		CA.StartCA(ctx)
-	case "CTng_Logger":
-		ctx := Logger.InitializeLoggerContextWithConfigFile(os.Args[2])
-		// start the logger server
-		Logger.StartLogger(ctx)
+	// case "CTng_CA":
+	// 	ctx := CA.InitializeCAContext(os.Args[2])
+	// 	// start the CA server
+	// 	CA.StartCA(ctx)
+	// case "CTng_Logger":
+	// 	ctx := Logger.InitializeLoggerContextWithConfigFile(os.Args[2])
+	// 	// start the logger server
+	// 	Logger.StartLogger(ctx)
 	case "client":
 		conf, err := client.LoadClientConfig(os.Args[2], os.Args[3])
 		if err != nil {

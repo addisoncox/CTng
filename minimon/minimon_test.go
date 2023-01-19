@@ -1,9 +1,9 @@
 package minimon
 
 import (
+	"encoding/json"
 	"net/http"
 	"net/http/httptest"
-	"strings"
 	"testing"
 )
 
@@ -33,7 +33,13 @@ func TestHandleREV(t *testing.T) {
 
 	// Check the response body is in the format of a json array
 	response := rr.Body.String()
-	if !strings.HasPrefix(response, "[\n  {") && !strings.HasSuffix(response, "}\n]") {
-		t.Errorf("Handler returned unexpected body: got \n%v", rr.Body.String())
+	// if !strings.HasPrefix(response, "[\n  {") && !strings.HasSuffix(response, "}\n]") {
+	// 	t.Errorf("Handler returned unexpected body: got \n%v", rr.Body.String())
+	// }
+
+	var jsonResponse json.RawMessage
+    if json.Unmarshal([]byte(response), &jsonResponse) != nil {
+		t.Errorf("Handler returned unexpected body: got \n%v", response)
 	}
+
 }
