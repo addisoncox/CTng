@@ -41,7 +41,7 @@ type Monitor_config struct {
 }
 
 type Gossiper_config struct {
-	// Crypto_config_location string // Dont use: kind of confusing when considering relative paths. User will pass in absolute paths.
+	Crypto_config_location string 
 	Connected_Gossipers []string
 	Owner_URL           string
 	Port                string

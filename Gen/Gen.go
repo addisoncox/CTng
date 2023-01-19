@@ -14,7 +14,7 @@ import (
 	//"net/http"
 	//"testing"
 	//"os"
-	//"crypto/rsa"
+	"crypto/rsa"
 	//"strings"
 	//"strconv"
 	//"github.com/gorilla/mux"
@@ -156,7 +156,7 @@ func GenerateMonitor_public_config(G_list []string, M_list []string, C_list []st
 }
 
 
-func GenerateMonitor_private_config(G_list []string, M_list []string, C_list []string, L_list []string, MMD int, MRD int, Gossip_wait_time int,Http_vers []string, filepath string) map[string]config.Monitor_config{
+func GenerateMonitor_private_config_map(G_list []string, M_list []string, C_list []string, L_list []string, MMD int, MRD int, Gossip_wait_time int,Http_vers []string, filepath string) map[string]config.Monitor_config{
 	Monitor_private_map := make(map[string]config.Monitor_config)
 	for i := 0; i < len(M_list); i++ {
 		// generate monitor config
@@ -190,7 +190,7 @@ func GenerateGossiper_public_config(G_list []string, M_list []string, C_list []s
 	}
 }
 
-func GenerateGossiper_private_config(G_list []string, M_list []string, C_list []string, L_list []string, MMD int, MRD int, Gossip_wait_time int,Communiation_delay int,Http_vers []string, filepath string) map[string]config.Gossiper_config{
+func GenerateGossiper_private_config_map(G_list []string, M_list []string, C_list []string, L_list []string, MMD int, MRD int, Gossip_wait_time int,Communiation_delay int,Http_vers []string, filepath string) map[string]config.Gossiper_config{
 	Gossiper_private_map := make(map[string]config.Gossiper_config)
 	for i := 0; i < len(G_list); i++ {
 		// generate gossiper config
@@ -217,4 +217,67 @@ func write_all_configs_to_file(public_config interface{}, private_config interfa
 	ioutil.WriteFile(public_config_path, public_config_json, 0644)
 	ioutil.WriteFile(private_config_path, private_config_json, 0644)
 	ioutil.WriteFile(crypto_config_path, crypto_config_json, 0644)
+}
+
+func write_config_to_file(config interface{}, filepath string, entitytype string, configtype string) {
+	// write to file
+	config_path := filepath + entitytype + "_" + configtype + "_config.json"
+	config_json, _ := json.MarshalIndent(config," "," ")
+	ioutil.WriteFile(config_path, config_json, 0644)
+}
+
+func RSA_gen(entity_list []string) (crypto.RSAPublicMap, map[string]*rsa.PrivateKey){
+	// generate RSA key pairs
+	// public key map
+	public_key_map := make(crypto.RSAPublicMap)
+	// private key map
+	private_key_map := make(map[string]*rsa.PrivateKey)
+	// generate RSA key pairs for all entities
+	for i := 0; i < len(entity_list); i++ {
+		sk,err := crypto.NewRSAPrivateKey()
+		if err != nil {
+			fmt.Println("Error generating RSA key pair")
+		}
+		pk := sk.PublicKey
+		public_key_map[crypto.CTngID(entity_list[i])] = pk
+		private_key_map[entity_list[i]] = sk
+	}
+	return public_key_map, private_key_map
+}
+func RSA_gen_all(G_list []string, M_list[]string, C_list []string, L_list[]string) (crypto.RSAPublicMap, map[string]*rsa.PrivateKey){
+	//use RSA_gen to generate all RSA keys
+	entity_list := append(G_list, M_list...)
+	entity_list = append(entity_list, C_list...)
+	entity_list = append(entity_list, L_list...)
+	return RSA_gen(entity_list)
+}
+
+func BLS_gen_all(G_list []string) (map[string][]byte, map[string][]byte){
+	//create a list of crypto.CTngID
+	var entity_list []crypto.CTngID
+	for i := 0; i < len(G_list); i++ {
+		entity_list = append(entity_list, crypto.CTngID(G_list[i]))
+	}
+	//generate BLS key pairs for all entities
+	_, pub, priv, err := crypto.GenerateThresholdKeypairs(entity_list, len(G_list))
+	if err != nil {
+		fmt.Println("Error generating BLS key pair")
+	}
+	// public key map
+	public_key_map := pub.Serialize()
+	// private key map
+	private_key_map := make(map[string][]byte)
+	for i := 0; i < len(G_list); i++ {
+		blspriv := priv[entity_list[i]]
+		private_key_map[G_list[i]] = blspriv.Serialize()
+	}
+	return public_key_map, private_key_map
+}
+
+func Update_crypto_config(crypto_config *crypto.StoredCryptoConfig, SignaturePublicMap crypto.RSAPublicMap, BLSPublicMap map[string][]byte, SignaturePrivateMap map[string]*rsa.PrivateKey, BLSPrivateMap map[string][]byte) {
+	// update crypto config
+	crypto_config.SignaturePublicMap = SignaturePublicMap
+	crypto_config.ThresholdPublicMap = BLSPublicMap
+	crypto_config.RSAPrivateKey = *SignaturePrivateMap[crypto_config.SelfID.String()]
+	crypto_config.ThresholdSecretKey = BLSPrivateMap[crypto_config.SelfID.String()]
 }
