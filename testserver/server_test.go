@@ -15,6 +15,10 @@ import(
 	"crypto/x509"
 	"encoding/json"
 	"io/ioutil"
+	"os"
+	"encoding/pem"
+	"log"
+	"crypto/rand"
 )
 
 var ctx_ca_1 *CA.CAContext
@@ -41,6 +45,22 @@ var STH_Logger1 gossip.Gossip_object
 var STH_Logger2 gossip.Gossip_object
 var STH_FULL_Logger1 gossip.Gossip_object
 var STH_FULL_Logger2 gossip.Gossip_object
+
+func SaveCertificateToDisk(certBytes []byte, filePath string) {
+	certOut, err := os.Create(filePath)
+	if err != nil {
+		log.Fatalf("Failed to open %s for writing: %v", filePath, err)
+	}
+	if err := pem.Encode(certOut, &pem.Block{
+		Type:  "CERTIFICATE",
+		Bytes: certBytes,
+	}); err != nil {
+		log.Fatalf("Failed to write data to %s: %v", filePath, err)
+	}
+	if err := certOut.Close(); err != nil {
+		log.Fatalf("Error closing %s: %v", filePath, err)
+	}
+}
 
 func InitializeMonitorContext(public_config_path string, private_config_path string, crypto_config_path string, storageID string) *monitor.MonitorContext {
 	conf, err := config.LoadMonitorConfig(public_config_path, private_config_path, crypto_config_path)
@@ -189,15 +209,17 @@ func TestCertLogging (t *testing.T){
 	Logger1_cert_pool := make([]*x509.Certificate, 0)
 	// append 4 certs from CA 1 and 3 certs from CA 2
 	for i := 0;i < 4;i++{
+		// Logger 1 logs first 4 certs from CA 1 and first 4 certs from CA 2
 		Logger1_cert_pool = append(Logger1_cert_pool, cert_pool[i])
-		Logger1_cert_pool = append(Logger1_cert_pool, cert_pool[i+4])
+		Logger1_cert_pool = append(Logger1_cert_pool, cert_pool[i+5])
 	}
 	// Prepare cert pool for logger 2
 	Logger2_cert_pool := make([]*x509.Certificate, 0)
 	// append 4 certs from CA 1 and 3 certs from CA 2
 	for i := 0;i < 4;i++{
+		// Logger 2 logs last 4 certs from CA 1 and last 4 certs from CA 2
 		Logger2_cert_pool = append(Logger2_cert_pool, cert_pool[i+1])
-		Logger2_cert_pool = append(Logger2_cert_pool, cert_pool[i+5])
+		Logger2_cert_pool = append(Logger2_cert_pool, cert_pool[i+6])
 	}
 	// convert []*x509.Certificate to []x509.Certificate
 	Logger1_cert_pool_2 := make([]x509.Certificate, 0)
@@ -257,6 +279,33 @@ func TestCertLogging (t *testing.T){
 	//fmt.Println("POI list for CA 2 from logger 1 is: ", ca2_from_logger1)
 	//fmt.Println("POI list for CA 2 from logger 2 is: ", ca2_from_logger2)
 	
+	// For all the certs in CA 1 Cert Pool, Sign them and write them to disk
+	ca_1_cert_list := CA1_cert_pool.GetCertList()
+	for i := 0;i < CA1_cert_pool.GetLength();i++{
+		target_cert := ca_1_cert_list[i]
+		derbytes, err := x509.CreateCertificate(rand.Reader, target_cert, ctx_ca_1.Rootcert, target_cert.PublicKey,&ctx_ca_1.CA_crypto_config.RSAPrivateKey)
+		if err != nil{
+			fmt.Println("Error in creating certificate: ", err)
+		}
+		//fmt.Println("root cert: ", ctx_ca_1.Rootcert)
+		//fmt.Println("derbytes: ", derbytes)
+
+		SaveCertificateToDisk(derbytes, target_cert.Subject.CommonName+ " from CA1.crt")
+	}
+	// For all the certs in CA 2 Cert Pool, Sign them and write them to disk
+	ca_2_cert_list := CA2_cert_pool.GetCertList()
+	for i := 0;i < CA2_cert_pool.GetLength();i++{
+		target_cert := ca_2_cert_list[i]
+		derbytes, err := x509.CreateCertificate(rand.Reader, target_cert, ctx_ca_2.Rootcert, target_cert.PublicKey,&ctx_ca_2.CA_crypto_config.RSAPrivateKey)
+		if err != nil{
+			fmt.Println("Error in creating certificate: ", err)
+		}
+		//fmt.Println("root cert: ", ctx_ca_2.Rootcert)
+		//fmt.Println("derbytes: ", derbytes)
+		SaveCertificateToDisk(derbytes, target_cert.Subject.CommonName+ "fromCA2.crt")
+	}
+
+
 	// Get STH from cert 1 CA 1
 	cert1_ca1 := CA1_cert_pool.GetCertBySubjectKeyID(ca1_from_logger1[0].SubjectKeyId)
 	sth1_cert1_ca1 := CA.GetCTngExtensions(cert1_ca1)[1].STH.Signer
