@@ -12,11 +12,11 @@ import (
 
 	"log"
 	"testing"
+	"crypto/x509"
 
 	//"strings"
 	//"strconv"
 	//"github.com/gorilla/mux"
-	"github.com/google/certificate-transparency-go/x509"
 )
 
 /*
@@ -91,18 +91,18 @@ func TestMerkleTree(t *testing.T) {
 	}
 	periodNum := 0
 	ctx := InitializeLoggerContext("../Gen/logger_testconfig/1/Logger_public_config.json", "../Gen/logger_testconfig/1/Logger_private_config.json", "../Gen/logger_testconfig/1/Logger_crypto_config.json")
-	_, sth, nodes := buildMerkleTreeFromCerts(certs, *ctx, periodNum)
+	_, sth, nodes := BuildMerkleTreeFromCerts(certs, *ctx, periodNum)
 	testExistsSubjectKeyId, _ := json.Marshal(2)
 	testCertExists := x509.Certificate{Version: 2, SubjectKeyId: testExistsSubjectKeyId}
 	for _, node := range nodes {
 		if node.SubjectKeyId == string(testExistsSubjectKeyId) {
-			if !(verifyPOI(sth, node.poi, testCertExists)) {
+			if !(VerifyPOI(sth, node.Poi, testCertExists)) {
 				log.Fatal("Expected certificate does not exist")
 			}
 		}
 	}
 	testCertDoesNotExist := x509.Certificate{Version: 32, SubjectKeyId: testExistsSubjectKeyId}
-	if verifyPOI(sth, nodes[0].poi, testCertDoesNotExist) {
+	if VerifyPOI(sth, nodes[0].Poi, testCertDoesNotExist) {
 		log.Fatal("Not existent certificate passed verification")
 	}
 }

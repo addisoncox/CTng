@@ -6,6 +6,8 @@ import (
 	//"CTng/gossip"
 	//"CTng/crypto"
 	//"CTng/util"
+	//"CTng/config"
+	"CTng/CA"
 	"bytes"
 	"encoding/json"
 	"fmt"
@@ -73,7 +75,7 @@ func Send_STH_to_CA(c *LoggerContext, sth *STH, ca string){
 
 
 // Send one POI to CA
-func Send_POI_to_CA(c *LoggerContext, poi *POI, ca string){
+func Send_POI_to_CA(c *LoggerContext, poi *CA.POI, ca string){
 	var poi_json []byte
 	poi_json, err := json.Marshal(poi)
 	if err != nil {
@@ -90,7 +92,7 @@ func Send_POIs_to_CAs(c *LoggerContext, MerkleNodes []MerkleNode){
 	//iterate over the MerkleNodes
 	for i := 0; i < len(MerkleNodes); i++ {
 		// create POI, using merkle node.ProofofInclusion and node.SubjectKeyId
-		poi := &POI{MerkleNodes[i].poi, MerkleNodes[i].SubjectKeyId}
+		poi := &CA.POI{ProofOfInclusion: MerkleNodes[i].Poi, SubjectKeyId:MerkleNodes[i].SubjectKeyId}
 		// Get the Issuer CA 
 		ca := MerkleNodes[i].Issuer
 		// send POI to CA

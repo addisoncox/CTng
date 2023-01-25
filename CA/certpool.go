@@ -153,6 +153,10 @@ func (s *CertPool) GetCertBySubjectKeyID(subjectKeyId string) *x509.Certificate{
 	return s.certs[candidates[0]]
 }
 
+
+func (c *CertPool) GetLength() int {
+	return len(c.certs)
+}
 // Update one certificate in the pool by its subjectkeyid
 func (s *CertPool) UpdateCertBySubjectKeyID(subjectKeyId string, cert *x509.Certificate) {
 	if s == nil {
@@ -166,6 +170,8 @@ func (s *CertPool) UpdateCertBySubjectKeyID(subjectKeyId string, cert *x509.Cert
 
 	s.certs[candidates[0]] = cert
 }
+
+
 
 // Update all certificates in the pool by their LID
 func (s *CertPool) UpdateCertsByLID(lid string, sth gossip.Gossip_object) {

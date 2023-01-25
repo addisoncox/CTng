@@ -3,13 +3,12 @@ package Logger
 import (
 	"CTng/crypto"
 	"CTng/gossip"
+	"CTng/CA"
 	"crypto/sha256"
 	"encoding/json"
 	"strconv"
-
-	"github.com/google/certificate-transparency-go/x509"
+	"crypto/x509"
 )
-
 type STH struct {
 	Signer    string
 	Timestamp string
@@ -17,27 +16,16 @@ type STH struct {
 	TreeSize  int
 }
 
-type Direction uint
-
-type ProofOfInclusion struct {
-	siblingHashes [][]byte
-	neighborHash  []byte
-}
-
-type POI struct {
-	ProofOfInclusion ProofOfInclusion
-	SubjectKeyId     string
-}
-
 type RevocationID uint
+type Direction uint
 
 type MerkleNode struct {
 	hash         []byte
 	neighbor     *MerkleNode
 	left         *MerkleNode
 	right        *MerkleNode
-	poi          ProofOfInclusion
-	sth          gossip.Gossip_object
+	Poi          CA.ProofOfInclusion
+	Sth          gossip.Gossip_object
 	rid          RevocationID
 	SubjectKeyId string
 	Issuer       string
@@ -50,18 +38,18 @@ func doubleHash(data1 []byte, data2 []byte) []byte {
 		return hash(append(data2, data1...))
 	}
 }
-func verifyPOI(sth STH, poi ProofOfInclusion, cert x509.Certificate) bool {
+func VerifyPOI(sth STH, poi CA.ProofOfInclusion, cert x509.Certificate) bool {
 	certBytes, _ := json.Marshal(cert)
 	testHash := hash(certBytes)
-	n := len(poi.siblingHashes)
-	poi.siblingHashes[n-1] = poi.neighborHash
+	n := len(poi.SiblingHashes)
+	poi.SiblingHashes[n-1] = poi.NeighborHash
 	for i := n - 1; i >= 0; i-- {
-		testHash = doubleHash(poi.siblingHashes[i], testHash)
+		testHash = doubleHash(poi.SiblingHashes[i], testHash)
 	}
 	return string(testHash) == string(sth.RootHash)
 }
 
-func buildMerkleTreeFromCerts(certs []x509.Certificate, ctx LoggerContext, periodNum int) (gossip.Gossip_object, STH, []MerkleNode) {
+func BuildMerkleTreeFromCerts(certs []x509.Certificate, ctx LoggerContext, periodNum int) (gossip.Gossip_object, STH, []MerkleNode) {
 	n := len(certs)
 	nodes := make([]MerkleNode, n)
 	for i := 0; i < n; i++ {
@@ -95,7 +83,7 @@ func buildMerkleTreeFromCerts(certs []x509.Certificate, ctx LoggerContext, perio
 	}
 	addPOI(&root, nil, make([][]byte, 0))
 	for i := 0; i < len(leafs); i++ {
-		leafs[i].poi.neighborHash = leafs[i].neighbor.hash
+		leafs[i].Poi.NeighborHash = leafs[i].neighbor.hash
 	}
 	return gossipSTH, STH1, leafs
 }
@@ -103,7 +91,7 @@ func buildMerkleTreeFromCerts(certs []x509.Certificate, ctx LoggerContext, perio
 func addPOI(root *MerkleNode, neighbor *MerkleNode, previousSiblingHashes [][]byte) {
 	if neighbor != nil {
 		previousSiblingHashes = append(previousSiblingHashes, neighbor.hash)
-		root.poi = ProofOfInclusion{siblingHashes: previousSiblingHashes}
+		root.Poi = CA.ProofOfInclusion{SiblingHashes: previousSiblingHashes}
 	}
 
 	if root.left != nil {
@@ -119,20 +107,20 @@ func hash(data []byte) []byte {
 	return hash[:]
 }
 
-func addPOIAndSTH(node *MerkleNode, siblingHashes [][]byte, sth gossip.Gossip_object) {
+func addPOIAndSTH(node *MerkleNode, SiblingHashes [][]byte, sth gossip.Gossip_object) {
 	if node.left == nil && node.right == nil {
 		if node.neighbor != nil {
-			siblingHashes = append(siblingHashes, node.neighbor.hash)
+			SiblingHashes = append(SiblingHashes, node.neighbor.hash)
 		}
-		node.poi = ProofOfInclusion{siblingHashes: siblingHashes}
-		node.sth = sth
+		node.Poi = CA.ProofOfInclusion{SiblingHashes: SiblingHashes}
+		node.Sth = sth
 		return
 	}
 	if node.neighbor != nil {
-		siblingHashes = append(siblingHashes, node.neighbor.hash)
+		SiblingHashes = append(SiblingHashes, node.neighbor.hash)
 	}
-	addPOIAndSTH(node.left, siblingHashes, sth)
-	addPOIAndSTH(node.right, siblingHashes, sth)
+	addPOIAndSTH(node.left, SiblingHashes, sth)
+	addPOIAndSTH(node.right, SiblingHashes, sth)
 }
 
 func generateMerkleTree(leafs []MerkleNode) (MerkleNode, []MerkleNode) {

@@ -3,7 +3,6 @@ package CA
 import (
 	"crypto/rand"
 	"crypto/rsa"
-	"crypto/x509"
 	"CTng/crypto"
 	"crypto/x509/pkix"
 	"log"
@@ -13,6 +12,7 @@ import (
 	"time"
 	"encoding/json"
 	"fmt"
+	"crypto/x509"
 	//"strconv"
 )
 // Unsigned Pre-certificate
@@ -53,6 +53,8 @@ func Genrate_Unsigned_PreCert(host string, validFor time.Duration, isCA bool, is
 		template.IsCA = true
 		template.KeyUsage |= x509.KeyUsageCertSign
 	}
+	ctng_extension := CTngExtension{RID: ctx.CertCounter}
+	template.CRLDistributionPoints = []string{fmt.Sprintf("%v", ctng_extension)}
 	ctx.CertCounter++
 	return &template
 }
@@ -103,6 +105,17 @@ func Parse_CTng_extension(cert *x509.Certificate) *CTngExtension{
 	return ctng_UM
 }
 
+func Parse_CTng_extensions(cert *x509.Certificate) []*CTngExtension{
+	// iterate over all entries in CRLDistributionPoints
+	// and parse CTng extension
+	ctng_exts := make([]*CTngExtension, len(cert.CRLDistributionPoints))	
+	for i, ctng_ext_M := range cert.CRLDistributionPoints{
+		ctng_exts[i] = new(CTngExtension)
+		json.Unmarshal([]byte(ctng_ext_M), ctng_exts[i])
+	}
+	return ctng_exts
+}
+
 // generate signed precert
 func Generate_Signed_PreCert(c *CAContext, host string, validFor time.Duration, isCA bool, issuer pkix.Name, subject pkix.Name, root_cert *x509.Certificate, root bool, pub *rsa.PublicKey, priv *rsa.PrivateKey) *x509.Certificate{
 	// Generate precert
@@ -112,12 +125,26 @@ func Generate_Signed_PreCert(c *CAContext, host string, validFor time.Duration, 
 }
 
 //generate N subject, with different common name
-func Generate_N_Subjects(N int) []pkix.Name{
+func Generate_N_Subjects(N int, global_offset int) []pkix.Name{
 	subjects := make([]pkix.Name,N)
 	for i:=0;i<N;i++{
-		subjects[i].CommonName = "Testing Dummy "+fmt.Sprint(i)
+		subjects[i].CommonName = "Testing Dummy "+fmt.Sprint(i+global_offset)
 	}
 	return subjects
+}
+
+// Generate N random Public/Private key pairs, return a map of public key, using pkix.Name as key
+func Generate_N_KeyPairs(subjects []pkix.Name) map[string]*rsa.PublicKey{
+	keypairs := make(map[string]*rsa.PublicKey)
+	for i:=0;i<len(subjects);i++{
+		sk,err := crypto.NewRSAPrivateKey()
+		if err != nil {
+			fmt.Println("Error generating RSA key pair")
+		}
+		pk := sk.PublicKey
+		keypairs[subjects[i].CommonName] = &pk
+	}
+	return keypairs
 }
 
 //generate 1 issuer given N
@@ -127,12 +154,15 @@ func Generate_Issuer(name string) pkix.Name{
 	return issuer
 }
 
+
 //generate N signed precert, with different subject
-func Generate_N_Signed_PreCert(c *CAContext,N int, host string, validFor time.Duration, isCA bool, issuer pkix.Name, root_cert *x509.Certificate, root bool, pub *rsa.PublicKey, priv *rsa.PrivateKey) []*x509.Certificate{
+func Generate_N_Signed_PreCert(c *CAContext,N int, host string, validFor time.Duration, isCA bool, issuer pkix.Name, root_cert *x509.Certificate, root bool, priv *rsa.PrivateKey, global_offset int) []*x509.Certificate{
 	precerts := make([]*x509.Certificate,N)
-	subjects := Generate_N_Subjects(N)
+	subjects := Generate_N_Subjects(N, global_offset)
+	pubkeys := Generate_N_KeyPairs(subjects)
 	for i:=0;i<N;i++{
-		precerts[i] = Generate_Signed_PreCert(c,host, validFor, isCA, issuer, subjects[i], root_cert, root, pub, priv)
+		pubkey := pubkeys[subjects[i].CommonName]
+		precerts[i] = Generate_Signed_PreCert(c,host, validFor, isCA, issuer, subjects[i], root_cert, root, pubkey, priv)
 	}
 	return precerts
 }
