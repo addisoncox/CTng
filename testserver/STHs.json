@@ -1,0 +1,44 @@
+[
+  {
+    "application": "CTng",
+    "period": "0",
+    "type": "STH_FULL",
+    "signer": "",
+    "signers": {
+      "0": "localhost:8080",
+      "1": "localhost:8081"
+    },
+    "signature": [
+      "{\"sign\":\"165dc546a6f1e434a7ea4896fb6e8b9e196a11b13176d4afcefc4db46c191ebf68001d4224ddc7eac30d398b14251c05\", \"ids\":[\"localhost:8080\",\"localhost:8081\"]}",
+      ""
+    ],
+    "timestamp": "2023-01-25T04:45:20Z",
+    "crypto_scheme": "BLS",
+    "payload": [
+      "localhost:9000",
+      "{\"Signer\":\"\",\"Timestamp\":\"2023-01-25T04:45:20Z\",\"RootHash\":\"\\ufffd\\ufffdM\\ufffd.\\u001e\\ufffdQ\\u000e\\ufffd\\ufffdՐ\\ufffd^y\\ufffd:\\ufffd\\ufffd\\ufffdɢ$\\ufffd\\u0012\\ufffd\\ufffd-\\ufffd\\ufffd\",\"TreeSize\":8}",
+      ""
+    ]
+  },
+  {
+    "application": "CTng",
+    "period": "0",
+    "type": "STH_FULL",
+    "signer": "",
+    "signers": {
+      "0": "localhost:8080",
+      "1": "localhost:8082"
+    },
+    "signature": [
+      "{\"sign\":\"34f083d1b0472d7f7c26f63fe3a2d574e3efc730a7612669524aae342b0b661fa3571e213507af42bccc4595cf8a4096\", \"ids\":[\"localhost:8080\",\"localhost:8082\"]}",
+      ""
+    ],
+    "timestamp": "2023-01-25T04:45:20Z",
+    "crypto_scheme": "BLS",
+    "payload": [
+      "localhost:9001",
+      "{\"Signer\":\"\",\"Timestamp\":\"2023-01-25T04:45:20Z\",\"RootHash\":\"\\ufffdƚ\\ufffd\\ufffd5\\\\\\ufffd\\u003c\\ufffd6\\\"\\ufffd\\ufffdWo\\ndC\\ufffda\\ufffd\\ufffd6\\ufffd\\ufffd\\u0011\\ufffd\\ufffd\\ufffd*q\",\"TreeSize\":8}",
+      ""
+    ]
+  }
+]
