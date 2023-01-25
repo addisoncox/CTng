@@ -48,7 +48,7 @@ type GossiperContext struct {
 	Config      *config.Gossiper_config
 	StorageID   string
 	//RWlock
-	RWlock sync.RWMutex
+	RWlock *sync.RWMutex
 	//STH + REV + ACC
 	Storage_RAW  *Gossip_Storage_Counter
 	//STH_FRAG + REV_FRAG + ACC_FRAG + CON_FRAG
@@ -114,7 +114,7 @@ func Gossip_Context_Init(config *config.Gossiper_config,Storage_ID string) *Goss
 	*g_log = make(Gossiper_log) 
 	ctx := GossiperContext{
 		Config:      config,
-		RWlock: sync.RWMutex{},
+		RWlock: &sync.RWMutex{},
 		//STH + REV + ACC + CON
 		Storage_RAW:  storage_raw,
 		//STH_FRAG + REV_FRAG + ACC_FRAG + CON_FRAG
