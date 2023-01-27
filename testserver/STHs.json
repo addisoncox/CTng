@@ -12,11 +12,11 @@
       "{\"sign\":\"165dc546a6f1e434a7ea4896fb6e8b9e196a11b13176d4afcefc4db46c191ebf68001d4224ddc7eac30d398b14251c05\", \"ids\":[\"localhost:8080\",\"localhost:8081\"]}",
       ""
     ],
-    "timestamp": "2023-01-25T07:23:01Z",
+    "timestamp": "2023-01-26T21:36:41Z",
     "crypto_scheme": "BLS",
     "payload": [
       "localhost:9000",
-      "{\"Signer\":\"\",\"Timestamp\":\"2023-01-25T07:23:01Z\",\"RootHash\":\";\\ufffd1Y\\u001f\\ufffd\\u001a\\ufffd\\ufffd6G\\ufffdڐ\\ufffd\\u001a4\\ufffd\\ufffd\\ufffd\\ufffd\\ufffd\\ufffdh\\ufffdewzj\\ufffdOZ\",\"TreeSize\":8}",
+      "{\"Signer\":\"\",\"Timestamp\":\"2023-01-26T21:36:40Z\",\"RootHash\":\"\\ufffd\\ufffd\\ufffd\\ufffd\\ufffdt\\ufffd\\u003c\\ufffd\\ufffd\\ufffdo\\ufffd\\ufffdy\\ufffd\\ufffde\\ufffd9L\\ufffdՌX\\ufffd\\ufffdo\\ufffd\\ufffd\\ufffd\\ufffd\",\"TreeSize\":8}",
       ""
     ]
   },
@@ -33,11 +33,11 @@
       "{\"sign\":\"34f083d1b0472d7f7c26f63fe3a2d574e3efc730a7612669524aae342b0b661fa3571e213507af42bccc4595cf8a4096\", \"ids\":[\"localhost:8080\",\"localhost:8082\"]}",
       ""
     ],
-    "timestamp": "2023-01-25T07:23:01Z",
+    "timestamp": "2023-01-26T21:36:41Z",
     "crypto_scheme": "BLS",
     "payload": [
       "localhost:9001",
-      "{\"Signer\":\"\",\"Timestamp\":\"2023-01-25T07:23:01Z\",\"RootHash\":\"\\u0011y\\ufffd\\ufffd\\u000e\\ufffdG\\ufffdt\\ufffd\\ufffdx\\ufffd\\u0016$\\ufffd\\u00057\\ufffdKV\\ufffdߏ\\u0004\\u000eSs\\ufffd\\ufffd\\\\\",\"TreeSize\":8}",
+      "{\"Signer\":\"\",\"Timestamp\":\"2023-01-26T21:36:40Z\",\"RootHash\":\"3\\ufffd\\ufffd\\ufffdX$\\u0018\\u0016\\\\\\u001fYa{\\u0010/f7y\\tH\\ufffd5u\\ufffd\\ufffd#\\n\\ufffd}ŷ\",\"TreeSize\":8}",
       ""
     ]
   }

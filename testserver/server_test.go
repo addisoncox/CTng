@@ -290,7 +290,7 @@ func TestCertLogging (t *testing.T){
 		//fmt.Println("root cert: ", ctx_ca_1.Rootcert)
 		//fmt.Println("derbytes: ", derbytes)
 
-		SaveCertificateToDisk(derbytes, target_cert.Subject.CommonName+ " from CA1.crt")
+		SaveCertificateToDisk(derbytes, target_cert.Subject.CommonName+ " from CA 1.crt")
 	}
 	// For all the certs in CA 2 Cert Pool, Sign them and write them to disk
 	ca_2_cert_list := CA2_cert_pool.GetCertList()
@@ -302,7 +302,7 @@ func TestCertLogging (t *testing.T){
 		}
 		//fmt.Println("root cert: ", ctx_ca_2.Rootcert)
 		//fmt.Println("derbytes: ", derbytes)
-		SaveCertificateToDisk(derbytes, target_cert.Subject.CommonName+ "fromCA2.crt")
+		SaveCertificateToDisk(derbytes, target_cert.Subject.CommonName+ " from CA 2.crt")
 	}
 
 
