@@ -33,6 +33,7 @@ type CAContext struct {
 	CertPoolStorage   *CTngCertPoolStorage
 	Rootcert *x509.Certificate
 	CertCounter int
+	CRV *CRV
 }
 
 type CA_public_config struct {
@@ -216,6 +217,8 @@ func InitializeCAContext(public_config_path string,private_config_file_path stri
 	}
 	// Generate root certificate
 	caContext.Rootcert = Generate_Root_Certificate(caContext)
+	newCRV := CRV_init()
+	caContext.CRV = newCRV
 	return caContext
 }
 

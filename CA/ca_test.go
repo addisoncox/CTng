@@ -1,173 +1,28 @@
 
 package CA
-/*
 import (
-	"CTng/gossip"
-	"CTng/crypto"
-	//"CTng/util"
-	//"bytes"
-	"encoding/json"
 	"fmt"
-	"io/ioutil"
-	"log"
-	//"net/http"
 	"testing"
-	"time"
-	//"strings"
-	//"strconv"
-	//"github.com/gorilla/mux"
+	"github.com/bits-and-blooms/bitset"
 )
-// test generate CA config
 
-func TestGenerateCAConfig(t *testing.T) {
-	for i := 0;i < 2;i++{
-		// Generate CA public config template
-		caPublicConfig := GenerateCA_public_config_template()
-		// Generate CA private config template
-		caPrivateConfig := GenerateCA_private_config_template()
-		// Generate CA crypto config template
-		caCryptoConfig := GenerateCA_Crypto_config_template()
-
-		// Start setting CA public config
-		// set all CA URLs
-		caPublicConfig.All_CA_URLs = []string{"localhost:9100", "localhost:9101"}
-		// set all logger URLs
-		caPublicConfig.All_Logger_URLs = []string{"localhost:9000", "localhost:9001"}
-		// set MMD
-		caPublicConfig.MMD = 60
-		// set MRD
-		caPublicConfig.MRD = 60
-		// set http version
-		caPublicConfig.Http_vers = []string{"1.1"}
-
-		// Start setting CA private config
-		caPrivateConfig.Signer = "localhost:910" + fmt.Sprint(i)
-		caPrivateConfig.Port = "910" + fmt.Sprint(i)
-		caPrivateConfig.Loggerlist = []string{"localhost:9000", "localhost:9001"}
-		caPrivateConfig.Monitorlist = []string{"localhost:8180", "localhost:8181", "localhost:8182", "localhost:8183"}
-		caPrivateConfig.Gossiperlist = []string{"localhost:8080", "localhost:8081", "localhost:8082", "localhost:8083"}
-		caPrivateConfig.Cert_per_period = 10
-
-		// Start setting CA crypto config
-		caCryptoConfig.SelfID = crypto.CTngID("localhost:910" + fmt.Sprint(i))
-		caCryptoConfig.SignScheme = "rsa"
-		caCryptoConfig.HashScheme = 4
-		rsapriv, err := crypto.NewRSAPrivateKey()
-		if err != nil {
-			log.Fatal(err)
-		}
-		caCryptoConfig.PrivateKey = rsapriv
-		rsapub := rsapriv.PublicKey
-		caCryptoConfig.PublicKey = rsapub
-
-		// Start Marshal indent all 3
-		caPublicConfigBytes, err := json.MarshalIndent(caPublicConfig, "", "  ")
-		if err != nil {
-			log.Fatal(err)
-		}
-		err = ioutil.WriteFile("ca_testconfig/" + fmt.Sprint(i+1)+ "/ca_public_config.json", caPublicConfigBytes, 0644)
-		if err != nil {
-			log.Fatal(err)
-		}
-		caPrivateConfigBytes, err := json.MarshalIndent(caPrivateConfig, "", "  ")
-		if err != nil {
-			log.Fatal(err)
-		}
-		err = ioutil.WriteFile("ca_testconfig/" + fmt.Sprint(i+1)+ "/ca_private_config.json", caPrivateConfigBytes, 0644)
-		if err != nil {
-			log.Fatal(err)
-		}
-		caCryptoConfigBytes, err := json.MarshalIndent(caCryptoConfig, "", "  ")
-		if err != nil {
-			log.Fatal(err)
-		}
-		err = ioutil.WriteFile("ca_testconfig/" + fmt.Sprint(i+1)+ "/ca_crypto_config.json", caCryptoConfigBytes, 0644)
-		if err != nil {
-			log.Fatal(err)
-		}
-	}
+func testCRV(t *testing.T){
+	newCRV := CRV_init()
+	newCRV.Revoke(1)
+	newCRV.Revoke(4)
+	fmt.Println(newCRV.CRV_current)
+	fmt.Println(newCRV.CRV_pre_update)
+	var newbitset = new(bitset.BitSet)
+	newbitset.UnmarshalJSON(newCRV.GetDeltaCRV())
+	fmt.Println(newbitset)
 }
 
-//test initialize CA context
-func TestContext(t *testing.T) {
-	// initialize CA context
-	ctx := InitializeCAContext("ca_testconfig/1/ca_config.json")
-	fmt.Println("CA context initialized",(*ctx.Config).Loggerlist)
+func TestCAContext(t *testing.T){
+	ctx := InitializeCAContext("../Gen/ca_testconfig/1/CA_public_config.json","../Gen/ca_testconfig/1/CA_private_config.json","../Gen/ca_testconfig/1/CA_crypto_config.json")
+	ctx.CRV.Revoke(1)
+	ctx.CRV.Revoke(4)
+	fmt.Println(ctx.CRV.CRV_current)
+	REV := Generate_Revocation(ctx,"0")
+	fmt.Println(REV)
 }
 
-func Genrate_N_Ctng_Extensions(n int) []CTngExtension{
-	// initialize CTng extension list
-	extensions := make([]CTngExtension, n)
-	// generate 2 ctng extensions
-	for i := 0;i < n;i++{
-		// generate STH
-		sth := gossip.Gossip_object{}
-		// generate POI
-		poi := []string{"poi1", "poi2"}
-		// generate RID
-		rid := i
-		// generate CTng extension
-		extensions[i] = CTngExtension{sth, poi, rid}
-	}
-	return extensions
-}
-
-func CTngExtensions_to_Strings(extensions []CTngExtension) []string{
-	// initialize CTng extension string list
-	extensions_str := make([]string, len(extensions))
-	// convert ctng extensions to strings
-	for i := 0;i < len(extensions);i++{
-		// Marshal CTng extension to json
-		extension_bytes, err := json.Marshal(extensions[i])
-		if err != nil {
-			log.Fatal(err)
-		}
-		// convert json to string
-		extensions_str[i] = string(extension_bytes)
-	}
-	return extensions_str
-}
-
-//test CertGen
-func TestCertGen(t *testing.T) {
-	// initialize CA context
-	ctx := InitializeCAContext("ca_testconfig/1/ca_config.json")
-	// generate issuer
-	issuer := Generate_Issuer("CA 1")
-	// generate host
-	host := "CA 1"
-	// generate valid duration
-	validFor := 365 * 24 * time.Hour
-	isCA := false
-	// generate 64 certificates
-	certs := Generate_N_Signed_PreCert(ctx, 64, host, validFor, isCA, issuer, ctx.Rootcert, false, &ctx.Config.Public, &ctx.Config.Private)
-	fmt.Println(len(certs))
-	// print the common name of the first 10 certificate
-	for i := 0;i < 10;i++{
-		fmt.Println(certs[i].Subject.CommonName)
-	}
-	// generate 2 ctng extensions
-	exts := Genrate_N_Ctng_Extensions(2)
-	// convert ctng extensions to strings
-	exts_str := CTngExtensions_to_Strings(exts)
-	//fmt.Println(exts_str)
-	// add first extension to 1 certificate
-	certs[0].CRLDistributionPoints = []string{exts_str[0]}
-	// add first cert to certpool
-	ctx.CurrentCertificatePool.AddCertificate(*certs[0], ctx)
-	// Print the first certificate in the certpool, cert pool is a map
-	for _, cert := range ctx.CurrentCertificatePool.Certificates{
-		fmt.Println(cert.Subject.CommonName)
-		fmt.Println(cert.CRLDistributionPoints)
-	}
-	// add extensions to 1 certificate
-	certs[0].CRLDistributionPoints = []string{exts_str[1]}
-	// add first cert to certpool
-	ctx.CurrentCertificatePool.AddCertificate(*certs[0], ctx)
-	// Print the first certificate in the certpool, cert pool is a map
-	for _, cert := range ctx.CurrentCertificatePool.Certificates{
-		fmt.Println(cert.Subject.CommonName)
-		fmt.Println(cert.CRLDistributionPoints)
-	}
-}
-*/
