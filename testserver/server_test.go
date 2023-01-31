@@ -36,13 +36,17 @@ var ctx_gossiper_3 *gossip.GossiperContext
 var ctx_gossiper_4 *gossip.GossiperContext
 var cert_pool []*x509.Certificate
 var Logger1_cert_pool []*x509.Certificate
+var logger1_cert_pool_alt []*x509.Certificate // cert pool for logger 1 with a different number of certs
 var Logger2_cert_pool []*x509.Certificate
+var logger2_cert_pool_alt []*x509.Certificate // cert pool for logger 2 with a different number of certs
 var CA1_cert_pool CA.CertPool
 var CA2_cert_pool CA.CertPool
 var POI_Logger1_map map[string][]CA.POI
 var POI_Logger2_map map[string][]CA.POI
 var STH_Logger1 gossip.Gossip_object
+var STH_Logger1_alt gossip.Gossip_object // Conflicting STH for logger 1
 var STH_Logger2 gossip.Gossip_object
+var STH_Logger2_alt gossip.Gossip_object // Conflicting STH for logger 2
 var STH_FULL_Logger1 gossip.Gossip_object
 var STH_FULL_Logger2 gossip.Gossip_object
 
@@ -213,6 +217,14 @@ func TestCertLogging (t *testing.T){
 		Logger1_cert_pool = append(Logger1_cert_pool, cert_pool[i])
 		Logger1_cert_pool = append(Logger1_cert_pool, cert_pool[i+5])
 	}
+	// Prepare cert pool alt for logger 1
+	Logger1_cert_pool_alt := make([]*x509.Certificate, 0)
+	// append 3 certs from CA 1 and 3 certs from CA 2 (one less than Logger1_cert_pool)
+	for i := 0;i < 3;i++{
+		// Logger 1 logs first 4 certs from CA 1 and first 4 certs from CA 2
+		Logger1_cert_pool_alt = append(Logger1_cert_pool_alt, cert_pool[i])
+		Logger1_cert_pool_alt = append(Logger1_cert_pool_alt, cert_pool[i+5])
+	}
 	// Prepare cert pool for logger 2
 	Logger2_cert_pool := make([]*x509.Certificate, 0)
 	// append 4 certs from CA 1 and 3 certs from CA 2
@@ -221,22 +233,44 @@ func TestCertLogging (t *testing.T){
 		Logger2_cert_pool = append(Logger2_cert_pool, cert_pool[i+1])
 		Logger2_cert_pool = append(Logger2_cert_pool, cert_pool[i+6])
 	}
+	// Prepare cert pool alt for logger 2
+	Logger2_cert_pool_alt := make([]*x509.Certificate, 0)
+	// append 3 certs from CA 1 and 3 certs from CA 2 (one less than Logger2_cert_pool)
+	for i := 0;i < 3;i++{
+		// Logger 2 logs last 4 certs from CA 1 and last 4 certs from CA 2
+		Logger2_cert_pool_alt = append(Logger2_cert_pool_alt, cert_pool[i+1])
+		Logger2_cert_pool_alt = append(Logger2_cert_pool_alt, cert_pool[i+6])
+	}
 	// convert []*x509.Certificate to []x509.Certificate
 	Logger1_cert_pool_2 := make([]x509.Certificate, 0)
 	for i := 0;i < len(Logger1_cert_pool);i++{
 		Logger1_cert_pool_2 = append(Logger1_cert_pool_2, *Logger1_cert_pool[i])
 	}
+	Logger1_cert_pool_alt_2 := make([]x509.Certificate, 0)
+	for i := 0;i < len(Logger1_cert_pool_alt);i++{
+		Logger1_cert_pool_alt_2 = append(Logger1_cert_pool_alt_2, *Logger1_cert_pool_alt[i])
+	}
 	Logger2_cert_pool_2 := make([]x509.Certificate, 0)
 	for i := 0;i < len(Logger2_cert_pool);i++{
 		Logger2_cert_pool_2 = append(Logger2_cert_pool_2, *Logger2_cert_pool[i])
 	}
+	Logger2_cert_pool_alt_2 := make([]x509.Certificate, 0)
+	for i := 0;i < len(Logger2_cert_pool_alt);i++{
+		Logger2_cert_pool_alt_2 = append(Logger2_cert_pool_alt_2, *Logger2_cert_pool_alt[i])
+	}
 	// Start building Merkle Tree and get STH and POI
 	gossip_sth_1, _, nodes_logger_1 := Logger.BuildMerkleTreeFromCerts(Logger1_cert_pool_2, *ctx_logger_1, 0)
+	gossip_sth_1_alt, _, _ := Logger.BuildMerkleTreeFromCerts(Logger1_cert_pool_alt_2, *ctx_logger_1, 0)
 	gossip_sth_2, _, nodes_logger_2 := Logger.BuildMerkleTreeFromCerts(Logger2_cert_pool_2, *ctx_logger_2, 0)
+	gossip_sth_2_alt, _, _ := Logger.BuildMerkleTreeFromCerts(Logger2_cert_pool_alt_2, *ctx_logger_2, 0)
 	STH_Logger1 = gossip_sth_1
+	STH_Logger1_alt = gossip_sth_1_alt
 	STH_Logger2 = gossip_sth_2
+	STH_Logger2_alt = gossip_sth_2_alt
 	fmt.Println("Signer of the STH from logger 1 is: ", STH_Logger1.Signer)
+	fmt.Println("Signer of the STH_alt from logger 1 is: ", STH_Logger1_alt.Signer)
 	fmt.Println("Signer of the STH from logger 2 is: ", STH_Logger2.Signer)
+	fmt.Println("Signer of the STH_alt from logger 2 is: ", STH_Logger2_alt.Signer)
 	// initialize POI map
 	ca1_from_logger1 := []CA.POI{}
 	ca1_from_logger2 := []CA.POI{}
@@ -402,4 +436,55 @@ func TestSTHFULL(t *testing.T){
 		fmt.Println("Error in writing STHs to json file")
 	}
 	fmt.Println("-------------------------------STH FULL Test Passed-------------------------------")
+}
+
+func TestCONFULL(t *testing.T){
+	// Create the payload for CON, should be the signer of the STH || STH || STH_alt
+	payload := [3]string{STH_Logger1.Signer, STH_Logger1.Payload[0]+STH_Logger1.Payload[1]+ STH_Logger1.Payload[2], STH_Logger1_alt.Payload[0]+STH_Logger1_alt.Payload[1]+ STH_Logger1_alt.Payload[2]}
+	//Gossiper 1 Threshold sign the payload
+	partial_sig_1, err := ctx_gossiper_1.Config.Crypto.ThresholdSign(payload[0]+payload[1]+payload[2])
+	if err != nil{
+		fmt.Println("Error in threshold sign CONF_Logger1")
+	}
+	//Gossiper 2 Threshold sign CON_logger2
+	partial_sig_2, err := ctx_gossiper_2.Config.Crypto.ThresholdSign(payload[0]+payload[1]+payload[2])
+	if err != nil{
+		fmt.Println("Error in threshold sign CONF_Logger2")
+	}
+	// Create a list of partial signature
+	partial_sig_list := []crypto.SigFragment{partial_sig_1, partial_sig_2}
+	// Aggregate partial signature
+	sig, err := ctx_gossiper_1.Config.Crypto.ThresholdAggregate(partial_sig_list)
+	if err != nil{
+		fmt.Println("Error in threshold aggregate CONF_Logger1 and CONF_Logger2")
+	}
+	sigstring, err:= sig.String()
+	if err != nil{
+		fmt.Println("Error in converting signature to string")
+	}
+	// Create Signer map
+	signermap := make(map[int]string)
+	signermap[0] = ctx_gossiper_1.Config.Crypto.SelfID.String()
+	signermap[1] = ctx_gossiper_2.Config.Crypto.SelfID.String()
+	CONF_FULL_Logger1 := gossip.Gossip_object{
+		Application: "CTng",
+		Type:        gossip.CON_FULL,
+		Period:      "0",
+		Signer:      "",
+		Signers:     signermap,
+		Timestamp:   gossip.GetCurrentTimestamp(),
+		Signature:   [2]string{sigstring},
+		Crypto_Scheme: "BLS",
+		Payload:     payload,
+	}
+	POMs := []gossip.Gossip_object{CONF_FULL_Logger1}
+	POMs_json, err := json.MarshalIndent(POMs, "", "  ")
+	if err != nil{
+		fmt.Println("Error in marshaling POMs")
+	}
+	err = ioutil.WriteFile("POMs.json", POMs_json, 0644)
+	if err != nil{
+		fmt.Println("Error in writing POMs to json file")
+	}
+	fmt.Println("-------------------------------CONF FULL Test Passed-------------------------------")
 }
