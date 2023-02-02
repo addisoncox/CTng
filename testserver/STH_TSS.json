@@ -1,0 +1,23 @@
+[
+  {
+    "application": "CTng",
+    "period": "0",
+    "type": "STH_FULL",
+    "signer": "",
+    "signers": {
+      "0": "localhost:8080",
+      "1": "localhost:8081"
+    },
+    "signature": [
+      "{\"sign\":\"165dc546a6f1e434a7ea4896fb6e8b9e196a11b13176d4afcefc4db46c191ebf68001d4224ddc7eac30d398b14251c05\", \"ids\":[\"localhost:8080\",\"localhost:8081\"]}",
+      ""
+    ],
+    "timestamp": "2023-02-02T02:28:48Z",
+    "crypto_scheme": "BLS",
+    "payload": [
+      "localhost:9000",
+      "{\"Signer\":\"\",\"Timestamp\":\"2023-02-02T02:28:48Z\",\"RootHash\":\"@\\ufffd$\\ufffd\\ufffd`\\ufffd\\u0003R\\ufffdZӵ\\ufffd\\ufffdL{\\ufffd\\ufffdi\\ufffd2(\\u0017|\\ufffd\\ufffd^}\\ufffd%1\",\"TreeSize\":8}",
+      ""
+    ]
+  }
+]

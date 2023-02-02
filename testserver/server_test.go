@@ -19,6 +19,7 @@ import(
 	"encoding/pem"
 	"log"
 	"crypto/rand"
+	"github.com/bits-and-blooms/bitset"
 )
 
 var ctx_ca_1 *CA.CAContext
@@ -49,6 +50,12 @@ var STH_Logger2 gossip.Gossip_object
 var STH_Logger2_alt gossip.Gossip_object // Conflicting STH for logger 2
 var STH_FULL_Logger1 gossip.Gossip_object
 var STH_FULL_Logger2 gossip.Gossip_object
+var REV_CA1 gossip.Gossip_object
+var REV_CA1_alt gossip.Gossip_object
+var REV_CA2 gossip.Gossip_object
+var REV_CA2_alt gossip.Gossip_object
+var REV_FULL_CA1 gossip.Gossip_object
+var REV_FULL_CA2 gossip.Gossip_object
 
 func SaveCertificateToDisk(certBytes []byte, filePath string) {
 	certOut, err := os.Create(filePath)
@@ -415,7 +422,7 @@ func TestSTHFULL(t *testing.T){
 	signermap[1] = ctx_gossiper_3.Config.Crypto.SelfID.String()
 	STH_FULL_Logger2 = gossip.Gossip_object{
 		Application: "CTng",
-		Type:        "STH_FULL",
+		Type:        gossip.STH_FULL,
 		Period:      "0",
 		Signer:      "",
 		Signers:     signermap,
@@ -426,21 +433,129 @@ func TestSTHFULL(t *testing.T){
 	}
 
 	// Create a jsonfile for STHs
-	STHs := []gossip.Gossip_object{STH_FULL_Logger1, STH_FULL_Logger2}
+	STHs := []gossip.Gossip_object{STH_FULL_Logger1}
 	STHs_json, err := json.MarshalIndent(STHs, "", "  ")
 	if err != nil{
 		fmt.Println("Error in marshaling STHs")
 	}
-	err = ioutil.WriteFile("STHs.json", STHs_json, 0644)
+	err = ioutil.WriteFile("STH_TSS.json", STHs_json, 0644)
 	if err != nil{
 		fmt.Println("Error in writing STHs to json file")
 	}
 	fmt.Println("-------------------------------STH FULL Test Passed-------------------------------")
 }
-
+func TestREVFULL(t *testing.T){
+	// Revoke cert 3 from CA 1
+	ctx_ca_1.CRV.Revoke(3)
+	// Revoke cert 3 from CA 2
+	ctx_ca_2.CRV.Revoke(3)
+	//Generate REV from CA 1
+	rev_ca1 := CA.Generate_Revocation(ctx_ca_1, "0")
+	bitset_DCRV_CA1 := new(bitset.BitSet)
+	bitset_DCRV_CA1.UnmarshalJSON([]byte(ctx_ca_1.CRV.GetDeltaCRV()))
+	fmt.Println("CRV for CA 1", bitset_DCRV_CA1)
+	REV_CA1 = rev_ca1
+	// Generate REV from CA 2
+	rev_ca2 := CA.Generate_Revocation(ctx_ca_2, "0")
+	bitset_DCRV_CA2 := new(bitset.BitSet)
+	bitset_DCRV_CA2.UnmarshalJSON([]byte(ctx_ca_2.CRV.GetDeltaCRV()))
+	fmt.Println("CRV for CA 2", bitset_DCRV_CA2)
+	REV_CA2 = rev_ca2
+	// revoke cert 4 from CA 2
+	ctx_ca_2.CRV.Revoke(4)
+	bitset_DCRV_CA2_alt := new(bitset.BitSet)
+	bitset_DCRV_CA2_alt.UnmarshalJSON([]byte(ctx_ca_2.CRV.GetDeltaCRV()))
+	fmt.Println("CRV_alt for CA 2", bitset_DCRV_CA2_alt)
+	// Generate REV from CA 2
+	REV_CA2_alt = CA.Generate_Revocation(ctx_ca_2, "0")
+	// Get the Gossiper 1's signature on the payload of ca1's revocation
+	partial_sig_1, err := ctx_gossiper_1.Config.Crypto.ThresholdSign(rev_ca1.Payload[0]+rev_ca1.Payload[1]+rev_ca1.Payload[2])
+	if err != nil{
+		fmt.Println("Error in threshold sign REV_Logger1")
+	}
+	// Get the Gossiper 2's signature on the payload of ca1's revocation
+	partial_sig_2, err := ctx_gossiper_2.Config.Crypto.ThresholdSign(rev_ca1.Payload[0]+rev_ca1.Payload[1]+rev_ca1.Payload[2])
+	if err != nil{
+		fmt.Println("Error in threshold sign REV_Logger2")
+	}
+	// Get the Gossiper 1's signature on the payload of ca2's revocation
+	partial_sig_3, err := ctx_gossiper_1.Config.Crypto.ThresholdSign(rev_ca2.Payload[0]+rev_ca2.Payload[1]+rev_ca2.Payload[2])
+	if err != nil{
+		fmt.Println("Error in threshold sign REV_Logger1")
+	}
+	// Get the Gossiper 2's signature on the payload of ca2's revocation
+	partial_sig_4, err := ctx_gossiper_2.Config.Crypto.ThresholdSign(rev_ca2.Payload[0]+rev_ca2.Payload[1]+rev_ca2.Payload[2])
+	if err != nil{
+		fmt.Println("Error in threshold sign REV_Logger2")
+	}
+	// Create a list of partial signature for ca1's revocation
+	partial_sig_list := []crypto.SigFragment{partial_sig_1, partial_sig_2}
+	// Create a list of partial signature for ca2's revocation
+	partial_sig_list2 := []crypto.SigFragment{partial_sig_3, partial_sig_4}
+	// Aggregate partial signature for ca1's revocation
+	sig, err := ctx_gossiper_1.Config.Crypto.ThresholdAggregate(partial_sig_list)
+	if err != nil{
+		fmt.Println("Error in threshold aggregate REV_Logger1 and REV_Logger2")
+	}
+	// Aggregate partial signature for ca2's revocation
+	sig2, err := ctx_gossiper_1.Config.Crypto.ThresholdAggregate(partial_sig_list2)
+	if err != nil{
+		fmt.Println("Error in threshold aggregate REV_Logger1 and REV_Logger2")
+	}
+	sigstring, err:= sig.String()
+	if err != nil{
+		fmt.Println("Error in converting signature to string")
+	}
+	sigstring2, err:= sig2.String()
+	if err != nil{
+		fmt.Println("Error in converting signature to string")
+	}
+	// Create Signer map for ca1's revocation
+	signermap := make(map[int]string)
+	signermap[0] = ctx_gossiper_1.Config.Crypto.SelfID.String()
+	signermap[1] = ctx_gossiper_2.Config.Crypto.SelfID.String()
+	// Create Signer map for ca2's revocation
+	signermap2 := make(map[int]string)
+	signermap2[0] = ctx_gossiper_1.Config.Crypto.SelfID.String()
+	signermap2[1] = ctx_gossiper_2.Config.Crypto.SelfID.String()
+	// Create REV_FULL object for ca1's revocation
+	REV_FULL_CA1= gossip.Gossip_object{
+		Application: "CTng",
+		Type:        gossip.REV_FULL,
+		Period:      "0",
+		Signer:      "",
+		Signers:     signermap,
+		Timestamp:   gossip.GetCurrentTimestamp(),
+		Signature:   [2]string{sigstring},
+		Crypto_Scheme: "BLS",
+		Payload:     [3]string{rev_ca1.Payload[0], rev_ca1.Payload[1], rev_ca1.Payload[2]},
+	}
+	// Create REV_FULL object for ca2's revocation
+	REV_FULL_CA2 = gossip.Gossip_object{
+		Application: "CTng",
+		Type:        gossip.REV_FULL,
+		Period:      "0",
+		Signer:      "",
+		Signers:     signermap2,
+		Timestamp:   gossip.GetCurrentTimestamp(),
+		Signature:   [2]string{sigstring2},
+		Crypto_Scheme: "BLS",
+		Payload:     [3]string{rev_ca2.Payload[0], rev_ca2.Payload[1], rev_ca2.Payload[2]},
+	}
+	REV_FULL_list := []gossip.Gossip_object{REV_FULL_CA1}
+	REV_FULL_json, err := json.MarshalIndent(REV_FULL_list, "", "  ")
+	if err != nil{
+		fmt.Println("Error in marshaling REV_FULLs")
+	}
+	err = ioutil.WriteFile("REV_TSS.json", REV_FULL_json, 0644)
+	if err != nil{
+		fmt.Println("Error in writing REV_FULLs to file")
+	}
+}
+	 
 func TestCONFULL(t *testing.T){
 	// Create the payload for CON, should be the signer of the STH || STH || STH_alt
-	payload := [3]string{STH_Logger1.Signer, STH_Logger1.Payload[0]+STH_Logger1.Payload[1]+ STH_Logger1.Payload[2], STH_Logger1_alt.Payload[0]+STH_Logger1_alt.Payload[1]+ STH_Logger1_alt.Payload[2]}
+	payload := [3]string{STH_Logger2.Signer, STH_Logger2.Payload[0]+STH_Logger2.Payload[1]+ STH_Logger2.Payload[2], STH_Logger2_alt.Payload[0]+STH_Logger2_alt.Payload[1]+ STH_Logger2_alt.Payload[2]}
 	//Gossiper 1 Threshold sign the payload
 	partial_sig_1, err := ctx_gossiper_1.Config.Crypto.ThresholdSign(payload[0]+payload[1]+payload[2])
 	if err != nil{
@@ -466,7 +581,7 @@ func TestCONFULL(t *testing.T){
 	signermap := make(map[int]string)
 	signermap[0] = ctx_gossiper_1.Config.Crypto.SelfID.String()
 	signermap[1] = ctx_gossiper_2.Config.Crypto.SelfID.String()
-	CONF_FULL_Logger1 := gossip.Gossip_object{
+	CON_FULL_Logger2 := gossip.Gossip_object{
 		Application: "CTng",
 		Type:        gossip.CON_FULL,
 		Period:      "0",
@@ -477,14 +592,53 @@ func TestCONFULL(t *testing.T){
 		Crypto_Scheme: "BLS",
 		Payload:     payload,
 	}
-	POMs := []gossip.Gossip_object{CONF_FULL_Logger1}
+	// Create the payload for CON, should be the signer of the REV || REV || REV_alt, from CA 2
+	payload2 := [3]string{REV_CA2.Signer, REV_CA2.Payload[0]+REV_CA2.Payload[1]+ REV_CA2.Payload[2], REV_CA2_alt.Payload[0]+REV_CA2_alt.Payload[1]+ REV_CA2_alt.Payload[2]}
+	//Gossiper 1 Threshold sign the payload
+	partial_sig_1, err = ctx_gossiper_1.Config.Crypto.ThresholdSign(payload2[0]+payload2[1]+payload2[2])
+	if err != nil{
+		fmt.Println("Error in threshold sign CONF_Logger1")
+	}
+	//Gossiper 2 Threshold sign CON_logger2
+	partial_sig_2, err = ctx_gossiper_2.Config.Crypto.ThresholdSign(payload2[0]+payload2[1]+payload2[2])
+	if err != nil{
+		fmt.Println("Error in threshold sign CONF_Logger2")
+	}
+	// Create a list of partial signature
+	partial_sig_list = []crypto.SigFragment{partial_sig_1, partial_sig_2}
+	// Aggregate partial signature
+	sig, err = ctx_gossiper_1.Config.Crypto.ThresholdAggregate(partial_sig_list)
+	if err != nil{
+		fmt.Println("Error in threshold aggregate CONF_Logger1 and CONF_Logger2")
+	}
+	sigstring2, err:= sig.String()
+	if err != nil{
+		fmt.Println("Error in converting signature to string")
+	}
+	// Create Signer map
+	signermap = make(map[int]string)
+	signermap[0] = ctx_gossiper_1.Config.Crypto.SelfID.String()
+	signermap[1] = ctx_gossiper_2.Config.Crypto.SelfID.String()
+	CON_FULL_CA2 := gossip.Gossip_object{
+		Application: "CTng",
+		Type:        gossip.CON_FULL,
+		Period:      "0",
+		Signer:      "",
+		Signers:     signermap,
+		Timestamp:   gossip.GetCurrentTimestamp(),
+		Signature:   [2]string{sigstring2},
+		Crypto_Scheme: "BLS",
+		Payload:     payload2,
+	}
+	POMs := []gossip.Gossip_object{CON_FULL_Logger2, CON_FULL_CA2}
 	POMs_json, err := json.MarshalIndent(POMs, "", "  ")
 	if err != nil{
 		fmt.Println("Error in marshaling POMs")
 	}
-	err = ioutil.WriteFile("POMs.json", POMs_json, 0644)
+	err = ioutil.WriteFile("POM_TSS.json", POMs_json, 0644)
 	if err != nil{
 		fmt.Println("Error in writing POMs to json file")
 	}
 	fmt.Println("-------------------------------CONF FULL Test Passed-------------------------------")
 }
+
