@@ -12,7 +12,7 @@
       "{\"sign\":\"38b18111a518372351fae190bf151e3aa6c4f86366f5b2de3d8cb37f32fb700644ce466072b87052f13f3002b9c91502\", \"ids\":[\"localhost:8080\",\"localhost:8081\"]}",
       ""
     ],
-    "timestamp": "2023-02-02T02:28:48Z",
+    "timestamp": "2023-02-03T07:18:12Z",
     "crypto_scheme": "BLS",
     "payload": [
       "localhost:9100",

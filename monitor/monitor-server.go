@@ -27,8 +27,7 @@ func handleMonitorRequests(c *MonitorContext) {
 	// MUX which routes HTTP directories to functions.
 	gorillaRouter := mux.NewRouter().StrictSlash(true)
 	// POST functions
-	gorillaRouter.HandleFunc("/monitor/checkforme", bindMonitorContext(c, requestcheck)).Methods("POST")
-	gorillaRouter.HandleFunc("/monitor/get-updates", bindMonitorContext(c, requestupdate)).Methods("POST")
+	gorillaRouter.HandleFunc("/monitor/get-update", bindMonitorContext(c, requestupdate)).Methods("GET")
 	gorillaRouter.HandleFunc("/monitor/recieve-gossip", bindMonitorContext(c, handle_gossip)).Methods("POST")
 	gorillaRouter.HandleFunc("/monitor/recieve-gossip-from-gossiper", bindMonitorContext(c, handle_gossip_from_gossiper)).Methods("POST")
 	// Start the HTTP server.

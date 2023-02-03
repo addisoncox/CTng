@@ -2,7 +2,7 @@ package monitor
 
 import (
 	"CTng/gossip"
-	"CTng/crypto"
+	//"CTng/crypto"
 	"CTng/util"
 	"bytes"
 	"encoding/json"
@@ -12,14 +12,14 @@ import (
 	"net/http"
 	//"time"
 	//"strings"
-	"strconv"
+	//"strconv"
 	//"github.com/gorilla/mux"
 )
 
 type Clientupdate struct{
-	STHs *gossip.Gossip_Storage
-	REVs *gossip.Gossip_Storage
-	PoMs *gossip.Gossip_Storage
+	STHs gossip.Gossip_Storage
+	REVs gossip.Gossip_Storage
+	PoMs gossip.Gossip_Storage
 	MonitorID string
 	//Period here means the update period, the client udpate object can contain more information than just the period 
 	Period string
@@ -31,49 +31,76 @@ type Clientquery struct{
 	LastUpdatePeriod string
 }
 
-//This function should be invoked after the monitor-gossiper system converges in this period
-func PrepareClientupdate(c *MonitorContext,LastUpdatePeriod string) Clientupdate{
-	LastUpdatePeriodint, _ := strconv.Atoi(LastUpdatePeriod)
-	CurrentPeriodint, _:= strconv.Atoi(gossip.GetCurrentPeriod())
+//we use this function to prepare the client update object, the client update object contains all the information that the client needs to update its local storage
+// filepath is where STHs, REVs and PoMs are stored, local file system stores these information by period
+func PrepareClientupdate(c *MonitorContext, filepath string) Clientupdate{
 	//intialize some storages
 	storage_conflict_pom := new(gossip.Gossip_Storage)
-	*storage_conflict_pom  = make(gossip.Gossip_Storage)
+	*storage_conflict_pom = make(gossip.Gossip_Storage)
 	storage_sth_full := new(gossip.Gossip_Storage)
-	*storage_sth_full  = make(gossip.Gossip_Storage)
+	*storage_sth_full = make(gossip.Gossip_Storage)
 	storage_rev_full := new(gossip.Gossip_Storage)
-	*storage_rev_full  = make(gossip.Gossip_Storage)
+	*storage_rev_full = make(gossip.Gossip_Storage)
+	//load all sths and store them in storage_sth_full
+	bytes, err := util.ReadByte(filepath + "/STH_TSS.json")
+	if err != nil {
+		panic(err)
+	}
+	// Create an array of Gossip_object
+	var sths []gossip.Gossip_object
+	err = json.Unmarshal(bytes, &sths)
+	if err != nil {
+		panic(err)
+	}
+	for _, sth := range sths {
+		// compute gossip ID
+		gossipID := sth.GetID()
+		// store gossip object
+		(*storage_sth_full)[gossipID] = sth
+	}
+	//load all revs and store them in storage_rev_full
+	bytes, err = util.ReadByte(filepath + "/REV_TSS.json")
+	if err != nil {
+		panic(err)
+	}
+	var revs []gossip.Gossip_object
+	err = json.Unmarshal(bytes, &revs)
+	if err != nil {
+		panic(err)
+	}
+	for _, rev := range revs {
+		// compute gossip ID
+		gossipID := rev.GetID();
+		// store gossip object
+		(*storage_rev_full)[gossipID] = rev
+	}
 	//load all poms and sign on it
-	for _, gossipObject := range *storage_conflict_pom{
-		(*storage_conflict_pom)[gossipObject.GetID()] = gossipObject
+	bytes, err = util.ReadByte(filepath + "/POM_TSS.json")
+	if err != nil {
+		panic(err)
 	}
-	payload,_ := json.Marshal(*storage_conflict_pom)
-	signature, _ := crypto.RSASign([]byte(payload), &c.Config.Crypto.RSAPrivateKey, c.Config.Crypto.SelfID)
-	//load all STHs (Fully Threshold signed) from lastUpdatePeriod to the current period
-	for _, gossipObject := range *storage_sth_full{
-		for i := LastUpdatePeriodint; i < CurrentPeriodint; i++ {
-			if gossipObject.Period == strconv.Itoa(i){
-				(*storage_sth_full)[gossipObject.GetID()] = gossipObject
-			}
-		}
+	var poms []gossip.Gossip_object
+	err = json.Unmarshal(bytes, &poms)
+	if err != nil {
+		panic(err)
 	}
-	//load all REVs (Fully Threshold signed) from LastUpdatePeriod to the current period
-	for _, gossipObject := range *storage_rev_full{
-		for i := LastUpdatePeriodint; i < CurrentPeriodint; i++ {
-			if gossipObject.Period == strconv.Itoa(i){
-				(*storage_rev_full)[gossipObject.GetID()] = gossipObject
-			}
-		}
+	for _, pom := range poms {
+		// compute gossip ID
+		gossipID := pom.GetID()
+		// store gossip object
+		(*storage_conflict_pom)[gossipID] = pom
 	}
+	//prepare the client update object
 	CTupdate := Clientupdate{
-		STHs: storage_sth_full,
-		REVs: storage_rev_full,
-		PoMs: storage_conflict_pom,
+		STHs: *storage_sth_full,
+		REVs: *storage_rev_full,
+		PoMs: *storage_conflict_pom,
 		MonitorID: c.Config.Signer,
 		Period: gossip.GetCurrentPeriod(),
-		PoMsig: signature.String(),
 	}
 	return CTupdate
 }
+
 
 func requestupdate(c *MonitorContext, w http.ResponseWriter, r *http.Request){
 	var ticket Clientquery
