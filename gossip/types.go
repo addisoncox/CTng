@@ -135,6 +135,54 @@ func Gossip_Context_Init(config *config.Gossiper_config,Storage_ID string) *Goss
 	}
 	return &ctx
 }
+
+func InitializeGossiperContext(public_config_path string, private_config_path string, crypto_config_path string, storageID string) *GossiperContext {
+	conf, err := config.LoadGossiperConfig(public_config_path, private_config_path, crypto_config_path)
+	if err != nil {
+		panic(err)
+	}
+	storage_raw := new(Gossip_Storage_Counter)
+	*storage_raw = make(Gossip_Storage_Counter)
+	storage_frag := new(Gossip_Storage_Counter)
+	*storage_frag = make(Gossip_Storage_Counter)
+	storage_full := new(Gossip_Storage)
+	*storage_full = make(Gossip_Storage)
+	storage_pom := new(Gossip_Storage)
+	*storage_pom = make(Gossip_Storage)
+	storage_pom_temp := new(Gossip_Storage)
+	*storage_pom_temp = make(Gossip_Storage)
+	gossip_object_TSS_DB := new(Gossip_Object_TSS_DB)
+	*gossip_object_TSS_DB = make(Gossip_Object_TSS_DB)
+	accusation_db := new(Accusation_DB)
+	*accusation_db = make(Accusation_DB)
+	conflict_db := new(Conflict_DB)
+	*conflict_db = make(Conflict_DB)
+	g_log := new(Gossiper_log)
+	*g_log = make(Gossiper_log) 
+	ctx := GossiperContext{
+		Config:      &conf,
+		RWlock: &sync.RWMutex{},
+		//STH + REV + ACC + CON
+		Storage_RAW:  storage_raw,
+		//STH_FRAG + REV_FRAG + ACC_FRAG + CON_FRAG
+		Storage_FRAG: storage_frag,
+		//STH_FULL + REV_FULL + ACC_FULL + CON_FULL
+		Storage_FULL: storage_full,
+		//CON_FRAG + ACC_FULL + CON_FULL 
+		Storage_POM: storage_pom,
+		Storage_POM_TEMP: storage_pom_temp,
+		//ACC_FRAG counter + CON_FRAG counter 
+		Obj_TSS_DB: gossip_object_TSS_DB,
+		//ACC Counter
+		ACC_DB: accusation_db,
+		CON_DB: conflict_db,
+		G_log: g_log,
+		StorageFile: "gossiper_data.json", // could be a parameter in the future.
+		StorageID:   storageID,
+	}
+	return &ctx
+}
+
 func CountStorageCounter(gs *Gossip_Storage_Counter, entry *GossiperLogEntry){
 	for key,_ := range *gs{
 		switch key.Type{

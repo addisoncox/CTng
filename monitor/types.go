@@ -240,3 +240,32 @@ func (c *MonitorContext) WipeStorage(){
 	}
 	fmt.Println(util.BLUE,"Temp storage has been wiped.",util.RESET)
 }
+
+func InitializeMonitorContext(public_config_path string, private_config_path string, crypto_config_path string, storageID string) *MonitorContext {
+	conf, err := config.LoadMonitorConfig(public_config_path, private_config_path, crypto_config_path)
+	if err != nil {
+		//panic(err)
+	}
+	// Space is allocated for all storage fields, and then make is run to initialize these spaces.
+	storage_temp := new(gossip.Gossip_Storage)
+	*storage_temp = make(gossip.Gossip_Storage)
+	storage_conflict_pom := new(gossip.Gossip_Storage)
+	*storage_conflict_pom = make(gossip.Gossip_Storage)
+	storage_accusation_pom := new(gossip.Gossip_Storage)
+	*storage_accusation_pom = make(gossip.Gossip_Storage)
+	storage_sth_full := new(gossip.Gossip_Storage)
+	*storage_sth_full = make(gossip.Gossip_Storage)
+	storage_rev_full := new(gossip.Gossip_Storage)
+	*storage_rev_full = make(gossip.Gossip_Storage)
+	ctx := MonitorContext{
+		Config:                 &conf,
+		Storage_TEMP:           storage_temp,
+		Storage_CONFLICT_POM:   storage_conflict_pom,
+		Storage_ACCUSATION_POM: storage_accusation_pom,
+		Storage_STH_FULL:       storage_sth_full,
+		Storage_REV_FULL:       storage_rev_full,
+		StorageID:              storageID,
+	}
+	ctx.Config = &conf
+	return &ctx
+}
