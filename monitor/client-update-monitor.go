@@ -4,7 +4,7 @@ import (
 	"CTng/gossip"
 	//"CTng/crypto"
 	"CTng/util"
-	"bytes"
+	//"bytes"
 	"encoding/json"
 	"fmt"
 	//"io/ioutil"
@@ -26,14 +26,9 @@ type Clientupdate struct{
 	PoMsig string
 }
 
-type Clientquery struct{
-	Client_URL string
-	LastUpdatePeriod string
-}
-
 //we use this function to prepare the client update object, the client update object contains all the information that the client needs to update its local storage
 // filepath is where STHs, REVs and PoMs are stored, local file system stores these information by period
-func PrepareClientupdate(c *MonitorContext, filepath string) Clientupdate{
+func PrepareClientupdate(c *MonitorContext, filepath_sth string, filepath_rev string, filepath_pom string) Clientupdate{
 	//intialize some storages
 	storage_conflict_pom := new(gossip.Gossip_Storage)
 	*storage_conflict_pom = make(gossip.Gossip_Storage)
@@ -42,7 +37,7 @@ func PrepareClientupdate(c *MonitorContext, filepath string) Clientupdate{
 	storage_rev_full := new(gossip.Gossip_Storage)
 	*storage_rev_full = make(gossip.Gossip_Storage)
 	//load all sths and store them in storage_sth_full
-	bytes, err := util.ReadByte(filepath + "/STH_TSS.json")
+	bytes, err := util.ReadByte(filepath_sth)
 	if err != nil {
 		panic(err)
 	}
@@ -59,7 +54,7 @@ func PrepareClientupdate(c *MonitorContext, filepath string) Clientupdate{
 		(*storage_sth_full)[gossipID] = sth
 	}
 	//load all revs and store them in storage_rev_full
-	bytes, err = util.ReadByte(filepath + "/REV_TSS.json")
+	bytes, err = util.ReadByte(filepath_rev)
 	if err != nil {
 		panic(err)
 	}
@@ -75,7 +70,7 @@ func PrepareClientupdate(c *MonitorContext, filepath string) Clientupdate{
 		(*storage_rev_full)[gossipID] = rev
 	}
 	//load all poms and sign on it
-	bytes, err = util.ReadByte(filepath + "/POM_TSS.json")
+	bytes, err = util.ReadByte(filepath_pom)
 	if err != nil {
 		panic(err)
 	}
@@ -101,27 +96,43 @@ func PrepareClientupdate(c *MonitorContext, filepath string) Clientupdate{
 	return CTupdate
 }
 
+func Getfilepath_sth(maindir string, period string) string{
+	//get the file path
+	filepath := maindir + period + "/STH_TSS.json"
+	return filepath
+}
+
+func Getfilepath_rev(maindir string, period string) string{
+	//get the file path
+	filepath := maindir + period + "/REV_TSS.json"
+	return filepath
+}
+
+func Getfilepath_pom(maindir string, period string) string{
+	//get the file path
+	filepath := maindir + period + "/PoM_TSS.json"
+	return filepath
+}
+
+func Getallpath(c *MonitorContext, period string) (string, string, string){
+	//get the file path
+	filepath_sth := c.StorageFile_STH_FULL+ period + "/STH_TSS.json"
+	filepath_rev := c.StorageFile_REV_FULL+ period + "/REV_TSS.json"
+	filepath_pom := c.StorageFile_CONFLICT_POM+ period + "/PoM_TSS.json"
+	return filepath_sth, filepath_rev, filepath_pom
+}
 
 func requestupdate(c *MonitorContext, w http.ResponseWriter, r *http.Request){
-	var ticket Clientquery
-	fmt.Println(util.GREEN+"Client ticket received"+util.RESET)
-	err := json.NewDecoder(r.Body).Decode(&ticket)
+	var periodnum string
+	err := json.NewDecoder(r.Body).Decode(&periodnum) 
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusBadRequest)
 	}
-	var ctupdate = PrepareClientupdate(c,ticket.LastUpdatePeriod)
+	//get the file path
+	filepath_sth, filepath_rev, filepath_pom := Getallpath(c, periodnum)
+	var ctupdate = PrepareClientupdate(c, filepath_sth, filepath_rev, filepath_pom)
 	fmt.Println(ctupdate.Period)
 	msg, _ := json.Marshal(ctupdate)
-	resp, postErr := c.Client.Post("http://"+ticket.Client_URL+"/receive-updates", "application/json", bytes.NewBuffer(msg))
-	if postErr != nil {
-		fmt.Println("Error sending update to client: " + postErr.Error())
-	} else {
-		// Close the response, mentioned by http.Post
-		// Alernatively, we could return the response from this function.
-		defer resp.Body.Close()
-		if c.Verbose {
-			fmt.Println("Client responded with " + resp.Status)
-		}
-		fmt.Println(util.GREEN+"Client update Sent"+util.RESET)
-	}
+	json.NewEncoder(w).Encode(msg)
+	fmt.Println("Update request Processed")
 }
