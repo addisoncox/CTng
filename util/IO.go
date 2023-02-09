@@ -65,3 +65,11 @@ func CreateFile(path string) {
         defer file.Close()
     }
 }
+
+func CreateDir(path string){
+	err := os.MkdirAll(path, 0755)
+	if err != nil {
+		return
+	}
+}
+

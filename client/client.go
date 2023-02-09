@@ -28,6 +28,7 @@ func bindClientContext(context *ClientContext, fn func(context *ClientContext, w
 //the monitor will then send us all the missing updates
 //it will go to next monitor if the default update monitor is at fault or is not responding
 func QueryMonitors(c *ClientContext){
+	/*
 	// Convert gossip object to JSON
 	Newquery := monitor.Clientquery{
 		Client_URL: c.Config.Client_URL,
@@ -58,6 +59,7 @@ func QueryMonitors(c *ClientContext){
 		//fmt.Println(util.GREEN+"Query sent to the monitor: ",  c.Config.Default_update_monitor,"at",gossip.GetCurrentPeriod(),util.RESET)
 		defer resp.Body.Close()
 	}
+	*/
 }
 
 func PushtoMonitor(c *ClientContext,sp SignedPoMs){
@@ -74,14 +76,6 @@ func PushtoMonitor(c *ClientContext,sp SignedPoMs){
 	defer resp.Body.Close()
 }
 
-func GetSignedPoMs(c* ClientContext, mc monitor.Clientupdate) SignedPoMs{
-	poms_signed := SignedPoMs{
-		PoMs:   *mc.PoMs,
-		Period: mc.Period,
-		Sig: mc.PoMsig,
-	}
-	return poms_signed
-}
 func Handleupdates(c *ClientContext, w http.ResponseWriter, r *http.Request){
 	var update monitor.Clientupdate
 	err := json.NewDecoder(r.Body).Decode(&update)

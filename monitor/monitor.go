@@ -81,7 +81,6 @@ func handle_gossip(c *MonitorContext, w http.ResponseWriter, r *http.Request) {
 	} else {
 		fmt.Println("Recieved new, valid", gossip_obj.Type,".")
 		Process_valid_object(c, gossip_obj)
-		c.SaveStorage()
 	}
 	http.Error(w, "Gossip object Processed.", http.StatusOK)
 }
@@ -277,21 +276,9 @@ func PeriodicTasks(c *MonitorContext) {
 	QueryAuthorities(c)
 	c.WipeStorage()
 	c.Clean_Conflicting_Object()
-	c.SaveStorage()
+	c.SaveStorage(gossip.GetCurrentPeriod())
 	//wait for some time (after all the monitor-gossip system converges)
 	//time.Sleep(10*time.Second);
-}
-
-func InitializeMonitorStorage(c *MonitorContext){
-	c.StorageDirectory = "testData/monitordata/"+c.StorageID+"/"
-	c.StorageFile_CONFLICT_POM  = "CONFLICT_POM.json"
-	c.StorageFile_ACCUSATION_POM = "ACCUSATION_POM.json"
-	c.StorageFile_STH_FULL = "STH_FULL.json"
-	c.StorageFile_REV_FULL = "REV_FULL.json" 
-	util.CreateFile(c.StorageDirectory+c.StorageFile_CONFLICT_POM)
-	util.CreateFile(c.StorageDirectory+c.StorageFile_ACCUSATION_POM)
-	util.CreateFile(c.StorageDirectory+c.StorageFile_STH_FULL)
-	util.CreateFile(c.StorageDirectory+c.StorageFile_REV_FULL)
 }
 
 //This function is called by handle_gossip in monitor_server.go under the server folder

@@ -61,9 +61,38 @@ func TestPanicOnBadReceiveGossip(t *testing.T) {
 	t.Errorf("Expected panic")
 }
 
-func TestPrepareClientupdate(t *testing.T) {
+func testPrepareClientupdate(t *testing.T) {
 	// TODO
 	ctx_monitor_1 := InitializeMonitorContext("../Gen/monitor_testconfig/1/Monitor_public_config.json","../Gen/monitor_testconfig/1/Monitor_private_config.json","../Gen/monitor_testconfig/1/Monitor_crypto_config.json","1")
 	update := PrepareClientupdate(ctx_monitor_1, "../testserver/STH_TSS.json", "../testserver/REV_TSS.json", "../testserver/PoM_TSS.json")
 	fmt.Println(update)
+}
+
+func testLoadStorage(t *testing.T) {
+	// TODO
+	ctx_monitor_1 := InitializeMonitorContext("../Gen/monitor_testconfig/1/Monitor_public_config.json","../Gen/monitor_testconfig/1/Monitor_private_config.json","../Gen/monitor_testconfig/1/Monitor_crypto_config.json","1")
+	ctx_monitor_1.LoadOneStorage(gossip.CON_FULL, "../testserver/POM_TSS.json")
+	ctx_monitor_1.LoadOneStorage(gossip.STH_FULL, "../testserver/REV_TSS.json")
+	ctx_monitor_1.LoadOneStorage(gossip.REV_FULL, "../testserver/STH_TSS.json")
+	fmt.Println(ctx_monitor_1.GetObjectNumber(gossip.CON_FULL))
+	fmt.Println(ctx_monitor_1.GetObjectNumber(gossip.STH_FULL))
+	fmt.Println(ctx_monitor_1.GetObjectNumber(gossip.REV_FULL))
+}
+
+func testSaveStorage(t *testing.T){
+	// TODO
+	ctx_monitor_1 := InitializeMonitorContext("../Gen/monitor_testconfig/1/Monitor_public_config.json","../Gen/monitor_testconfig/1/Monitor_private_config.json","../Gen/monitor_testconfig/1/Monitor_crypto_config.json","1")
+	ctx_monitor_1.LoadOneStorage(gossip.CON_FULL, "../testserver/POM_TSS.json")
+	ctx_monitor_1.LoadOneStorage(gossip.STH_FULL, "../testserver/REV_TSS.json")
+	ctx_monitor_1.LoadOneStorage(gossip.REV_FULL, "../testserver/STH_TSS.json")
+	ctx_monitor_1.InitializeMonitorStorage("../testserver")
+	fmt.Println(ctx_monitor_1.StorageDirectory)
+	ctx_monitor_1.SaveStorage("0")
+}
+
+func TestMonitorServer(t *testing.T) {
+	ctx_monitor_1 := InitializeMonitorContext("../Gen/monitor_testconfig/1/Monitor_public_config.json","../Gen/monitor_testconfig/1/Monitor_private_config.json","../Gen/monitor_testconfig/1/Monitor_crypto_config.json","1")
+	//over write ctx_monitor_1.Mode to 1 if you want to test the monitor server without waiting
+	ctx_monitor_1.Mode = 1
+	StartMonitorServer(ctx_monitor_1)
 }

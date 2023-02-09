@@ -32,8 +32,21 @@ type MonitorContext struct {
 	// Therefore, a monitor can only accuse once per Period. I believe this is a temporary solution.
 	Verbose    bool
 	Client     *http.Client
+	Mode int
 }
-
+func (c *MonitorContext) GetObjectNumber(objtype string) int{
+	switch objtype {
+	case gossip.CON_FULL:
+		return len(*c.Storage_CONFLICT_POM)
+	case gossip.ACC_FULL:
+		return len(*c.Storage_ACCUSATION_POM)
+	case gossip.STH_FULL:
+		return len(*c.Storage_STH_FULL)
+	case gossip.REV_FULL:
+		return len(*c.Storage_REV_FULL)
+	}
+	return 0
+}
 func (c *MonitorContext) Clean_Conflicting_Object(){
 	GID := gossip.Gossip_ID{}
 	for key, _ := range *c.Storage_STH_FULL{
@@ -60,7 +73,7 @@ func (c *MonitorContext) Clean_Conflicting_Object(){
 	}
 }
 
-func (c *MonitorContext) SaveStorage() error{
+func (c *MonitorContext) SaveStorage(Period string) error{
 	storageList_conflict_pom := []gossip.Gossip_object{}
     storageList_accusation_pom := []gossip.Gossip_object{}
 	storageList_sth_full := []gossip.Gossip_object{}
@@ -77,99 +90,57 @@ func (c *MonitorContext) SaveStorage() error{
 	for _, gossipObject := range *c.Storage_REV_FULL {
 		storageList_rev_full = append(storageList_rev_full, gossipObject)
 	}
-
-	err := util.WriteData(c.StorageDirectory+"/"+c.StorageFile_CONFLICT_POM, storageList_conflict_pom)
-	if err!=nil{
-		return err
-	}
-	err = util.WriteData(c.StorageDirectory+"/"+c.StorageFile_ACCUSATION_POM, storageList_accusation_pom)
-	if err!=nil{
-		return err
-	}
-	err = util.WriteData(c.StorageDirectory+"/"+c.StorageFile_STH_FULL, storageList_sth_full)
-	if err!=nil{
-		return err
-	}
-	err = util.WriteData(c.StorageDirectory+"/"+c.StorageFile_REV_FULL, storageList_rev_full)
-	if err!=nil{
-		return err
-	}
+	// Create the storage directory, should be StorageDirectory/Period
+	newdir := c.StorageDirectory + "/" + Period
+	util.CreateDir(newdir)
+	// Create the storage files
+	sth_path := newdir + "/" + c.StorageFile_STH_FULL
+	rev_path := newdir + "/" + c.StorageFile_REV_FULL
+	conflict_path := newdir + "/" + c.StorageFile_CONFLICT_POM
+	accusation_path := newdir + "/" + c.StorageFile_ACCUSATION_POM
+	util.CreateFile(sth_path)
+	util.CreateFile(rev_path)
+	util.CreateFile(conflict_path)
+	util.CreateFile(accusation_path)
+	// Write the storage files
+	util.WriteData(sth_path, storageList_sth_full)
+	util.WriteData(rev_path, storageList_rev_full)
+	util.WriteData(conflict_path, storageList_conflict_pom)
+	util.WriteData(accusation_path, storageList_accusation_pom)
 	fmt.Println(util.BLUE,"File Storage Complete for Period: ",gossip.GetCurrentPeriod(),util.RESET)
 	return nil
 }
 
-func (c *MonitorContext) LoadOneStorage(name string) error {
+func (c *MonitorContext) LoadOneStorage(name string, filepath string) error {
 	storageList := []gossip.Gossip_object{}
+	bytes, err := util.ReadByte(filepath)
+	if err != nil {
+		return err
+	}
+	err = json.Unmarshal(bytes, &storageList)
+	if err != nil {
+		return err
+	}
 	switch name{
 	case gossip.CON_FULL:
-		bytes, err := util.ReadByte(c.StorageFile_CONFLICT_POM)
-		if err != nil {
-			return err
-		}
-		err = json.Unmarshal(bytes, &storageList)
-		if err != nil {
-			return err
-		}
 		for _, gossipObject := range storageList {
 			(*c.Storage_CONFLICT_POM)[gossipObject.GetID()] = gossipObject
 		}
 	case gossip.ACC_FULL:
-		bytes, err := util.ReadByte(c.StorageFile_ACCUSATION_POM);
-		if err != nil {
-			return err
-		}
-		err = json.Unmarshal(bytes, &storageList)
-		if err != nil {
-			return err
-		}
 		for _, gossipObject := range storageList {
 			(*c.Storage_ACCUSATION_POM)[gossipObject.GetID()] = gossipObject
 		}
 	case gossip.STH_FULL:
-		bytes, err := util.ReadByte(c.StorageFile_STH_FULL);
-		if err != nil {
-			return err
-		}
-		err = json.Unmarshal(bytes, &storageList)
-		if err != nil {
-			return err
-		}
 		for _, gossipObject := range storageList {
 			(*c.Storage_STH_FULL)[gossipObject.GetID()] = gossipObject
 		}
 	case gossip.REV_FULL:
-		bytes, err := util.ReadByte(c.StorageFile_REV_FULL);
-		if err != nil {
-			return err
-		}
-		err = json.Unmarshal(bytes, &storageList)
-		if err != nil {
-			return err
-		}
 		for _, gossipObject := range storageList {
 			(*c.Storage_REV_FULL)[gossipObject.GetID()] = gossipObject
 		}
 	} 
 	return errors.New("Mismatch")
 }
-
-func (c *MonitorContext) LoadStorage() error{
-	err := c.LoadOneStorage(gossip.CON_FULL)
-	if err != nil {
-		return err
-	}
-	err = c.LoadOneStorage(gossip.STH_FULL)
-	if err != nil {
-		return err
-	}
-	err = c.LoadOneStorage(gossip.REV_FULL)
-	if err != nil {
-		return err
-	}
-	return nil
-}
-
-
 
 func (c *MonitorContext) GetObject(id gossip.Gossip_ID) gossip.Gossip_object{
 	GType := id.Type
@@ -222,8 +193,6 @@ func (c *MonitorContext) StoreObject(o gossip.Gossip_object) {
 			(*c.Storage_TEMP)[o.GetID()] = o
 		}
 
-		
-
 }
 
 //wipe all temp data
@@ -239,6 +208,14 @@ func (c *MonitorContext) WipeStorage(){
 		}
 	}
 	fmt.Println(util.BLUE,"Temp storage has been wiped.",util.RESET)
+}
+
+func (c *MonitorContext) InitializeMonitorStorage(filepath string){
+	c.StorageDirectory = filepath+"/"+ c.StorageID+"/"
+	c.StorageFile_CONFLICT_POM  = "POM_TSS.json"
+	c.StorageFile_ACCUSATION_POM = "ACC_TSS.json"
+	c.StorageFile_STH_FULL = "STH_TSS.json"
+	c.StorageFile_REV_FULL = "REV_TSS.json" 
 }
 
 func InitializeMonitorContext(public_config_path string, private_config_path string, crypto_config_path string, storageID string) *MonitorContext {
@@ -265,6 +242,7 @@ func InitializeMonitorContext(public_config_path string, private_config_path str
 		Storage_STH_FULL:       storage_sth_full,
 		Storage_REV_FULL:       storage_rev_full,
 		StorageID:              storageID,
+		Mode: 0,
 	}
 	ctx.Config = &conf
 	return &ctx

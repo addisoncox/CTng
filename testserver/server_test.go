@@ -72,31 +72,63 @@ func SaveCertificateToDisk(certBytes []byte, filePath string) {
 		log.Fatalf("Error closing %s: %v", filePath, err)
 	}
 }
-func TestEntityContext (t *testing.T){
+func InitializeOneEntity (entity_type string, entity_id string) any{
 	// initialize CA context
-	ctx_ca_1 = CA.InitializeCAContext("../Gen/ca_testconfig/1/CA_public_config.json","../Gen/ca_testconfig/1/CA_private_config.json","../Gen/ca_testconfig/1/CA_crypto_config.json")
-	ctx_ca_2 = CA.InitializeCAContext("../Gen/ca_testconfig/2/CA_public_config.json","../Gen/ca_testconfig/2/CA_private_config.json","../Gen/ca_testconfig/2/CA_crypto_config.json")
-	fmt.Println(ctx_ca_1.CA_private_config.Signer, ctx_ca_2.CA_private_config.Signer)
+	if entity_type == "CA" {
+		path_1 := "../Gen/ca_testconfig/" + entity_id + "/CA_public_config.json"
+		path_2 := "../Gen/ca_testconfig/" + entity_id + "/CA_private_config.json"
+		path_3 := "../Gen/ca_testconfig/" + entity_id + "/CA_crypto_config.json"
+		return CA.InitializeCAContext(path_1,path_2,path_3)
+	}
 	// initialze Logger context
-	ctx_logger_1 = Logger.InitializeLoggerContext("../Gen/logger_testconfig/1/Logger_public_config.json","../Gen/logger_testconfig/1/Logger_private_config.json","../Gen/logger_testconfig/1/Logger_crypto_config.json")
-	ctx_logger_2 = Logger.InitializeLoggerContext("../Gen/logger_testconfig/2/Logger_public_config.json","../Gen/logger_testconfig/2/Logger_private_config.json","../Gen/logger_testconfig/2/Logger_crypto_config.json")
+	if entity_type == "Logger" {
+		path_1 := "../Gen/logger_testconfig/" + entity_id + "/Logger_public_config.json"
+		path_2 := "../Gen/logger_testconfig/" + entity_id + "/Logger_private_config.json"
+		path_3 := "../Gen/logger_testconfig/" + entity_id + "/Logger_crypto_config.json"
+		return Logger.InitializeLoggerContext(path_1,path_2,path_3)
+	}
+	// initialze Monitor context
+	if entity_type == "Monitor" {
+		path_1 := "../Gen/monitor_testconfig/" + entity_id + "/Monitor_public_config.json"
+		path_2 := "../Gen/monitor_testconfig/" + entity_id + "/Monitor_private_config.json"
+		path_3 := "../Gen/monitor_testconfig/" + entity_id + "/Monitor_crypto_config.json"
+		return monitor.InitializeMonitorContext(path_1,path_2,path_3,entity_id)
+	}
+	// initialze Gossiper context
+	if entity_type == "Gossiper" {
+		path_1 := "../Gen/gossiper_testconfig/" + entity_id + "/Gossiper_public_config.json"
+		path_2 := "../Gen/gossiper_testconfig/" + entity_id + "/Gossiper_private_config.json"
+		path_3 := "../Gen/gossiper_testconfig/" + entity_id + "/Gossiper_crypto_config.json"
+		return gossip.InitializeGossiperContext(path_1,path_2,path_3,entity_id)
+	}
+	return nil
+}
+func InitializeAll(){
+	ctx_ca_1 = InitializeOneEntity("CA","1").(*CA.CAContext)
+	ctx_ca_2 = InitializeOneEntity("CA","2").(*CA.CAContext)
+	ctx_logger_1 = InitializeOneEntity("Logger","1").(*Logger.LoggerContext)
+	ctx_logger_2 = InitializeOneEntity("Logger","2").(*Logger.LoggerContext)
+	ctx_monitor_1 = InitializeOneEntity("Monitor","1").(*monitor.MonitorContext)
+	ctx_monitor_2 = InitializeOneEntity("Monitor","2").(*monitor.MonitorContext)
+	ctx_monitor_3 = InitializeOneEntity("Monitor","3").(*monitor.MonitorContext)
+	ctx_monitor_4 = InitializeOneEntity("Monitor","4").(*monitor.MonitorContext)
+	ctx_gossiper_1 = InitializeOneEntity("Gossiper","1").(*gossip.GossiperContext)
+	ctx_gossiper_2 = InitializeOneEntity("Gossiper","2").(*gossip.GossiperContext)
+	ctx_gossiper_3 = InitializeOneEntity("Gossiper","3").(*gossip.GossiperContext)
+	ctx_gossiper_4 = InitializeOneEntity("Gossiper","4").(*gossip.GossiperContext)
+	fmt.Println(ctx_ca_1.CA_private_config.Signer, ctx_ca_2.CA_private_config.Signer)
 	fmt.Println(ctx_logger_1.Logger_private_config.Signer, ctx_logger_2.Logger_private_config.Signer)
-	// initialize Monitor context
-	ctx_monitor_1 = monitor.InitializeMonitorContext("../Gen/monitor_testconfig/1/Monitor_public_config.json","../Gen/monitor_testconfig/1/Monitor_private_config.json","../Gen/monitor_testconfig/1/Monitor_crypto_config.json","1")
-	ctx_monitor_2 = monitor.InitializeMonitorContext("../Gen/monitor_testconfig/2/Monitor_public_config.json","../Gen/monitor_testconfig/2/Monitor_private_config.json","../Gen/monitor_testconfig/2/Monitor_crypto_config.json","2")
-	ctx_monitor_3 = monitor.InitializeMonitorContext("../Gen/monitor_testconfig/3/Monitor_public_config.json","../Gen/monitor_testconfig/3/Monitor_private_config.json","../Gen/monitor_testconfig/3/Monitor_crypto_config.json","3")
-	ctx_monitor_4 = monitor.InitializeMonitorContext("../Gen/monitor_testconfig/4/Monitor_public_config.json","../Gen/monitor_testconfig/4/Monitor_private_config.json","../Gen/monitor_testconfig/4/Monitor_crypto_config.json","4")
 	fmt.Println(ctx_monitor_1.Config.Signer, ctx_monitor_2.Config.Signer, ctx_monitor_3.Config.Signer, ctx_monitor_4.Config.Signer)
-	// initialize Gossiper context
-	ctx_gossiper_1 = gossip.InitializeGossiperContext("../Gen/gossiper_testconfig/1/Gossiper_public_config.json","../Gen/gossiper_testconfig/1/Gossiper_private_config.json","../Gen/gossiper_testconfig/1/Gossiper_crypto_config.json","1")
-	ctx_gossiper_2 = gossip.InitializeGossiperContext("../Gen/gossiper_testconfig/2/Gossiper_public_config.json","../Gen/gossiper_testconfig/2/Gossiper_private_config.json","../Gen/gossiper_testconfig/2/Gossiper_crypto_config.json","2")
-	ctx_gossiper_3 = gossip.InitializeGossiperContext("../Gen/gossiper_testconfig/3/Gossiper_public_config.json","../Gen/gossiper_testconfig/3/Gossiper_private_config.json","../Gen/gossiper_testconfig/3/Gossiper_crypto_config.json","3")
-	ctx_gossiper_4 = gossip.InitializeGossiperContext("../Gen/gossiper_testconfig/4/Gossiper_public_config.json","../Gen/gossiper_testconfig/4/Gossiper_private_config.json","../Gen/gossiper_testconfig/4/Gossiper_crypto_config.json","4")
 	fmt.Println((*ctx_gossiper_1.Config).Crypto.SelfID.String(), (*ctx_gossiper_2.Config).Crypto.SelfID.String(), (*ctx_gossiper_3.Config).Crypto.SelfID.String(), (*ctx_gossiper_4.Config).Crypto.SelfID.String())
-	fmt.Println("-------------------------------Context Initialization Test Passed-------------------------------")
 }
 
-func TestCACertGen(t *testing.T){
+func TestEntityContext (t *testing.T){
+	fmt.Println("-------------------------------Entity Context Test-------------------------------")
+	InitializeAll()
+	fmt.Println("-------------------------------Entity Context Test Passed-------------------------------")
+}
+
+func testCACertGen(t *testing.T){
 	// Initialize CA_cert_pool
 	CA1_cert_pool = *CA.NewCertPool()
 	CA2_cert_pool = *CA.NewCertPool()
@@ -137,7 +169,7 @@ func TestCACertGen(t *testing.T){
 }
 
 
-func TestCertLogging (t *testing.T){
+func testCertLogging (t *testing.T){
 	// Prepare cert pool for logger 1
 	Logger1_cert_pool := make([]*x509.Certificate, 0)
 	// append 4 certs from CA 1 and 3 certs from CA 2
@@ -279,7 +311,7 @@ func TestCertLogging (t *testing.T){
 }
 
 
-func TestSTHFULL(t *testing.T){
+func testSTHFULL(t *testing.T){
 	//Gossiper 1 Threshold sign STH_logger1
 	partial_sig_1, err := ctx_gossiper_1.Config.Crypto.ThresholdSign(STH_Logger1.Signer)
 	if err != nil{
@@ -366,7 +398,7 @@ func TestSTHFULL(t *testing.T){
 	}
 	fmt.Println("-------------------------------STH FULL Test Passed-------------------------------")
 }
-func TestREVFULL(t *testing.T){
+func testREVFULL(t *testing.T){
 	// Revoke cert 3 from CA 1
 	ctx_ca_1.CRV.Revoke(3)
 	// Revoke cert 3 from CA 2
@@ -475,7 +507,7 @@ func TestREVFULL(t *testing.T){
 	}
 }
 	 
-func TestCONFULL(t *testing.T){
+func testCONFULL(t *testing.T){
 	// Create the payload for CON, should be the signer of the STH || STH || STH_alt
 	payload := [3]string{STH_Logger2.Signer, STH_Logger2.Payload[0]+STH_Logger2.Payload[1]+ STH_Logger2.Payload[2], STH_Logger2_alt.Payload[0]+STH_Logger2_alt.Payload[1]+ STH_Logger2_alt.Payload[2]}
 	//Gossiper 1 Threshold sign the payload

@@ -2,17 +2,9 @@ package monitor
 
 import (
 	"CTng/gossip"
-	//"CTng/crypto"
-	//"CTng/util"
-	//"bytes"
-	//"encoding/json"
-	"fmt"
-	//"io/ioutil"
 	"log"
 	"net/http"
 	"time"
-	"strings"
-	//"strconv"
 	"github.com/gorilla/mux"
 )
 
@@ -37,28 +29,9 @@ func handleMonitorRequests(c *MonitorContext) {
 }
 
 func StartMonitorServer(c *MonitorContext) {
-	// Check if the storage file exists in this directory
-	monitortype := 1
-	fmt.Println("What type of Monitor would you like to use?")
-	fmt.Println("1. Normal, Sync monitor")
-	fmt.Println("2. 0 wait monitor for testing")
-	fmt.Scanln(&monitortype)
-	if monitortype == 1{
+	if c.Mode == 0{
 	time_wait := gossip.Getwaitingtime();
 	time.Sleep(time.Duration(time_wait)*time.Second);
-	}
-	InitializeMonitorStorage(c)
-	err := c.LoadStorage()
-	if err != nil {
-		if strings.Contains(err.Error(), "no such file or directory") {
-			// Storage File doesn't exit. Create new, empty json file.
-			err = c.SaveStorage()
-			if err != nil {
-				panic(err)
-			}
-		} else {
-			panic(err)
-		}
 	}
 	tr := &http.Transport{}
 	c.Client = &http.Client{
