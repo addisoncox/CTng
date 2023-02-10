@@ -3,7 +3,7 @@ package Logger
 
 
 import (
-	//"CTng/gossip"
+	"CTng/gossip"
 	//"CTng/crypto"
 	//"CTng/util"
 	//"CTng/config"
@@ -39,11 +39,43 @@ func handleLoggerRequests(ctx *LoggerContext) {
 	
 	// receive precerts from CA
 	gorillaRouter.HandleFunc("/Logger/receive-precerts", bindLoggerContext(ctx, receive_pre_cert)).Methods("POST")
+	// get sth request from Monitor
+	gorillaRouter.HandleFunc("/ctng/v2/get-sth", bindLoggerContext(ctx, requestSTH)).Methods("GET")
 	//start the HTTP server
 	http.Handle("/", gorillaRouter)
 	// Listen on port set by config until server is stopped.
 	log.Fatal(http.ListenAndServe(":"+ctx.Logger_private_config.Port, nil))
 }
+
+func requestSTH(c *LoggerContext, w http.ResponseWriter, r *http.Request){
+	// get current period
+	Period := gossip.GetCurrentPeriod()
+	c.Request_Count++
+	switch c.Logger_Type {
+	case 0:
+		// normal logger
+		json.NewEncoder(w).Encode(c.STH_storage[Period])
+	case 1:
+		// split-world logger
+		if c.Request_Count % c.MisbehaviorInterval == 0 {
+			// misbehave
+			json.NewEncoder(w).Encode(c.STH_storage_fake[Period])
+		}
+	case 2:
+		// ALways unresponsive logger
+		// do nothing
+		return
+	case 3:
+		// sometimes unresponsive logger
+		if c.Request_Count % c.MisbehaviorInterval == 0 {
+			// misbehave
+			return
+		}
+	}
+}
+
+
+
 
 // receive precert from CA
 func receive_pre_cert(c *LoggerContext, w http.ResponseWriter, r *http.Request) {

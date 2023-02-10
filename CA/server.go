@@ -40,11 +40,42 @@ func handleCARequests(c *CAContext) {
 	gorillaRouter.HandleFunc("/CA/receive-sth", bindCAContext(c, receive_sth)).Methods("POST")
 	// receive POI from logger
 	gorillaRouter.HandleFunc("/CA/receive-poi", bindCAContext(c, receive_poi)).Methods("POST")
-	
+	// receive get request from monitor
+	gorillaRouter.HandleFunc("/ctng/v2/get-revocation", bindCAContext(c, requestREV)).Methods("GET")
 	// Start the HTTP server.
 	http.Handle("/", gorillaRouter)
 	// Listen on port set by config until server is stopped.
 	log.Fatal(http.ListenAndServe(":"+c.CA_private_config.Port, nil))
+}
+
+// receive get request from monitor
+func requestREV(c *CAContext, w http.ResponseWriter, r *http.Request){
+	Period := gossip.GetCurrentPeriod()
+	c.Request_Count++
+	switch c.CA_Type {
+	case 0:
+		//normal CA
+		json.NewEncoder(w).Encode(c.REV_storage[Period])
+		return
+	case 1:
+		//split-world CA
+		if c.Request_Count % c.MisbehaviorInterval == 0{
+			json.NewEncoder(w).Encode(c.REV_storage_fake[Period])
+		}else{
+			json.NewEncoder(w).Encode(c.REV_storage[Period])
+		}
+		return
+	case 2:
+		//always unresponsive CA
+		return
+	case 3:
+		//sometimes unresponsive CA
+		if c.Request_Count % c.MisbehaviorInterval == 0{
+			return	
+		}else{
+			json.NewEncoder(w).Encode(c.REV_storage[Period])
+		}
+	}
 }
 
 // receive STH from logger

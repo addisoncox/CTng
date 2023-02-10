@@ -10,8 +10,6 @@ import (
 	"CTng/gossip"
 	"CTng/crypto"
 	"github.com/gorilla/mux"
-	"bytes"
-	"strings"
 	"time"
 	"errors"
 )
@@ -60,20 +58,6 @@ func QueryMonitors(c *ClientContext){
 		defer resp.Body.Close()
 	}
 	*/
-}
-
-func PushtoMonitor(c *ClientContext,sp SignedPoMs){
-	msg, _ := json.Marshal(sp)
-	resp, err := c.Client.Post("http://"+c.Config.Default_check_monitor+"/monitor/checkforme", "application/json", bytes.NewBuffer(msg))
-	if err != nil {
-		if strings.Contains(err.Error(), "Client.Timeout") ||
-			strings.Contains(err.Error(), "connection refused") {
-			fmt.Println(util.RED+"Connection failed to "+c.Config.Default_check_monitor+".", util.RESET)
-		} else {
-			fmt.Println(util.RED+err.Error(), "sending to "+c.Config.Default_check_monitor+".", util.RESET)
-		}
-	}
-	defer resp.Body.Close()
 }
 
 func Handleupdates(c *ClientContext, w http.ResponseWriter, r *http.Request){

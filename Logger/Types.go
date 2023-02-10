@@ -3,6 +3,7 @@ package Logger
 import (
 	"crypto/rsa"
 	"CTng/crypto"
+	"CTng/gossip"
 	"net/http"
 	"crypto/x509"
 	"CTng/config"
@@ -38,6 +39,11 @@ type LoggerContext struct {
 	CurrentPrecertPool *CA.CertPool
 	PrecertStorage *PrecertStorage
 	OnlinePeriod int
+	Logger_Type int //0 for normal Logger, 1 for Split-world Logger, 2 for always unreponsive Logger, 3 for sometimes unreponsive Logger
+	Request_Count int //Only used for sometimes unreponsive Logger and Split-world Logger
+	STH_storage map[string]gossip.Gossip_object //for monitor to query
+	STH_storage_fake map[string]gossip.Gossip_object //for monitor to query
+	MisbehaviorInterval int //for sometimes unreponsive Logger and Split-world Logger, misbehave every x requests
 }
 
 
@@ -101,6 +107,11 @@ func InitializeLoggerContext(public_config_path string,private_config_file_path 
 		CurrentPrecertPool: CA.NewCertPool(),
 		PrecertStorage: &PrecertStorage{PrecertPools: make(map[string] *CA.CertPool)},
 		OnlinePeriod: 0,
+		Logger_Type: 0,
+		Request_Count: 0,
+		STH_storage: make(map[string]gossip.Gossip_object),
+		STH_storage_fake: make(map[string]gossip.Gossip_object),
+		MisbehaviorInterval: 0,
 	}
 	// Initialize http client
 	tr := &http.Transport{}

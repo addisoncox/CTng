@@ -34,6 +34,11 @@ type CAContext struct {
 	Rootcert *x509.Certificate
 	CertCounter int
 	CRV *CRV
+	CA_Type int //0 for normal CA, 1 for Split-world CA, 2 for always unreponsive CA, 3 for sometimes unreponsive CA
+	Request_Count int //Only used for sometimes unreponsive CA and Split-world CA
+	REV_storage map[string]gossip.Gossip_object //for monitor to query
+	REV_storage_fake map[string]gossip.Gossip_object //for monitor to query
+	MisbehaviorInterval int //for sometimes unreponsive CA and Split-world CA, misbehave every x requests
 }
 
 type CA_public_config struct {
@@ -209,6 +214,11 @@ func InitializeCAContext(public_config_path string,private_config_file_path stri
 		PrivateKey: cryptoconfig.RSAPrivateKey,
 		CurrentCertificatePool: NewCertPool(),
 		CertPoolStorage: &CTngCertPoolStorage{Certpools: make(map[string] CertPool)},
+		CA_Type: 0,
+		Request_Count: 0,
+		REV_storage:  make(map[string]gossip.Gossip_object),
+		REV_storage_fake: make(map[string]gossip.Gossip_object),
+		MisbehaviorInterval: 0,
 	}
 	// Initialize http client
 	tr := &http.Transport{}
