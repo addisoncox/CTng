@@ -177,6 +177,24 @@ func PeriodicTask(ctx *CAContext) {
 		Send_Signed_PreCert_To_Loggers(ctx, certs[i], ctx.CA_private_config.Loggerlist)
 	}
 	fmt.Println("CA Finished Tasks at Period", GetCurrentPeriod())
+	f1 := func() {
+		// get current period
+		period := GetCurrentPeriod()
+		// convert string to int
+		periodnum, err := strconv.Atoi(period)
+		if err != nil {
+		}
+		// add 1 to current period
+		periodnum = periodnum + 1
+		// convert int to string
+		period = strconv.Itoa(periodnum)
+		rev := Generate_Revocation(ctx, period,0)
+		fake_rev := Generate_Revocation(ctx, period,1)
+		ctx.REV_storage[period] = rev
+		ctx.REV_storage[fake_rev.Period] = fake_rev
+	}
+	time.AfterFunc(time.Duration(ctx.CA_public_config.MMD-30)*time.Second, f1)
+
 }
 
 

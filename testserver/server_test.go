@@ -404,13 +404,13 @@ func testREVFULL(t *testing.T){
 	// Revoke cert 3 from CA 2
 	ctx_ca_2.CRV.Revoke(3)
 	//Generate REV from CA 1
-	rev_ca1 := CA.Generate_Revocation(ctx_ca_1, "0")
+	rev_ca1 := CA.Generate_Revocation(ctx_ca_1, "0",0)
 	bitset_DCRV_CA1 := new(bitset.BitSet)
 	bitset_DCRV_CA1.UnmarshalJSON([]byte(ctx_ca_1.CRV.GetDeltaCRV()))
 	fmt.Println("CRV for CA 1", bitset_DCRV_CA1)
 	REV_CA1 = rev_ca1
 	// Generate REV from CA 2
-	rev_ca2 := CA.Generate_Revocation(ctx_ca_2, "0")
+	rev_ca2 := CA.Generate_Revocation(ctx_ca_2, "0",0)
 	bitset_DCRV_CA2 := new(bitset.BitSet)
 	bitset_DCRV_CA2.UnmarshalJSON([]byte(ctx_ca_2.CRV.GetDeltaCRV()))
 	fmt.Println("CRV for CA 2", bitset_DCRV_CA2)
@@ -421,7 +421,7 @@ func testREVFULL(t *testing.T){
 	bitset_DCRV_CA2_alt.UnmarshalJSON([]byte(ctx_ca_2.CRV.GetDeltaCRV()))
 	fmt.Println("CRV_alt for CA 2", bitset_DCRV_CA2_alt)
 	// Generate REV from CA 2
-	REV_CA2_alt = CA.Generate_Revocation(ctx_ca_2, "0")
+	REV_CA2_alt = CA.Generate_Revocation(ctx_ca_2, "0",0)
 	// Get the Gossiper 1's signature on the payload of ca1's revocation
 	partial_sig_1, err := ctx_gossiper_1.Config.Crypto.ThresholdSign(rev_ca1.Payload[0]+rev_ca1.Payload[1]+rev_ca1.Payload[2])
 	if err != nil{

@@ -22,7 +22,13 @@ func TestCAContext(t *testing.T){
 	ctx.CRV.Revoke(1)
 	ctx.CRV.Revoke(4)
 	fmt.Println(ctx.CRV.CRV_current)
-	REV := Generate_Revocation(ctx,"0")
-	fmt.Println(REV)
+	REV := Generate_Revocation(ctx,"0",0)
+	REV_fake := Generate_Revocation(ctx,"0",1)
+	fmt.Println(REV.Payload[2])
+	fmt.Println(REV_fake.Payload[2])
+	ctx.REV_storage["0"] = REV
+	ctx.REV_storage_fake["0"] = REV_fake
+	fmt.Println(ctx.REV_storage["0"].Payload[2])
+	fmt.Println(ctx.REV_storage_fake["0"].Payload[2])
 }
 

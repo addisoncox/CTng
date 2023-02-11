@@ -55,12 +55,31 @@ func (crv *CRV) Revoke(index int){
 }
 
 
-func Generate_Revocation (c *CAContext, Period string) gossip.Gossip_object{
+func Generate_Revocation (c *CAContext, Period string, REV_type int) gossip.Gossip_object{
+	// if REV_type == 1 generate a REV based on another Delta_CRV
 	// hash c.CRV.CRVcurrent
 	hashmsg, _ := c.CRV.CRV_current.MarshalJSON()
 	hash,_ := crypto.GenerateSHA256(hashmsg)
+	var hashmsgdelta []byte
 	// hash delta CRV
-	hashmsgdelta := c.CRV.GetDeltaCRV()
+	if REV_type == 0 {
+		hashmsgdelta = c.CRV.GetDeltaCRV()
+	} else {
+		// get Delta CRV from first
+		m1 := c.CRV.GetDeltaCRV()
+		// Unmarshal m1
+		var m2 bitset.BitSet
+		err := m2.UnmarshalJSON(m1)
+		if err != nil {
+			panic(err)
+		}
+		// compute the complement of m2
+		m2_complement := m2.Complement()
+		hashmsgdelta, err = m2_complement.MarshalJSON()
+		if err != nil {
+			panic(err)
+		}
+	}
 	hash_delta,_ := crypto.GenerateSHA256(hashmsgdelta)
 	// hash Period||hash CRVcurrent||hash delta CRV
 	hash_revocation,_ := crypto.GenerateSHA256([]byte(Period+string(hash)+string(hash_delta)))
