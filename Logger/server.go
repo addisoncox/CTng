@@ -74,9 +74,6 @@ func requestSTH(c *LoggerContext, w http.ResponseWriter, r *http.Request){
 	}
 }
 
-
-
-
 // receive precert from CA
 func receive_pre_cert(c *LoggerContext, w http.ResponseWriter, r *http.Request) {
 	// Unmarshal the request body into a precert
@@ -92,7 +89,7 @@ func receive_pre_cert(c *LoggerContext, w http.ResponseWriter, r *http.Request) 
 }
 
 // send STH to CA
-func Send_STH_to_CA(c *LoggerContext, sth *STH, ca string){
+func Send_STH_to_CA(c *LoggerContext, sth gossip.Gossip_object, ca string){
 	var sth_json []byte
 	sth_json, err := json.Marshal(sth)
 	if err != nil {
@@ -160,11 +157,28 @@ func PeriodicTask(ctx *LoggerContext) {
 	time.AfterFunc(time.Duration(ctx.Logger_public_config.MMD)*time.Second, f)
 	f1 := func() {
 		fmt.Println(GerCurrentSecond())
-		fmt.Println(time.Now().UTC().Format(time.RFC3339))
-		fmt.Println("Logger Periodic Task", GetCurrentPeriod(), "has been online for", ctx.OnlinePeriod, "periods")
+		// update online period
 		ctx.OnlinePeriod = ctx.OnlinePeriod + 1
+		// Compute STH and POIs
+		period := gossip.GetCurrentPeriod()
+		// convert to int, and add 1 then convert back to string
+		periodint, err := strconv.Atoi(period)
+		if err != nil {
+		}
+		periodint = periodint + 1
+		// update STH
+		certlist := ctx.CurrentPrecertPool.GetCerts()
+		STH,_,POIs := BuildMerkleTreeFromCerts(certlist,*ctx, periodint)
+		// update STH storage
+		ctx.STH_storage[period] = STH
+		// send STH to all CAs
+		for i := 0; i < len(ctx.Logger_public_config.All_CA_URLs); i++ {
+			Send_STH_to_CA(ctx, STH, ctx.Logger_public_config.All_CA_URLs [i])
+		}
+		// send POI to the Issuer CA
+		Send_POIs_to_CAs(ctx, POIs)
 	}
-	time.AfterFunc(time.Duration(ctx.Logger_public_config.MMD-5)*time.Second, f1)
+	time.AfterFunc(time.Duration(ctx.Logger_public_config.MMD-20)*time.Second, f1)
 }
 
 

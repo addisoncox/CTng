@@ -193,8 +193,7 @@ func PeriodicTask(ctx *CAContext) {
 		ctx.REV_storage[period] = rev
 		ctx.REV_storage[fake_rev.Period] = fake_rev
 	}
-	time.AfterFunc(time.Duration(ctx.CA_public_config.MMD-30)*time.Second, f1)
-
+	time.AfterFunc(time.Duration(ctx.CA_public_config.MMD-20)*time.Second, f1)
 }
 
 

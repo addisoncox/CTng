@@ -162,6 +162,14 @@ func (c *CertPool) GetCertList() []*x509.Certificate {
 	return c.certs
 }
 
+func (c *CertPool) GetCerts() []x509.Certificate {
+	var certs []x509.Certificate
+	for _, cert := range c.certs {
+		certs = append(certs, *cert)
+	}
+	return certs
+}
+
 // Update one certificate in the pool by its subjectkeyid
 func (s *CertPool) UpdateCertBySubjectKeyID(subjectKeyId string, cert *x509.Certificate) {
 	if s == nil {
@@ -208,3 +216,4 @@ func (s *CertPool) UpdateCertsByLID(lid string, sth gossip.Gossip_object) {
 		}
 	}
 }
+
