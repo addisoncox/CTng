@@ -24,6 +24,8 @@ var num_logger int
 var num_ca int
 var num_cert int
 var Threshold int
+var MMD int
+var MRD int
 var Total int
 var G_list []string
 var M_list []string
@@ -53,6 +55,8 @@ func Test_init(t *testing.T){
 	num_ca = 2
 	num_cert = 4
 	Threshold = 2
+	MMD = 60
+	MRD = 60
 	Total = num_gossiper
 	G_list, M_list, C_list, L_list = Generate_all_list(num_gossiper, num_ca, num_logger)
 	ca_private_config_map = make(map[string]CA.CA_private_config)
@@ -77,7 +81,7 @@ func Test_key_gen(t *testing.T){
 }
 func Test_gen_CA_Logger(t *testing.T){
 	// Generate CA public config map
-	ca_public_config = GenerateCA_public_config(C_list, L_list, 60, 60, []string{"1.1"})
+	ca_public_config = GenerateCA_public_config(C_list, L_list, MMD, MMD, []string{"1.1"})
 	// Generate CA private config map
 	ca_private_config_map = GenerateCA_private_config_map(G_list, M_list, L_list, num_cert,num_ca)
 	// Generate CA crypto config map
@@ -85,7 +89,7 @@ func Test_gen_CA_Logger(t *testing.T){
 	// Create CA directory
 	os.Mkdir("ca_testconfig", 0777)
 	// Generate Logger public config map
-	logger_public_config = GenerateLogger_public_config(C_list, L_list, 60, 60, []string{"1.1"})
+	logger_public_config = GenerateLogger_public_config(C_list, L_list, MMD, MMD, []string{"1.1"})
 	// Generate Logger private config map
 	logger_private_config_map = GenerateLogger_private_config_map(G_list,M_list,C_list, num_logger)
 	// Generate Logger crypto config map
@@ -128,9 +132,9 @@ func Test_gen_CA_Logger(t *testing.T){
 
 func Test_gen_Monitor_Gossiper(t *testing.T){
 	// Generate Monitor public config map
-	monitor_public_config := GenerateMonitor_public_config(G_list, M_list, C_list, L_list, 60, 60,5, []string{"1.1"})
+	monitor_public_config := GenerateMonitor_public_config(G_list, M_list, C_list, L_list, MMD, MMD,5, []string{"1.1"})
 	// Generate Monitor private config map
-	monitor_private_config_map := GenerateMonitor_private_config_map(G_list, M_list, C_list, L_list, 60, 60,5, []string{"1.1"}, " ")
+	monitor_private_config_map := GenerateMonitor_private_config_map(G_list, M_list, C_list, L_list, MMD, MMD,5, []string{"1.1"}, " ")
 	// Generate Monitor crypto config map
 	monitor_crypto_config_map := GenerateCryptoconfig_map(Total,Threshold,"Monitor")
 	// Create Monitor directory
@@ -155,9 +159,9 @@ func Test_gen_Monitor_Gossiper(t *testing.T){
 		write_all_configs_to_file(monitor_public_config, monitor_private_config, crypto_config, filepath, "Monitor")
 	}
 	// Generate Gossiper public config map
-	gossiper_public_config := GenerateGossiper_public_config(G_list, M_list, C_list, L_list, 60, 60,5,5, []string{"1.1"})
+	gossiper_public_config := GenerateGossiper_public_config(G_list, M_list, C_list, L_list, MMD, MMD,5,5, []string{"1.1"})
 	// Generate Gossiper private config map
-	gossiper_private_config_map := GenerateGossiper_private_config_map(G_list, M_list, C_list, L_list, 60, 60,5,5, []string{"1.1"}, " ")
+	gossiper_private_config_map := GenerateGossiper_private_config_map(G_list, M_list, C_list, L_list, MMD, MMD,5,5, []string{"1.1"}, " ")
 	// Generate Gossiper crypto config map
 	gossiper_crypto_config_map := GenerateCryptoconfig_map(Total,Threshold,"Gossiper")
 	// Create Gossiper directory

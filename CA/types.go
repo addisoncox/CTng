@@ -218,6 +218,7 @@ func InitializeCAContext(public_config_path string,private_config_file_path stri
 		REV_storage:  make(map[string]gossip.Gossip_object),
 		REV_storage_fake: make(map[string]gossip.Gossip_object),
 		MisbehaviorInterval: 0,
+		CertCounter: 0,
 	}
 	// Initialize http client
 	tr := &http.Transport{}

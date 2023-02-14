@@ -6,6 +6,7 @@ import(
 	"CTng/Logger"
 	"CTng/monitor"
 	"CTng/gossip"
+	"CTng/Gen"
 	//"CTng/config"
 	"CTng/crypto"
 	"testing"
@@ -15,9 +16,6 @@ import(
 	"crypto/x509"
 	"encoding/json"
 	"io/ioutil"
-	"os"
-	"encoding/pem"
-	"log"
 	"crypto/rand"
 	"github.com/bits-and-blooms/bitset"
 )
@@ -57,21 +55,7 @@ var REV_CA2_alt gossip.Gossip_object
 var REV_FULL_CA1 gossip.Gossip_object
 var REV_FULL_CA2 gossip.Gossip_object
 
-func SaveCertificateToDisk(certBytes []byte, filePath string) {
-	certOut, err := os.Create(filePath)
-	if err != nil {
-		log.Fatalf("Failed to open %s for writing: %v", filePath, err)
-	}
-	if err := pem.Encode(certOut, &pem.Block{
-		Type:  "CERTIFICATE",
-		Bytes: certBytes,
-	}); err != nil {
-		log.Fatalf("Failed to write data to %s: %v", filePath, err)
-	}
-	if err := certOut.Close(); err != nil {
-		log.Fatalf("Error closing %s: %v", filePath, err)
-	}
-}
+
 func InitializeOneEntity (entity_type string, entity_id string) any{
 	// initialize CA context
 	if entity_type == "CA" {
@@ -285,7 +269,7 @@ func testCertLogging (t *testing.T){
 		//fmt.Println("root cert: ", ctx_ca_1.Rootcert)
 		//fmt.Println("derbytes: ", derbytes)
 
-		SaveCertificateToDisk(derbytes, target_cert.Subject.CommonName+ " from CA 1.crt")
+		Gen.SaveCertificateToDisk(derbytes, target_cert.Subject.CommonName+ " from CA 1.crt")
 	}
 	// For all the certs in CA 2 Cert Pool, Sign them and write them to disk
 	ca_2_cert_list := CA2_cert_pool.GetCertList()
@@ -297,7 +281,7 @@ func testCertLogging (t *testing.T){
 		}
 		//fmt.Println("root cert: ", ctx_ca_2.Rootcert)
 		//fmt.Println("derbytes: ", derbytes)
-		SaveCertificateToDisk(derbytes, target_cert.Subject.CommonName+ " from CA 2.crt")
+		Gen.SaveCertificateToDisk(derbytes, target_cert.Subject.CommonName+ " from CA 2.crt")
 	}
 
 

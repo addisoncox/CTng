@@ -99,7 +99,7 @@ func Generate_Root_Certificate(ctx *CAContext) *x509.Certificate{
 	issuer := Generate_Issuer(ctx.CA_private_config.Signer)
 	subject := Generate_Issuer(ctx.CA_private_config.Signer)
 	root_cert_unsigned := Genrate_Unsigned_PreCert(host, validFor, isCA, issuer, subject, ctx)
-	root_cert_signed := Generate_Signed_PreCert(ctx, host, validFor, isCA, issuer, subject, root_cert_unsigned, true, &ctx.PublicKey, &ctx.PrivateKey)
+	root_cert_signed := Generate_Selfsigned_root_cert(ctx, host, validFor, isCA, issuer, subject, root_cert_unsigned, true, &ctx.PublicKey, &ctx.PrivateKey)
 	return root_cert_signed
 }
 
@@ -127,6 +127,14 @@ func Generate_Signed_PreCert(c *CAContext, host string, validFor time.Duration, 
 	// Generate precert
 	pre_cert := Genrate_Unsigned_PreCert(host, validFor, isCA, issuer, subject, c)
 	signed_precert := Sign_certificate(pre_cert, root_cert, root, pub, priv)
+	return signed_precert
+}
+
+func Generate_Selfsigned_root_cert(c *CAContext, host string, validFor time.Duration, isCA bool, issuer pkix.Name, subject pkix.Name, root_cert *x509.Certificate, root bool, pub *rsa.PublicKey, priv *rsa.PrivateKey) *x509.Certificate{
+	// Generate precert
+	pre_cert := Genrate_Unsigned_PreCert(host, validFor, isCA, issuer, subject, c)
+	signed_precert := Sign_certificate(pre_cert, root_cert, root, pub, priv)
+	c.CertCounter--
 	return signed_precert
 }
 

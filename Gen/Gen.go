@@ -4,6 +4,8 @@ import (
 	"CTng/Logger"
 	"CTng/config"
 	"CTng/crypto"
+	"CTng/gossip"
+	"CTng/monitor"
 	//"CTng/util"
 	//"bytes"
 	//"encoding/json"
@@ -13,7 +15,7 @@ import (
 	//"log"
 	//"net/http"
 	//"testing"
-	//"os"
+	"os"
 	"crypto/rsa"
 	//"strings"
 	//"strconv"
@@ -280,4 +282,160 @@ func Update_crypto_config(crypto_config *crypto.StoredCryptoConfig, SignaturePub
 	crypto_config.ThresholdPublicMap = BLSPublicMap
 	crypto_config.RSAPrivateKey = *SignaturePrivateMap[crypto_config.SelfID.String()]
 	crypto_config.ThresholdSecretKey = BLSPrivateMap[crypto_config.SelfID.String()]
+}
+
+func Generateall(num_gossiper int, Threshold int, num_logger int, num_ca int, num_cert int, MMD int, MRD int, config_path string){
+	Total := num_gossiper
+	G_list, M_list, C_list, L_list := Generate_all_list(num_gossiper, num_ca, num_logger)
+	ca_private_config_map := make(map[string]CA.CA_private_config)
+	ca_crypto_config_map := make(map[string]crypto.StoredCryptoConfig)
+	logger_private_config_map := make(map[string]Logger.Logger_private_config)
+	logger_crypto_config_map := make(map[string]crypto.StoredCryptoConfig)
+	monitor_private_config_map := make(map[string]config.Monitor_config)
+	monitor_crypto_config_map := make(map[string]crypto.StoredCryptoConfig)
+	gossiper_private_config_map := make(map[string]config.Gossiper_config)
+	gossiper_crypto_config_map := make(map[string]crypto.StoredCryptoConfig)
+	RSAPublicMap := make(crypto.RSAPublicMap)
+	RSAPrivateMap := make(map[string]*rsa.PrivateKey)
+	BLSPublicMap := make(map[string][]byte)
+	BLSPrivateMap := make(map[string][]byte)
+	// Generate RSA key pair
+	RSAPublicMap, RSAPrivateMap = RSA_gen_all(G_list, M_list, C_list, L_list)
+	// Generate BLS key pair
+	BLSPublicMap, BLSPrivateMap = BLS_gen_all(G_list)
+	// Generate CA public config map
+	ca_public_config := GenerateCA_public_config(C_list, L_list, MMD, MMD, []string{"1.1"})
+	// Generate CA private config map
+	ca_private_config_map = GenerateCA_private_config_map(G_list, M_list, L_list, num_cert,num_ca)
+	// Generate CA crypto config map
+	ca_crypto_config_map = GenerateCryptoconfig_map(Total,Threshold,"CA")
+	// Create CA directory
+	os.Mkdir("ca_testconfig", 0777)
+	// Generate Logger public config map
+	logger_public_config := GenerateLogger_public_config(C_list, L_list, MMD, MMD, []string{"1.1"})
+	// Generate Logger private config map
+	logger_private_config_map = GenerateLogger_private_config_map(G_list,M_list,C_list, num_logger)
+	// Generate Logger crypto config map
+	logger_crypto_config_map = GenerateCryptoconfig_map(Total,Threshold,"Logger")
+	// Create Logger directory
+	os.Mkdir("logger_testconfig", 0777)
+	// write all CA public config, private config, crypto config to file
+	for i := 0;i < num_ca;i++{
+		// create a new folder for each CA if not exist
+		os.Mkdir(config_path+ "ca_testconfig/" + fmt.Sprint(i+1), 0777)
+		filepath := config_path+ "ca_testconfig/" + fmt.Sprint(i+1) + "/"
+		crypto_config := ca_crypto_config_map[C_list[i]]
+		//update threshold public map
+		crypto_config.ThresholdPublicMap = BLSPublicMap
+		//update RSA public map
+		crypto_config.SignaturePublicMap = RSAPublicMap
+		// update RSA Secret key
+		crypto_config.RSAPrivateKey = *RSAPrivateMap[C_list[i]]
+		// update BLS Secret key with empty byte array
+		crypto_config.ThresholdSecretKey = []byte{}
+		write_all_configs_to_file(ca_public_config, ca_private_config_map[C_list[i]], crypto_config, filepath, "CA")
+	}
+	// write all Logger public config, private config, crypto config to file
+	for i := 0;i < num_logger;i++{
+		// create a new folder for each Logger
+		os.Mkdir(config_path+"logger_testconfig/" + fmt.Sprint(i+1), 0777)
+		filepath := config_path+"logger_testconfig/" + fmt.Sprint(i+1) + "/"
+		crypto_config := logger_crypto_config_map[L_list[i]]
+		//update threshold public map
+		crypto_config.ThresholdPublicMap = BLSPublicMap
+		//update RSA public map
+		crypto_config.SignaturePublicMap = RSAPublicMap
+		// update RSA Secret key
+		crypto_config.RSAPrivateKey = *RSAPrivateMap[L_list[i]]
+		// update BLS Secret key with empty byte array
+		crypto_config.ThresholdSecretKey = []byte{}
+		write_all_configs_to_file(logger_public_config, logger_private_config_map[L_list[i]], crypto_config, filepath, "Logger")
+	}
+	// Generate Monitor public config map
+	monitor_public_config := GenerateMonitor_public_config(G_list, M_list, C_list, L_list, MMD, MMD,5, []string{"1.1"})
+	// Generate Monitor private config map
+	monitor_private_config_map = GenerateMonitor_private_config_map(G_list, M_list, C_list, L_list, MMD, MMD,5, []string{"1.1"}, " ")
+	// Generate Monitor crypto config map
+	monitor_crypto_config_map = GenerateCryptoconfig_map(Total,Threshold,"Monitor")
+	// Create Monitor directory
+	os.Mkdir("monitor_testconfig", 0777)
+	// write all Monitor public config, private config, crypto config to file
+	for i := 0;i < num_gossiper;i++{
+		// create a new folder for each Monitor
+		os.Mkdir(config_path+"monitor_testconfig/" + fmt.Sprint(i+1), 0777)
+		filepath := config_path+ "monitor_testconfig/" + fmt.Sprint(i+1) + "/"
+		//update the monitor private config with the monitor crypto config path
+		monitor_private_config := monitor_private_config_map[M_list[i]]
+		monitor_private_config.Crypto_config_location = filepath + "crypto_config.json"
+		crypto_config := monitor_crypto_config_map[M_list[i]]
+		//update threshold public map
+		crypto_config.ThresholdPublicMap = BLSPublicMap
+		//update RSA public map
+		crypto_config.SignaturePublicMap = RSAPublicMap
+		// update RSA Secret key
+		crypto_config.RSAPrivateKey = *RSAPrivateMap[M_list[i]]
+		// update BLS Secret key with empty byte array
+		crypto_config.ThresholdSecretKey = []byte{}
+		write_all_configs_to_file(monitor_public_config, monitor_private_config, crypto_config, filepath, "Monitor")
+	}
+	// Generate Gossiper public config map
+	gossiper_public_config := GenerateGossiper_public_config(G_list, M_list, C_list, L_list, MMD, MMD,5,5, []string{"1.1"})
+	// Generate Gossiper private config map
+	gossiper_private_config_map = GenerateGossiper_private_config_map(G_list, M_list, C_list, L_list, MMD, MMD,5,5, []string{"1.1"}, " ")
+	// Generate Gossiper crypto config map
+	gossiper_crypto_config_map = GenerateCryptoconfig_map(Total,Threshold,"Gossiper")
+	// Create Gossiper directory
+	os.Mkdir("gossiper_testconfig", 0777)
+	// write all Gossiper public config, private config, crypto config to file
+	for i := 0;i < num_gossiper;i++{
+		// create a new folder for each Gossiper
+		os.Mkdir(config_path+ "gossiper_testconfig/" + fmt.Sprint(i+1), 0777)
+		filepath := config_path + "gossiper_testconfig/" + fmt.Sprint(i+1) + "/"
+		//update the gossiper private config with the gossiper crypto config path
+		gossiper_private_config := gossiper_private_config_map[G_list[i]]
+		gossiper_private_config.Crypto_config_location= filepath + "crypto_config.json"
+		crypto_config := gossiper_crypto_config_map[G_list[i]]
+		//update threshold public map
+		crypto_config.ThresholdPublicMap = BLSPublicMap
+		//update RSA public map
+		crypto_config.SignaturePublicMap = RSAPublicMap
+		// update RSA Secret key
+		crypto_config.RSAPrivateKey = *RSAPrivateMap[G_list[i]]
+		// update Threshold Secret key
+		crypto_config.ThresholdSecretKey = BLSPrivateMap[G_list[i]]
+		write_all_configs_to_file(gossiper_public_config, gossiper_private_config, crypto_config, filepath, "Gossiper")
+	}
+}
+
+// warning: Only use this function after generating all the config files in SAME directory
+func InitializeOneEntity (entity_type string, entity_id string) any{
+	// initialize CA context
+	if entity_type == "CA" {
+		path_1 := "ca_testconfig/" + entity_id + "/CA_public_config.json"
+		path_2 := "ca_testconfig/" + entity_id + "/CA_private_config.json"
+		path_3 := "ca_testconfig/" + entity_id + "/CA_crypto_config.json"
+		return CA.InitializeCAContext(path_1,path_2,path_3)
+	}
+	// initialze Logger context
+	if entity_type == "Logger" {
+		path_1 := "logger_testconfig/" + entity_id + "/Logger_public_config.json"
+		path_2 := "logger_testconfig/" + entity_id + "/Logger_private_config.json"
+		path_3 := "logger_testconfig/" + entity_id + "/Logger_crypto_config.json"
+		return Logger.InitializeLoggerContext(path_1,path_2,path_3)
+	}
+	// initialze Monitor context
+	if entity_type == "Monitor" {
+		path_1 := "monitor_testconfig/" + entity_id + "/Monitor_public_config.json"
+		path_2 := "monitor_testconfig/" + entity_id + "/Monitor_private_config.json"
+		path_3 := "monitor_testconfig/" + entity_id + "/Monitor_crypto_config.json"
+		return monitor.InitializeMonitorContext(path_1,path_2,path_3,entity_id)
+	}
+	// initialze Gossiper context
+	if entity_type == "Gossiper" {
+		path_1 := "gossiper_testconfig/" + entity_id + "/Gossiper_public_config.json"
+		path_2 := "gossiper_testconfig/" + entity_id + "/Gossiper_private_config.json"
+		path_3 := "gossiper_testconfig/" + entity_id + "/Gossiper_crypto_config.json"
+		return gossip.InitializeGossiperContext(path_1,path_2,path_3,entity_id)
+	}
+	return nil
 }
