@@ -54,7 +54,13 @@ func Genrate_Unsigned_PreCert(host string, validFor time.Duration, isCA bool, is
 		template.KeyUsage |= x509.KeyUsageCertSign
 	}
 	ctng_extension := CTngExtension{RID: ctx.CertCounter}
-	template.CRLDistributionPoints = []string{fmt.Sprintf("%v", ctng_extension)}
+	bytes , err := json.Marshal(ctng_extension)
+	if err != nil {
+		log.Fatalf("Failed to marshal CTngExtension: %v", err)
+	}
+	//convert to string
+	ctng_extension_string := string(bytes)
+	template.CRLDistributionPoints = []string{ctng_extension_string}
 	ctx.CertCounter++
 	return &template
 }
