@@ -16,6 +16,7 @@ import (
 	"CTng/testData/fakeCA"
 	"CTng/testData/fakeLogger"
 	"CTng/webserver"
+	"CTng/logger_ca"
 	"fmt"
 	"os"
 )
@@ -33,6 +34,10 @@ func main() {
 	}
 
 	switch os.Args[1] {
+	case "minilogger":
+		logger_ca.StartLogger()
+	case "minica":
+		logger_ca.StartCA()
 	case "web":
 		webserver.Start()
 	case "minimon":

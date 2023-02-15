@@ -120,7 +120,7 @@ var Issuer_3 pkix.Name
 
 func test_gen(t *testing.T){
 	// Arguements are: num_gossiper int, Threshold int, num_logger int, num_ca int, num_cert int, MMD int, MRD int, config_path string
-	Gen.Generateall(4,2,3,3,560,60,60,"")
+	Gen.Generateall(4,2,3,3,7,60,60,"")
 }
 
 func Test_Context_Init(t *testing.T){
