@@ -27,7 +27,7 @@ type MerkleNode struct {
 	Poi          CA.ProofOfInclusion
 	Sth          gossip.Gossip_object
 	rid          RevocationID
-	SubjectKeyId string
+	SubjectKeyId []byte
 	Issuer       string
 }
 
@@ -54,7 +54,7 @@ func BuildMerkleTreeFromCerts(certs []x509.Certificate, ctx LoggerContext, perio
 	nodes := make([]MerkleNode, n)
 	for i := 0; i < n; i++ {
 		certBytes, _ := json.Marshal(certs[i])
-		nodes[i] = MerkleNode{hash: hash(certBytes), rid: RevocationID(i), SubjectKeyId: string(certs[i].SubjectKeyId), Issuer: string(certs[i].Issuer.CommonName)}
+		nodes[i] = MerkleNode{hash: hash(certBytes), rid: RevocationID(i), SubjectKeyId: certs[i].SubjectKeyId, Issuer: string(certs[i].Issuer.CommonName)}
 	}
 	if len(nodes)%2 == 1 {
 		certBytes, _ := json.Marshal(certs[n-1])

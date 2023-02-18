@@ -304,7 +304,7 @@ func Generateall(num_gossiper int, Threshold int, num_logger int, num_ca int, nu
 	// Generate BLS key pair
 	BLSPublicMap, BLSPrivateMap = BLS_gen_all(G_list)
 	// Generate CA public config map
-	ca_public_config := GenerateCA_public_config(C_list, L_list, MMD, MMD, []string{"1.1"})
+	ca_public_config := GenerateCA_public_config(L_list, C_list, MMD, MMD, []string{"1.1"})
 	// Generate CA private config map
 	ca_private_config_map = GenerateCA_private_config_map(G_list, M_list, L_list, num_cert,num_ca)
 	// Generate CA crypto config map
@@ -312,7 +312,7 @@ func Generateall(num_gossiper int, Threshold int, num_logger int, num_ca int, nu
 	// Create CA directory
 	os.Mkdir("ca_testconfig", 0777)
 	// Generate Logger public config map
-	logger_public_config := GenerateLogger_public_config(C_list, L_list, MMD, MMD, []string{"1.1"})
+	logger_public_config := GenerateLogger_public_config(L_list, C_list, MMD, MMD, []string{"1.1"})
 	// Generate Logger private config map
 	logger_private_config_map = GenerateLogger_private_config_map(G_list,M_list,C_list, num_logger)
 	// Generate Logger crypto config map

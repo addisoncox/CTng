@@ -33,7 +33,7 @@ func TestMerkleTree(t *testing.T) {
 	testExistsSubjectKeyId, _ := json.Marshal(2)
 	testCertExists := x509.Certificate{Version: 2, SubjectKeyId: testExistsSubjectKeyId}
 	for _, node := range nodes {
-		if node.SubjectKeyId == string(testExistsSubjectKeyId) {
+		if string(node.SubjectKeyId) == string(testExistsSubjectKeyId) {
 			if !(VerifyPOI(sth, node.Poi, testCertExists)) {
 				log.Fatal("Expected certificate does not exist")
 			}

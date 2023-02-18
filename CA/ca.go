@@ -53,7 +53,7 @@ func Genrate_Unsigned_PreCert(host string, validFor time.Duration, isCA bool, is
 		template.IsCA = true
 		template.KeyUsage |= x509.KeyUsageCertSign
 	}
-	ctng_extension := CTngExtension{RID: ctx.CertCounter}
+	ctng_extension := SequenceNumber{RID: ctx.CertCounter}
 	bytes , err := json.Marshal(ctng_extension)
 	if err != nil {
 		log.Fatalf("Failed to marshal CTngExtension: %v", err)
@@ -68,15 +68,6 @@ func Genrate_Unsigned_PreCert(host string, validFor time.Duration, isCA bool, is
 
 // Signed certificate with Root certificate
 func Sign_certificate(cert *x509.Certificate, root_cert *x509.Certificate,root bool, pub *rsa.PublicKey, priv *rsa.PrivateKey) *x509.Certificate{
-	derBytes, err := x509.CreateCertificate(rand.Reader, cert, root_cert, pub, priv)
-	if err != nil {
-		log.Fatalf("Failed to create certificate: %v", err)
-	}
-	//fmt.Println(derBytes)
-	cert, err = x509.ParseCertificate(derBytes)
-	if err != nil {
-		log.Fatalf("Failed to parse certificate: %v", err)
-	}
 	// if subjectkeyid is not set, set it to the hash of the public key
 	if len(cert.SubjectKeyId) == 0 {
 		//Marshal public key
@@ -87,6 +78,15 @@ func Sign_certificate(cert *x509.Certificate, root_cert *x509.Certificate,root b
 		//hash public key
 		key_hash,_ := crypto.GenerateSHA256(pub_key_M)
 		cert.SubjectKeyId = key_hash
+	}
+	derBytes, err := x509.CreateCertificate(rand.Reader, cert, root_cert, pub, priv)
+	if err != nil {
+		log.Fatalf("Failed to create certificate: %v", err)
+	}
+	//fmt.Println(derBytes)
+	cert, err = x509.ParseCertificate(derBytes)
+	if err != nil {
+		log.Fatalf("Failed to parse certificate: %v", err)
 	}
 	return cert
 }
@@ -101,25 +101,6 @@ func Generate_Root_Certificate(ctx *CAContext) *x509.Certificate{
 	root_cert_unsigned := Genrate_Unsigned_PreCert(host, validFor, isCA, issuer, subject, ctx)
 	root_cert_signed := Generate_Selfsigned_root_cert(ctx, host, validFor, isCA, issuer, subject, root_cert_unsigned, true, &ctx.PublicKey, &ctx.PrivateKey)
 	return root_cert_signed
-}
-
-// Parse CTng extension from certificate
-func Parse_CTng_extension(cert *x509.Certificate) *CTngExtension{
-	ctng_ext_M := []byte(cert.CRLDistributionPoints[0])
-	ctng_UM := new(CTngExtension)
-	json.Unmarshal(ctng_ext_M, &ctng_UM)
-	return ctng_UM
-}
-
-func Parse_CTng_extensions(cert *x509.Certificate) []*CTngExtension{
-	// iterate over all entries in CRLDistributionPoints
-	// and parse CTng extension
-	ctng_exts := make([]*CTngExtension, len(cert.CRLDistributionPoints))	
-	for i, ctng_ext_M := range cert.CRLDistributionPoints{
-		ctng_exts[i] = new(CTngExtension)
-		json.Unmarshal([]byte(ctng_ext_M), ctng_exts[i])
-	}
-	return ctng_exts
 }
 
 // generate signed precert
@@ -182,16 +163,12 @@ func Generate_N_Signed_PreCert(c *CAContext,N int, host string, validFor time.Du
 }
 
 // Marshall signed precert to json
-func Marshall_Signed_PreCert_To_Json(precert *x509.Certificate) []byte{
-	precert_json, err := json.Marshal(precert)
-	if err != nil {
-		log.Fatalf("Failed to marshall certificate: %v", err)
-	}
-	return precert_json
+func Marshall_Signed_PreCert(precert *x509.Certificate) []byte{
+	return precert.Raw
 }
 
 // Unmarshall signed precert from json
-func Unmarshall_Signed_PreCert_From_Json(precert []byte) *x509.Certificate{
+func Unmarshall_Signed_PreCert(precert []byte) *x509.Certificate{
 	cert, err := x509.ParseCertificate(precert)
 	if err != nil {
 		log.Fatalf("Failed to parse certificate: %v", err)

@@ -18,6 +18,7 @@ import (
 	"time"
 	//"strings"
 	"strconv"
+	"io/ioutil"
 	"github.com/gorilla/mux"
 )
 
@@ -77,25 +78,29 @@ func requestSTH(c *LoggerContext, w http.ResponseWriter, r *http.Request){
 // receive precert from CA
 func receive_pre_cert(c *LoggerContext, w http.ResponseWriter, r *http.Request) {
 	// Unmarshal the request body into a precert
-	var precert x509.Certificate
-	decoder := json.NewDecoder(r.Body)
-	err := decoder.Decode(&precert)
+	var precert *x509.Certificate
+	body, err := ioutil.ReadAll(r.Body)
 	if err != nil {
-		panic(err)
+		fmt.Printf("Error: %s\n", err)
+		return
 	}
+	// Parse the DER-encoded certificate
+	precert = CA.Unmarshall_Signed_PreCert(body)
+	fmt.Println(precert.SubjectKeyId)
 	// add to precert pool
-	c.CurrentPrecertPool.AddCert(&precert)
-	fmt.Println("Received precert from CA")
+	c.CurrentPrecertPool.AddCert(precert)
 }
 
 // send STH to CA
 func Send_STH_to_CA(c *LoggerContext, sth gossip.Gossip_object, ca string){
+	fmt.Println("Sending STH to CA ", ca)
 	var sth_json []byte
 	sth_json, err := json.Marshal(sth)
+	//fmt.Println(sth_json)
 	if err != nil {
 		log.Fatalf("Failed to marshal STH: %v", err)
 	}
-	resp, err := c.Client.Post(PROTOCOL+ ca +"/CA/receive-sth", "application/json", bytes.NewBuffer(sth_json))
+	resp, err := c.Client.Post(PROTOCOL+ca +"/CA/receive-sth", "application/json", bytes.NewBuffer(sth_json))
 	if err != nil {
 		log.Fatalf("Failed to send STH to CA: %v", err)
 	}
@@ -104,7 +109,7 @@ func Send_STH_to_CA(c *LoggerContext, sth gossip.Gossip_object, ca string){
 
 
 // Send one POI to CA
-func Send_POI_to_CA(c *LoggerContext, poi *CA.POI, ca string){
+func Send_POI_to_CA(c *LoggerContext, poi CA.POI, ca string){
 	var poi_json []byte
 	poi_json, err := json.Marshal(poi)
 	if err != nil {
@@ -121,11 +126,33 @@ func Send_POIs_to_CAs(c *LoggerContext, MerkleNodes []MerkleNode){
 	//iterate over the MerkleNodes
 	for i := 0; i < len(MerkleNodes); i++ {
 		// create POI, using merkle node.ProofofInclusion and node.SubjectKeyId
-		poi := &CA.POI{ProofOfInclusion: MerkleNodes[i].Poi, SubjectKeyId:MerkleNodes[i].SubjectKeyId}
-		// Get the Issuer CA 
-		ca := MerkleNodes[i].Issuer
-		// send POI to CA
-		Send_POI_to_CA(c, poi, ca)
+		if len(MerkleNodes[i].SubjectKeyId) != 0 {
+			//fmt.Println([]byte(MerkleNodes[i].SubjectKeyId))
+			var CAPOI CA.POI
+			CAPOI = CA.POI{
+				ProofOfInclusion: CA.ProofOfInclusion{
+					SiblingHashes: MerkleNodes[i].Poi.SiblingHashes,
+					NeighborHash: MerkleNodes[i].Poi.NeighborHash,
+				},
+				SubjectKeyId: MerkleNodes[i].SubjectKeyId, 
+				LoggerID: c.Logger_private_config.Signer,
+			}
+			var poi_json []byte
+			poi_json, err := json.Marshal(CAPOI)
+			if err != nil {
+				log.Fatalf("Failed to marshal POI: %v", err)
+			}
+			var newp CA.POI
+			err = json.Unmarshal(poi_json, &newp)
+			if err != nil {
+				log.Fatalf("Failed to unmarshal POI: %v", err)
+			}
+			fmt.Println([]byte(newp.SubjectKeyId))
+			// Get the Issuer CA 
+			ca := MerkleNodes[i].Issuer
+			// send POI to CA
+			Send_POI_to_CA(c, CAPOI, ca)
+		}
 	}
 }
 
@@ -155,8 +182,9 @@ func PeriodicTask(ctx *LoggerContext) {
 		PeriodicTask(ctx)
 	}
 	time.AfterFunc(time.Duration(ctx.Logger_public_config.MMD)*time.Second, f)
+	fmt.Println("——————————————————————————————————Logger Running Tasks at Period ", GetCurrentPeriod(), "——————————————————————————————————")
 	f1 := func() {
-		fmt.Println(GerCurrentSecond())
+		//fmt.Println(GerCurrentSecond())
 		// update online period
 		ctx.OnlinePeriod = ctx.OnlinePeriod + 1
 		// Compute STH and POIs
@@ -166,14 +194,17 @@ func PeriodicTask(ctx *LoggerContext) {
 		if err != nil {
 		}
 		periodint = periodint + 1
+		period = strconv.Itoa(periodint)
 		// update STH
 		certlist := ctx.CurrentPrecertPool.GetCerts()
 		STH,_,POIs := BuildMerkleTreeFromCerts(certlist,*ctx, periodint)
+		//fmt.Println("STH: ", STH)
 		// update STH storage
 		ctx.STH_storage[period] = STH
 		// send STH to all CAs
+		// fmt.Println(ctx.Logger_public_config.All_CA_URLs)
 		for i := 0; i < len(ctx.Logger_public_config.All_CA_URLs); i++ {
-			Send_STH_to_CA(ctx, STH, ctx.Logger_public_config.All_CA_URLs [i])
+			Send_STH_to_CA(ctx, STH, ctx.Logger_public_config.All_CA_URLs[i])
 		}
 		// send POI to the Issuer CA
 		Send_POIs_to_CAs(ctx, POIs)
@@ -200,7 +231,7 @@ func StartLogger(c *LoggerContext) {
 		second = 60 - second
 		//print wait time
 		fmt.Println("Logger will start after", second, "seconds")
-		//time.Sleep(time.Duration(second) * time.Second)
+		time.Sleep(time.Duration(second) * time.Second)
 	}
 	// handle request and wait 55 seconds
 	go PeriodicTask(c)

@@ -5,9 +5,9 @@ package CA
 
 
 import (
-	"CTng/gossip"
+	//"CTng/gossip"
 	"encoding/pem"
-	"encoding/json"
+	//"encoding/json"
 	"crypto/x509"
 )
 
@@ -182,38 +182,5 @@ func (s *CertPool) UpdateCertBySubjectKeyID(subjectKeyId string, cert *x509.Cert
 	}
 
 	s.certs[candidates[0]] = cert
-}
-
-
-
-// Update all certificates in the pool by their LID
-func (s *CertPool) UpdateCertsByLID(lid string, sth gossip.Gossip_object) {
-	if s == nil {
-		return
-	}
-	for _, cert := range s.certs {
-		// iterate over all Ctng extensions in CRLdistributionPoints
-		for _, ext := range cert.CRLDistributionPoints {
-			// Unmarshal the CTng extension 
-			var ctngext CTngExtension
-			//convert ext to []byte
-			err := json.Unmarshal([]byte(ext), &ctngext)
-			if err != nil {
-				continue
-			}
-			// if the extension has the same LID as the one we are looking for
-			if ctngext.STH.Signer == lid {
-				// update the extension
-				ctngext.STH = sth
-			}
-			// convert the extension back to string
-			extension_bytes, err := json.Marshal(ctngext)
-			if err != nil {
-				continue
-			}
-			ext = string(extension_bytes)	
-
-		}
-	}
 }
 

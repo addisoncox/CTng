@@ -44,6 +44,8 @@ type LoggerContext struct {
 	STH_storage map[string]gossip.Gossip_object //for monitor to query
 	STH_storage_fake map[string]gossip.Gossip_object //for monitor to query
 	MisbehaviorInterval int //for sometimes unreponsive Logger and Split-world Logger, misbehave every x requests
+	StorageDirectory string
+	StorageFile string
 }
 
 
