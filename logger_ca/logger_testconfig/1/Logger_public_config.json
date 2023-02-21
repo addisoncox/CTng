@@ -3,7 +3,8 @@
    "localhost:9100"
   ],
   "All_Logger_URLs": [
-   "localhost:9000"
+   "localhost:9000",
+   "localhost:9001"
   ],
   "MMD": 60,
   "MRD": 60,

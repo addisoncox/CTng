@@ -16,8 +16,8 @@ func StartCA(){
 	CA.StartCA(ctx_ca_1)
 }
 
-func StartLogger(){
-	path_prefix := "logger_ca/logger_testconfig/1"
+func StartLogger(LID string){
+	path_prefix := "logger_ca/logger_testconfig/"+LID
 	path_1 :=  path_prefix+ "/Logger_public_config.json"
 	path_2 :=  path_prefix+ "/Logger_private_config.json"
 	path_3 :=  path_prefix+ "/Logger_crypto_config.json"

@@ -4,7 +4,8 @@
    "localhost:9100"
   ],
   "Logger_URLs": [
-   "localhost:9000"
+   "localhost:9000",
+   "localhost:9001"
   ],
   "Signer": "localhost:8182",
   "Gossiper_URL": "localhost:8082",

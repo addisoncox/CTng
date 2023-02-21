@@ -218,7 +218,7 @@ func PeriodicTask(ctx *CAContext) {
 	validFor := 365 * 24 * time.Hour
 	isCA := false
 	// generate pre-certificates
-	certs := Generate_N_Signed_PreCert(ctx,6, host, validFor, isCA, issuer, ctx.Rootcert, false,&ctx.PrivateKey, 0)
+	certs := Generate_N_Signed_PreCert(ctx,ctx.CA_private_config.Cert_per_period, host, validFor, isCA, issuer, ctx.Rootcert, false,&ctx.PrivateKey, 0)
 	//Send the pre-certificates to the log
 	// iterate over certs
 	for i:=0;i<len(certs);i++{

@@ -35,7 +35,7 @@ func main() {
 
 	switch os.Args[1] {
 	case "minilogger":
-		logger_ca.StartLogger()
+		logger_ca.StartLogger(os.Args[2])
 	case "minica":
 		logger_ca.StartCA()
 	case "web":

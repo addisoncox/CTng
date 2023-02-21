@@ -1,9 +1,8 @@
 {
-  "Signer": "localhost:9100",
-  "Port": "9100",
-  "Loggerlist": [
-   "localhost:9000",
-   "localhost:9001"
+  "Signer": "localhost:9001",
+  "Port": "9001",
+  "CAlist": [
+   "localhost:9100"
   ],
   "Monitorlist": [
    "localhost:8180",
@@ -16,6 +15,5 @@
    "localhost:8081",
    "localhost:8082",
    "localhost:8083"
-  ],
-  "Cert_per_period": 1
+  ]
  }
