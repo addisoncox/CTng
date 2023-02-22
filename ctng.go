@@ -17,6 +17,7 @@ import (
 	"CTng/testData/fakeLogger"
 	"CTng/webserver"
 	"CTng/logger_ca"
+	"CTng/network"
 	"fmt"
 	"os"
 )
@@ -38,12 +39,22 @@ func main() {
 		logger_ca.StartLogger(os.Args[2])
 	case "minica":
 		logger_ca.StartCA()
+	case "lcmonitor":
+		logger_ca.StartMonitor()
 	case "web":
 		webserver.Start()
 	case "minimon":
 		minimon.Start()
 	case "miniclient":
 		miniclient.Start()
+	case "network_monitor":
+		network.StartMonitor(os.Args[2])
+	case "network_gossiper":
+		network.StartGossiper(os.Args[2])
+	case "network_logger":
+		network.StartLogger(os.Args[2])
+	case "network_ca":
+		network.StartCA(os.Args[2])
 	case "gossiper":
 		// make the config object.
 		conf, err := config.LoadGossiperConfig(os.Args[2], os.Args[3], os.Args[4])

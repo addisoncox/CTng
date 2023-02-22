@@ -141,7 +141,7 @@ func Send_Signed_PreCert_To_Logger(c *CAContext,precert *x509.Certificate, logge
 	//fmt.Println(precert_json)
 	resp, err := c.Client.Post(PROTOCOL+ logger+"/Logger/receive-precerts", "application/json", bytes.NewBuffer(precert_json))
 	if err != nil {
-		log.Fatalf("Failed to send precert to loggers: %v", err)
+		fmt.Println("Failed to send precert to loggers: ", err)
 	}
 	defer resp.Body.Close()
 }
@@ -154,7 +154,7 @@ func Send_Signed_PreCert_To_Loggers(c *CAContext, precert *x509.Certificate, log
 		//fmt.Println(loggers[i])
 		resp, err := c.Client.Post(PROTOCOL+ loggers[i]+"/Logger/receive-precerts", "application/json", bytes.NewBuffer(precert_json))
 		if err != nil {
-			log.Fatalf("Failed to send precert to loggers: %v", err)
+			fmt.Println("Failed to send precert to loggers: ", err)
 		}
 		defer resp.Body.Close()
 	}
@@ -268,8 +268,8 @@ func StartCA(c *CAContext) {
 	}
 	// if current second is not 0, wait till the next minute
 	if second != 0 {
-		fmt.Println("CA will start", 60-second, " seconds later.")
-		time.Sleep(time.Duration(60-second) * time.Second)
+		fmt.Println("CA will start", 60-second+1, " seconds later.")
+		time.Sleep(time.Duration(60-second+1) * time.Second)
 	}
 	// Initialize CA context
 	tr := &http.Transport{}

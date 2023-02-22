@@ -5,6 +5,7 @@ import (
 	"log"
 	"net/http"
 	"time"
+	"fmt"
 	"github.com/gorilla/mux"
 )
 
@@ -31,12 +32,14 @@ func handleMonitorRequests(c *MonitorContext) {
 func StartMonitorServer(c *MonitorContext) {
 	if c.Mode == 0{
 	time_wait := gossip.Getwaitingtime();
+	fmt.Println("Waiting for ",time_wait," seconds");
 	time.Sleep(time.Duration(time_wait)*time.Second);
 	}
 	tr := &http.Transport{}
 	c.Client = &http.Client{
 		Transport: tr,
 	}
+	fmt.Println("Monitor ", c.StorageID, " running on Period ", gossip.GetCurrentPeriod())
 	// Run a go routine to handle tasks that must occur every MMD
 	go PeriodicTasks(c)
 	// Start HTTP server loop on the main thread

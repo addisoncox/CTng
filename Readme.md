@@ -68,6 +68,7 @@ These servers are intended to provide a local test of all running components. Th
 
 The `testData` folder contains configurations for testing, but configs can be generated using the functions in `config`.
 
+To close all tmux sessions, you can use the tmux kill-server command. 
 
 # Function Documentation
 Documentation + Function descriptions exist in each file/subfolder.

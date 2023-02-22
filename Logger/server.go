@@ -102,7 +102,7 @@ func Send_STH_to_CA(c *LoggerContext, sth gossip.Gossip_object, ca string){
 	}
 	resp, err := c.Client.Post(PROTOCOL+ca +"/CA/receive-sth", "application/json", bytes.NewBuffer(sth_json))
 	if err != nil {
-		log.Fatalf("Failed to send STH to CA: %v", err)
+		fmt.Println("Failed to send STH to CA: ", err)
 	}
 	defer resp.Body.Close()
 }
@@ -117,7 +117,7 @@ func Send_POI_to_CA(c *LoggerContext, poi CA.POI, ca string){
 	}
 	resp, err := c.Client.Post(PROTOCOL+ca+"/CA/receive-poi", "application/json", bytes.NewBuffer(poi_json))
 	if err != nil {
-		log.Fatalf("Failed to send POI to CA: %v", err)
+		fmt.Println("Failed to send POI to CA: ", err)
 	}
 	defer resp.Body.Close()
 }

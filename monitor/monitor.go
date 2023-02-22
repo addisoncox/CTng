@@ -274,11 +274,12 @@ func PeriodicTasks(c *MonitorContext) {
 	// Run the periodic tasks.
 	QueryLoggers(c)
 	QueryAuthorities(c)
-	c.WipeStorage()
-	c.Clean_Conflicting_Object()
-	c.SaveStorage(gossip.GetCurrentPeriod())
-	//wait for some time (after all the monitor-gossip system converges)
-	//time.Sleep(10*time.Second);
+	f1 := func() {
+		c.Clean_Conflicting_Object()
+		c.SaveStorage(gossip.GetCurrentPeriod())
+		c.WipeStorage()
+	}
+	time.AfterFunc(time.Duration(c.Config.Public.MMD-20)*time.Second, f1)
 }
 
 //This function is called by handle_gossip in monitor_server.go under the server folder
