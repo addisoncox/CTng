@@ -28,6 +28,7 @@ func QueryMonitor() {
 		fmt.Printf("sth err: %v\n", err)
 	} else {
 		fmt.Printf("sth: %v\n", res)
+		fmt.Printf("sth field: %v\n", GetRootHash(res))
 		fmt.Printf("sth num periods: %d\n", sthNumPeriods)
 	}
 
@@ -49,8 +50,8 @@ func QueryMonitor() {
 		fmt.Printf("pom: %v\n", res)
 		fmt.Printf("pom num periods: %v\n", pomNumPeriods)
 	}
-	
-	if ((sthNumPeriods == revNumPeriods) && (sthNumPeriods == pomNumPeriods)) {
+
+	if (sthNumPeriods == revNumPeriods) && (sthNumPeriods == pomNumPeriods) {
 		// TODO: Query another monitor
 	}
 }
@@ -121,18 +122,38 @@ func FetchGossipObject(url string) (MonitorData, error) {
 	return data, err
 }
 
-func GetDeltaCRV(data MonitorData) string {
+func GetDeltaCRV(data MonitorData) []string {
 	// Parse payload[2] as Revocation
-	var rev map[string]any
-	err := json.Unmarshal([]byte(data[0].Payload[2]), &rev)
-	if err != nil {
-		fmt.Println("bruh 2")
-		fmt.Println(rev)
-		return ""
-	}
+	var out []string
+	for _, rev := range data {
+		var payload map[string]any
+		err := json.Unmarshal([]byte(rev.Payload[2]), &payload)
+		if err != nil {
+			fmt.Println(payload)
+			fmt.Println(err)
+			return out
+		}
 
-	// TODO: Parse as REV instead of string
-	return rev["Delta_CRV"].(string)
+		// TODO: Parse as REV instead of string
+		out = append(out, payload["Delta_CRV"].(string))
+	}
+	return out
+}
+
+func GetRootHash(data MonitorData) []string {
+	var out []string
+	for _, sth := range data {
+		var payload map[string]any
+		err := json.Unmarshal([]byte(sth.Payload[1]), &payload)
+		if err != nil {
+			fmt.Println(payload)
+			fmt.Println(err)
+			return out
+		}
+
+		out = append(out, payload["RootHash"].(string))
+	}
+	return out
 }
 
 func Fetch(url string) ([]byte, error) {
@@ -152,33 +173,3 @@ func Fetch(url string) ([]byte, error) {
 
 	return resBody, nil
 }
-
-// func parse[T any](res []byte) (T, error) {
-// 	var data T
-// 	err := json.Unmarshal(res, &data)
-// 	if err != nil {
-// 		return data, err
-// 	}
-// 	return data, nil
-// }
-
-// func Fetch(url string, description string) {
-// 	res, err := http.Get(url)
-// 	if err != nil {
-// 		fmt.Println("Error making http request:", err)
-// 		return
-// 	}
-
-// 	resBody, err := io.ReadAll(res.Body)
-// 	if err != nil {
-// 		fmt.Printf("Could not read %s response body: %s\n", description, err)
-// 		return
-// 	}
-
-// 	if res.StatusCode != http.StatusOK {
-// 		fmt.Printf("Failed to get %s: %s\n", description, resBody)
-// 	} else {
-// 		fmt.Printf("%s: %s\n", description, resBody)
-// 	}
-// 	fmt.Println()
-// }
