@@ -2,34 +2,88 @@ package miniclient
 
 import (
 	"fmt"
-	"io"
-	"net/http"
 )
 
 func Start() {
-	Fetch("http://localhost:3000/sth", "STH")
-	Fetch("http://localhost:3000/rev", "Revocation Information")
-	Fetch("http://localhost:3000/pom", "Proof of Misbehavior")
-	// Fetch("https://localhost:8002/", "Web Server")
+	QueryMonitor()
+	// QueryMonitorOldEndpoints()
+	fmt.Println()
+	QueryServer()
 }
 
-func Fetch(url string, description string) {
-	res, err := http.Get(url)
+func QueryMonitor() {
+	res, err := FetchClientUpdate("http://localhost:3000/?period=0")
 	if err != nil {
-		fmt.Println("Error making http request:", err)
+		fmt.Printf("client update err: %v\n", err)
 		return
 	}
 
-	resBody, err := io.ReadAll(res.Body)
-	if err != nil {
-		fmt.Printf("Could not read %s response body: %s\n", description, err)
-		return
-	}
+	fmt.Printf("monitor id: %v\n", res.MonitorID)
+	fmt.Printf("period: %v\n", res.Period)
+	fmt.Printf("\nsth: %v\n", res.STHs)
+	fmt.Printf("\nrev: %v\n", res.REVs)
+	fmt.Printf("\npom: %v\n", res.PoMs)
 
-	if res.StatusCode != http.StatusOK {
-		fmt.Printf("Failed to get %s: %s\n", description, resBody)
+	fmt.Printf("\nsth delta crv: %v\n", GetDeltaCRV(res.STHs))
+	fmt.Printf("\nsth srh value: %v\n", GetSRH(res.STHs))
+	fmt.Printf("\nrev root hash: %v\n", GetRootHash(res.REVs))
+}
+
+func QueryMonitorOldEndpoints() {
+	// monitorURL := "http://localhost:3000"
+	// backupMonitorURL := "http://localhost:3001"
+
+	res, err := FetchGossipObject("http://localhost:3000/sth")
+	sthNumPeriods := len(res)
+	if err != nil {
+		fmt.Printf("sth err: %v\n", err)
 	} else {
-		fmt.Printf("%s: %s\n", description, resBody)
+		fmt.Printf("sth: %v\n", res)
 	}
-	fmt.Println();
+
+	res, err = FetchGossipObject("http://localhost:3000/rev")
+	revNumPeriods := len(res)
+	if err != nil {
+		fmt.Printf("rev err: %v\n", err)
+	} else {
+		fmt.Printf("rev: %v\n", res)
+		fmt.Printf("rev delta crv: %s\n", GetDeltaCRV(res))
+		fmt.Printf("rev num periods: %d\n", revNumPeriods)
+	}
+
+	res, err = FetchGossipObject("http://localhost:3000/pom")
+	pomNumPeriods := len(res)
+	if err != nil {
+		fmt.Printf("pom err: %v\n", err)
+	} else {
+		fmt.Printf("pom: %v\n", res)
+		fmt.Printf("pom num periods: %v\n", pomNumPeriods)
+	}
+
+	if (sthNumPeriods == revNumPeriods) && (sthNumPeriods == pomNumPeriods) {
+		// TODO: Query another monitor
+	}
+}
+
+func QueryServer() {
+	cert, err := FetchCertificate("https://localhost:8000")
+	if err != nil {
+		fmt.Printf("normal cert err: %v\n", err)
+	} else {
+		fmt.Printf("normal cert: %v\n", cert.Subject)
+	}
+
+	cert, err = FetchCertificate("https://localhost:8001")
+	if err != nil {
+		fmt.Printf("revoked cert err: %v\n", err)
+	} else {
+		fmt.Printf("revoked cert: %v\n", cert.Subject)
+	}
+
+	cert, err = FetchCertificate("https://localhost:8002")
+	if err != nil {
+		fmt.Printf("pom cert err: %v\n", err)
+	} else {
+		fmt.Printf("pom cert: %v\n", cert.Subject)
+	}
 }

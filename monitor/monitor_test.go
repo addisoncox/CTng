@@ -64,7 +64,7 @@ func TestPanicOnBadReceiveGossip(t *testing.T) {
 func testPrepareClientupdate(t *testing.T) {
 	// TODO
 	ctx_monitor_1 := InitializeMonitorContext("../Gen/monitor_testconfig/1/Monitor_public_config.json","../Gen/monitor_testconfig/1/Monitor_private_config.json","../Gen/monitor_testconfig/1/Monitor_crypto_config.json","1")
-	update := PrepareClientupdate(ctx_monitor_1, "../testserver/STH_TSS.json", "../testserver/REV_TSS.json", "../testserver/PoM_TSS.json")
+	update, _ := PrepareClientUpdate(ctx_monitor_1, "../testserver/STH_TSS.json", "../testserver/REV_TSS.json", "../testserver/PoM_TSS.json")
 	fmt.Println(update)
 }
 
