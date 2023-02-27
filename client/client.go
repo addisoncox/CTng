@@ -79,7 +79,7 @@ func QueryMonitors(c *ClientContext) {
 }
 
 func Handleupdates(c *ClientContext, w http.ResponseWriter, r *http.Request) {
-	var update monitor.Clientupdate
+	var update monitor.ClientUpdate
 	err := json.NewDecoder(r.Body).Decode(&update)
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusBadRequest)
