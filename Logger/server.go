@@ -103,8 +103,9 @@ func Send_STH_to_CA(c *LoggerContext, sth gossip.Gossip_object, ca string){
 	resp, err := c.Client.Post(PROTOCOL+ca +"/CA/receive-sth", "application/json", bytes.NewBuffer(sth_json))
 	if err != nil {
 		fmt.Println("Failed to send STH to CA: ", err)
+	}else{
+		defer resp.Body.Close()
 	}
-	defer resp.Body.Close()
 }
 
 

@@ -148,6 +148,7 @@ func Send_Signed_PreCert_To_Logger(c *CAContext,precert *x509.Certificate, logge
 
 // send a signed precert to all loggers
 func Send_Signed_PreCert_To_Loggers(c *CAContext, precert *x509.Certificate, loggers []string){
+	//fmt.Println(loggers)
 	for i:=0;i<len(loggers);i++{
 		precert_json := Marshall_Signed_PreCert(precert)
 		//fmt.Println(precert_json)
@@ -155,8 +156,9 @@ func Send_Signed_PreCert_To_Loggers(c *CAContext, precert *x509.Certificate, log
 		resp, err := c.Client.Post(PROTOCOL+ loggers[i]+"/Logger/receive-precerts", "application/json", bytes.NewBuffer(precert_json))
 		if err != nil {
 			fmt.Println("Failed to send precert to loggers: ", err)
+		}else{
+			defer resp.Body.Close()
 		}
-		defer resp.Body.Close()
 	}
 }
 
@@ -219,6 +221,7 @@ func PeriodicTask(ctx *CAContext) {
 	isCA := false
 	// generate pre-certificates
 	certs := Generate_N_Signed_PreCert(ctx,ctx.CA_private_config.Cert_per_period, host, validFor, isCA, issuer, ctx.Rootcert, false,&ctx.PrivateKey, 0)
+	fmt.Println(len(certs))
 	//Send the pre-certificates to the log
 	// iterate over certs
 	for i:=0;i<len(certs);i++{
