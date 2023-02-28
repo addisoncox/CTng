@@ -134,6 +134,40 @@ func GetCTngExtensions(cert *x509.Certificate) []any {
 	}
 }
 
+func GetSequenceNumberfromCert(cert *x509.Certificate)int{
+	// parse cert.CRLDistributionPoints[0] to get the sequence number
+	var ctngext SequenceNumber
+	// convert the string to bytes
+	ctngextbytes := []byte(cert.CRLDistributionPoints[0])
+	// decode the bytes to ctngext
+	err := json.Unmarshal(ctngextbytes, &ctngext)
+	if err != nil {
+		fmt.Println("Error in GetCTngExtensions: ", err)
+	}
+	return ctngext.RID
+}
+
+func GetLoggerInfofromCert(cert *x509.Certificate) []CTngExtension{
+	var ctngexts []CTngExtension
+	if len(cert.CRLDistributionPoints) == 1 {
+		return nil
+	}else{
+		for _, ext := range cert.CRLDistributionPoints[1:] {
+			var ctngext CTngExtension
+			// convert the string to bytes
+			ctngextbytes := []byte(ext)
+			// decode the bytes to ctngext
+			err := json.Unmarshal(ctngextbytes, &ctngext)
+			if err != nil {
+				fmt.Println("Error in GetCTngExtensions: ", err)
+			}
+			ctngexts = append(ctngexts, ctngext)
+		}
+		return ctngexts
+	}
+}
+
+
 func GetPrecertfromCert(cert *x509.Certificate) *x509.Certificate {
 	// only keep the first ctng extension in CRLDistributionPoints
 	var ctngext CTngExtension

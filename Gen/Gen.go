@@ -306,7 +306,7 @@ func Generateall(num_gossiper int, Threshold int, num_logger int, num_ca int, nu
 	// Generate CA public config map
 	ca_public_config := GenerateCA_public_config(L_list, C_list, MMD, MMD, []string{"1.1"})
 	// Generate CA private config map
-	ca_private_config_map = GenerateCA_private_config_map(G_list, M_list, L_list, num_cert,num_ca)
+	ca_private_config_map = GenerateCA_private_config_map(G_list, M_list, L_list,num_ca, num_cert)
 	// Generate CA crypto config map
 	ca_crypto_config_map = GenerateCryptoconfig_map(Total,Threshold,"CA")
 	// Create CA directory
