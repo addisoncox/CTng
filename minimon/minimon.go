@@ -13,10 +13,11 @@ import (
 
 // Implements a minimal monitor server. Includes endpoints to retrieve STHs, REVs, and POMs.
 func Start() {
-	http.HandleFunc("/sth", createRequestHandler("testData/monitordata/1/STH_FULL.json"))
-	http.HandleFunc("/rev", createRequestHandler("testData/monitordata/1/REV_FULL.json"))
-	http.HandleFunc("/pom", createRequestHandler("testData/monitordata/1/CONFLICT_POM.json"))
 	http.HandleFunc("/", handleClientUpdate)
+
+	// http.HandleFunc("/sth", createRequestHandler("testData/monitordata/1/STH_FULL.json"))
+	// http.HandleFunc("/rev", createRequestHandler("testData/monitordata/1/REV_FULL.json"))
+	// http.HandleFunc("/pom", createRequestHandler("testData/monitordata/1/CONFLICT_POM.json"))
 
 	fmt.Println("Monitor listening on port 3000...")
 	if err := http.ListenAndServe("localhost:3000", nil); err != nil {
@@ -64,6 +65,7 @@ func handleClientUpdate(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
+// Create a HTTP request handler to return an array of gossip objects, stored in the given directory
 func createRequestHandler(fileName string) func(http.ResponseWriter, *http.Request) {
 	return func(w http.ResponseWriter, r *http.Request) {
 		if r.Method != "GET" {

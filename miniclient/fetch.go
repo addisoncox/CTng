@@ -13,26 +13,9 @@ import (
 
 type MonitorData = []gossip.Gossip_object
 
-func Fetch(url string) ([]byte, error) {
-	res, err := http.Get(url)
-	if err != nil {
-		return []byte{}, err
-	}
-
-	resBody, err := io.ReadAll(res.Body)
-	if err != nil {
-		return resBody, err
-	}
-
-	if res.StatusCode != http.StatusOK {
-		return resBody, fmt.Errorf("server returned status code %v: %v", res.StatusCode, string(resBody))
-	}
-
-	return resBody, nil
-}
-
+// Fetch an entity from the given url and parse it as a client update object
 func FetchClientUpdate(url string) (monitor.ClientUpdate, error) {
-	res, err := Fetch(url)
+	res, err := fetch(url)
 	if err != nil {
 		return monitor.ClientUpdate{}, err
 	}
@@ -42,8 +25,22 @@ func FetchClientUpdate(url string) (monitor.ClientUpdate, error) {
 	return data, err
 }
 
+// Fetch an entity from the given url and parse it as an array of gossip objects
+func FetchGossip(url string) (MonitorData, error) {
+	res, err := fetch(url)
+	if err != nil {
+		return MonitorData{}, err
+	}
+
+	var data MonitorData
+	err = json.Unmarshal(res, &data)
+	return data, err
+}
+
+// Get the x509 certificate from the given url
 func FetchCertificate(url string) (x509.Certificate, error) {
-	// Disable TLS certificate verificiation
+	// CTng certificates, having been created by our own CA, will not pass TLS verification, so we 
+	// must disable it
 	tr := &http.Transport{
 		TLSClientConfig: &tls.Config{InsecureSkipVerify: true},
 	}
@@ -62,10 +59,12 @@ func FetchCertificate(url string) (x509.Certificate, error) {
 
 	// return x509.Certificate{}, nil
 
+	// Make sure website has a certificate
 	if res.TLS == nil {
 		return x509.Certificate{}, nil
 	}
 
+	// Return the first certificate, if it exists
 	certificates := res.TLS.PeerCertificates
 	if len(certificates) == 0 && certificates[0] != nil {
 		return x509.Certificate{}, fmt.Errorf("no certificate")
@@ -74,13 +73,20 @@ func FetchCertificate(url string) (x509.Certificate, error) {
 	return *certificates[0], nil
 }
 
-func FetchGossipObject(url string) (MonitorData, error) {
-	res, err := Fetch(url)
+func fetch(url string) ([]byte, error) {
+	res, err := http.Get(url)
 	if err != nil {
-		return MonitorData{}, err
+		return []byte{}, err
 	}
 
-	var data MonitorData
-	err = json.Unmarshal(res, &data)
-	return data, err
+	resBody, err := io.ReadAll(res.Body)
+	if err != nil {
+		return resBody, err
+	}
+
+	if res.StatusCode != http.StatusOK {
+		return resBody, fmt.Errorf("server returned status code %v: %v", res.StatusCode, string(resBody))
+	}
+
+	return resBody, nil
 }
