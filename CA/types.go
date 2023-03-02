@@ -167,6 +167,9 @@ func GetLoggerInfofromCert(cert *x509.Certificate) []CTngExtension{
 	}
 }
 
+func GetCTngExtensionCount (cert *x509.Certificate) int{
+	return len(cert.CRLDistributionPoints)
+}
 
 func GetPrecertfromCert(cert *x509.Certificate) *x509.Certificate {
 	// only keep the first ctng extension in CRLDistributionPoints
