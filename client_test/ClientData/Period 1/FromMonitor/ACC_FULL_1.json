@@ -1,0 +1,23 @@
+[
+  {
+   "application": "CTng",
+   "period": "1",
+   "type": "http://ctng.uconn.edu/301",
+   "signer": "",
+   "signers": {
+    "0": "localhost:8080",
+    "1": "localhost:8081"
+   },
+   "signature": [
+    "{\"sign\":\"0be156815e89af2d418c784d501a7a1babd31f6c1d759bfefc482c4a122222418978830db7c66079fe4e33db9a27c50e\", \"ids\":[\"localhost:8080\",\"localhost:8081\"]}",
+    ""
+   ],
+   "timestamp": "2023-03-02T05:27:16Z",
+   "crypto_scheme": "BLS",
+   "payload": [
+    "localhost:9001",
+    "",
+    ""
+   ]
+  }
+ ]

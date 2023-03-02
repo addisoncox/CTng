@@ -62,6 +62,7 @@ func BuildMerkleTreeFromCerts(certs []x509.Certificate, ctx LoggerContext, perio
 	}
 	root, leafs := generateMerkleTree(nodes)
 	STH1 := STH{
+		Signer:    string(ctx.Logger_private_config.Signer),
 		Timestamp: gossip.GetCurrentTimestamp(),
 		RootHash:  string(root.hash),
 		TreeSize:  n,

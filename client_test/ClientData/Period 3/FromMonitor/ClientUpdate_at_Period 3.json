@@ -1,0 +1,94 @@
+{
+  "STHs": [
+   {
+    "application": "CTng",
+    "period": "3",
+    "type": "http://ctng.uconn.edu/301",
+    "signer": "",
+    "signers": {
+     "0": "localhost:8080",
+     "1": "localhost:8081"
+    },
+    "signature": [
+     "{\"sign\":\"987fb7f215891170482b957f76c8f94a7ef5e87c89fdcd78f7a3264d1c240f224948837d2316213d936b8d6052a05997\", \"ids\":[\"localhost:8080\",\"localhost:8081\"]}",
+     ""
+    ],
+    "timestamp": "2023-03-02T05:27:16Z",
+    "crypto_scheme": "BLS",
+    "payload": [
+     "localhost:9000",
+     "{\"Signer\":\"localhost:9000\",\"Timestamp\":\"2023-03-02T05:27:14Z\",\"RootHash\":\"\\ufffd\\ufffdV\\ufffd\\ufffd\\ufffdժ\\ufffd,\\ufffd\\ufffd3\\ufffd\\u0016\\ufffd\\ufffd\\ufffd\\ufffdx\\ufffd\\ufffd\\ufffd\\ufffd\\ufffd8\\ufffd\\u001a\\\\\\u0005\\ufffd\\ufffd\",\"TreeSize\":12}",
+     ""
+    ]
+   },
+   {
+    "application": "CTng",
+    "period": "3",
+    "type": "http://ctng.uconn.edu/301",
+    "signer": "",
+    "signers": {
+     "0": "localhost:8080",
+     "1": "localhost:8081"
+    },
+    "signature": [
+     "{\"sign\":\"0ddea5e5399f362b3e09c97b65ac861d54c5e37fbf2de09440fde39745df208c5951bda2783929878548b39d2d185586\", \"ids\":[\"localhost:8080\",\"localhost:8081\"]}",
+     ""
+    ],
+    "timestamp": "2023-03-02T05:27:16Z",
+    "crypto_scheme": "BLS",
+    "payload": [
+     "localhost:9001",
+     "{\"Signer\":\"localhost:9001\",\"Timestamp\":\"2023-03-02T05:27:14Z\",\"RootHash\":\"p5\\ufffdL\\ufffd\\ufffd:Ye'\\ufffd\\ufffdY\\t\\ufffdW\\u003e\\ufffd\\ufffd\\ufffd\\ufffd4\\u001b\\ufffd\\ufffd\\ufffd\\r*\\u001d\\ufffdCQ\",\"TreeSize\":12}",
+     ""
+    ]
+   }
+  ],
+  "REVs": [
+   {
+    "application": "CTng",
+    "period": "3",
+    "type": "http://ctng.uconn.edu/302",
+    "signer": "",
+    "signers": {
+     "0": "localhost:8080",
+     "1": "localhost:8081"
+    },
+    "signature": [
+     "{\"sign\":\"1e215d708061d376baccb53ef25fc92d1743011495c0b1ed24ea3461fdfba33b8ef21905779e2f5e9617aa88dd1e6e81\", \"ids\":[\"localhost:8080\",\"localhost:8081\"]}",
+     ""
+    ],
+    "timestamp": "2023-03-02T05:27:16Z",
+    "crypto_scheme": "BLS",
+    "payload": [
+     "localhost:9100",
+     "CRV",
+     "{\"Period\":\"3\",\"Delta_CRV\":\"IkFBQUFBQUFBQUIwQUFBQUFFQUFBQUE9PSI=\",\"SRH\":\"{\\\"sig\\\":\\\"0b5d5243f9976ddcc1f5f0ac6a8e3a36d648368f7a79f9105dc1ea5f06936f71ba29f62c89bd1927c2f6d667c13d7b3f04220d031fd61cc89db556da5a59252bde747a23801ec2b1a30846c613b9b5506b651bff6b5539195cdd03edb24d8acd1f534a40b8e92fc5c7fe0e3ea20b122b2624e59fedf1b9f22f12d75ac039646e4820dbde990872b4d99e0b23d71465ad31d73dcd1e13a19fe95a7588c230ff716c86f6a664a3108a54ab3b48d8e8d2a38b1040c459ecb0813afd4823dda1d1b5c53ce3f5b6aedc4367a6314602d29958b0ddc79f8f09c572056ef4e71bcd7b8b39808e3ada074806d548c4980a7450dbecc5a7f5e4c38fefb924cd8897c87e9a\\\",\\\"id\\\":\\\"localhost:9100\\\"}\"}"
+    ]
+   },
+   {
+    "application": "CTng",
+    "period": "3",
+    "type": "http://ctng.uconn.edu/302",
+    "signer": "",
+    "signers": {
+     "0": "localhost:8080",
+     "1": "localhost:8081"
+    },
+    "signature": [
+     "{\"sign\":\"67862ec4ad71b362a07f9ff3370317a10204e54d1ef43a3e4c6fae0b076afc59e6b5123ee05fee847b4e1ca88f7d510f\", \"ids\":[\"localhost:8080\",\"localhost:8081\"]}",
+     ""
+    ],
+    "timestamp": "2023-03-02T05:27:16Z",
+    "crypto_scheme": "BLS",
+    "payload": [
+     "localhost:9101",
+     "CRV",
+     "{\"Period\":\"3\",\"Delta_CRV\":\"IkFBQUFBQUFBQUIwQUFBQUFFQUFBQUE9PSI=\",\"SRH\":\"{\\\"sig\\\":\\\"9d5a59cff1e1905b12c48b15c3dc865ccdd3a565d63b0db89c92241e88d8c8a6fdd9089e42ecd9d8c6f566a61aec53d0376238e0c7b26b7328aadc70ff2760761a48d106ee93e04d76dade0298ccd3cab2fc9f94d984163df63c651d6f08509b3b5e7010293eaf24c02d04092a88e6464b9566bcd2b9c83a692255ed1314815cc35e6d9acfe9dfec42092464ef1142a04d47208d9af64b52553c77910ee9ec77d711d2936a8a441c4e746a8c432bc16f472f97a83beda7d47ced5479fee6b82c2ee8c4fa595c315cba66bc3703185bed1a384b995f3556e6b81494057c0e12167d5812be657c8d9f1b96c66c8d14900b8d9e3e3ffd3f2c5ce8b5edd9aef06266\\\",\\\"id\\\":\\\"localhost:9101\\\"}\"}"
+    ]
+   }
+  ],
+  "ACCs": null,
+  "PoMs": null,
+  "MonitorID": "localhost:8180",
+  "Period": "3"
+ }
