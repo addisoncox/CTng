@@ -474,7 +474,7 @@ func Test_MG_Period2(t *testing.T){
 	STH_FULL[2] = append(STH_FULL[2],generate_TSS_FULL(2,STHs[GID_L[1]],gossip.STH))
 	REV_FULL[2] = append(REV_FULL[2],generate_TSS_FULL(2,REVs[GID_CA[0]],gossip.REV))
 	ACC_FULL[2] = append(ACC_FULL[2],generate_TSS_FULL(2,generateACC(2,ctx_ca[2].CA_private_config.Signer),gossip.REV))
-	CON_FULL[2] = append(CON_FULL[2],generate_TSS_FULL(2,generateCON(2,REVs[GID_L[0]], REVs_fake[GID_L[0]]),gossip.REV))
+	CON_FULL[2] = append(CON_FULL[2],generate_TSS_FULL(2,generateCON(2,REVs[GID_CA[0]], REVs_fake[GID_CA[0]]),gossip.REV))
 	prep_update(2)
 	writeall(2,1,1,1,1)
 }

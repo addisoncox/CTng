@@ -12,7 +12,7 @@
     "{\"sign\":\"1e215d708061d376baccb53ef25fc92d1743011495c0b1ed24ea3461fdfba33b8ef21905779e2f5e9617aa88dd1e6e81\", \"ids\":[\"localhost:8080\",\"localhost:8081\"]}",
     ""
    ],
-   "timestamp": "2023-03-02T05:19:37Z",
+   "timestamp": "2023-03-02T05:27:16Z",
    "crypto_scheme": "BLS",
    "payload": [
     "localhost:9100",
@@ -33,7 +33,7 @@
     "{\"sign\":\"67862ec4ad71b362a07f9ff3370317a10204e54d1ef43a3e4c6fae0b076afc59e6b5123ee05fee847b4e1ca88f7d510f\", \"ids\":[\"localhost:8080\",\"localhost:8081\"]}",
     ""
    ],
-   "timestamp": "2023-03-02T05:19:37Z",
+   "timestamp": "2023-03-02T05:27:16Z",
    "crypto_scheme": "BLS",
    "payload": [
     "localhost:9101",

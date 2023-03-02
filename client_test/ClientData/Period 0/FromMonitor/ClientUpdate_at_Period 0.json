@@ -10,14 +10,14 @@
      "1": "localhost:8081"
     },
     "signature": [
-     "{\"sign\":\"ea7f5bd81e22a27d8e4ef4fa47ef2c46712a56f613eadb8b31cf2ce46d0052228b4c506beb50ac2619cdc6bc8d36d982\", \"ids\":[\"localhost:8080\",\"localhost:8081\"]}",
+     "{\"sign\":\"1c2e5a5556d357883079598de6038c1eeffdc0df9dc7f0d7ab7965a58ca24db2eb751fb11528ec6a7f2f2783b807db15\", \"ids\":[\"localhost:8080\",\"localhost:8081\"]}",
      ""
     ],
-    "timestamp": "2023-03-02T05:19:37Z",
+    "timestamp": "2023-03-02T05:27:16Z",
     "crypto_scheme": "BLS",
     "payload": [
      "localhost:9000",
-     "{\"Signer\":\"localhost:9000\",\"Timestamp\":\"2023-03-02T05:19:29Z\",\"RootHash\":\"]\\ufffd\\ufffd\\\\hk\\ufffd\\ufffd\\ufffd^Y\\ufffd\\u0004\\ufffd2\\u000b\\ufffd\\ufffd\\ufffd\\ufffd\\u001aȕ\\ufffd\\ufffd\\ufffd\\ufffd$ݼ\\ufffd\\ufffd\",\"TreeSize\":12}",
+     "{\"Signer\":\"localhost:9000\",\"Timestamp\":\"2023-03-02T05:27:09Z\",\"RootHash\":\"\\ufffd\\ufffd\\ufffd֙\\ufffd\\u0000-'\\ufffd\\ufffdG\\ufffd\\u001f\\u0008\\ufffdUp\\u0011\\ufffd\\u001b\\ufffd\\ufffd\\ufffd\\u0001\\ufffd\\ufffd\\u0013\\u000c5Z\\u0015\",\"TreeSize\":12}",
      ""
     ]
    },
@@ -31,14 +31,14 @@
      "1": "localhost:8081"
     },
     "signature": [
-     "{\"sign\":\"6a5193e2831cd057c0f05111cb2a1d98dd52b7eefa48abea354dc46e0dd2cd9ece200f1e48095d06f4b94a82d8dd2e02\", \"ids\":[\"localhost:8080\",\"localhost:8081\"]}",
+     "{\"sign\":\"79844bac56ea4936921e2d5bb1f32b190629910bafebc0ee725c602adb5cb5e13af9b3ff395f61a24ce0546e32e94a0e\", \"ids\":[\"localhost:8080\",\"localhost:8081\"]}",
      ""
     ],
-    "timestamp": "2023-03-02T05:19:37Z",
+    "timestamp": "2023-03-02T05:27:16Z",
     "crypto_scheme": "BLS",
     "payload": [
      "localhost:9001",
-     "{\"Signer\":\"localhost:9001\",\"Timestamp\":\"2023-03-02T05:19:29Z\",\"RootHash\":\"\\ufffd\\ufffd\\u0017\\u001eb\\ufffd\\ufffda\\rAv\\ufffd\\u0008:7\\u001f\\ufffd60\\ufffdV\\t\\ufffdڈ\\ufffd\\ufffd\\ufffd\\u00084\",\"TreeSize\":12}",
+     "{\"Signer\":\"localhost:9001\",\"Timestamp\":\"2023-03-02T05:27:09Z\",\"RootHash\":\"\\ufffd\\ufffd\\u003c\\u001cc\\ufffd\\ufffd\\ufffd.'\\ufffd\\ufffd)\\u000eIÉ\\ufffdH\\ufffd,!v\\ufffd\\u00071\\ufffd:\\ufffd\\ufffd\\u0005\\u001c\",\"TreeSize\":12}",
      ""
     ]
    },
@@ -52,14 +52,14 @@
      "1": "localhost:8081"
     },
     "signature": [
-     "{\"sign\":\"9afa295c9e7c527b8e53529cc38ab6424430f955a661caf6cc6d22fc39987b80c8f3839e746b5920fd6fe27f0f526289\", \"ids\":[\"localhost:8080\",\"localhost:8081\"]}",
+     "{\"sign\":\"3022ffbc2c2cfa0357f4f4c48bc45380ff4476068e64217d917277f10a33473c9e4d60c69d10612b7ff87fc0b979ce98\", \"ids\":[\"localhost:8080\",\"localhost:8081\"]}",
      ""
     ],
-    "timestamp": "2023-03-02T05:19:37Z",
+    "timestamp": "2023-03-02T05:27:16Z",
     "crypto_scheme": "BLS",
     "payload": [
      "localhost:9002",
-     "{\"Signer\":\"localhost:9002\",\"Timestamp\":\"2023-03-02T05:19:29Z\",\"RootHash\":\"\\ufffd/L\\ufffdZ\\u000b\\ufffd\\ufffd\\ufffd\\ufffd\\r\\ufffd\\u003eR\\ufffd_\\ufffd\\r.\\ufffd\\ufffdܕ*\\ufffd\\ufffd\\ufffdj\\ufffd{\\ufffdX\",\"TreeSize\":12}",
+     "{\"Signer\":\"localhost:9002\",\"Timestamp\":\"2023-03-02T05:27:09Z\",\"RootHash\":\"W\\ufffdMl\\ufffdg\\ufffd\\u0008\\ufffdN\\ufffd{\\ufffd\\ufffdM\\ufffd@\\ufffdQ%\\ufffd*\\ufffdR\\ufffdo2\\u0010\\ufffd\\ufffd@\\ufffd\",\"TreeSize\":12}",
      ""
     ]
    }
@@ -78,7 +78,7 @@
      "{\"sign\":\"a5c75d5565e1f1f54ca40f3ea629e0c61d6990ecfd66e59790111e7ff00ece3efb93e5b2e00e11986f05bfd97798700e\", \"ids\":[\"localhost:8080\",\"localhost:8081\"]}",
      ""
     ],
-    "timestamp": "2023-03-02T05:19:37Z",
+    "timestamp": "2023-03-02T05:27:16Z",
     "crypto_scheme": "BLS",
     "payload": [
      "localhost:9100",
@@ -99,7 +99,7 @@
      "{\"sign\":\"b28c87a574f61c6cdc5bb24ce3209676b3923146a07629b6f090a5a78dee509aa9aa92c8acbf288f72f985ecfa3aa402\", \"ids\":[\"localhost:8080\",\"localhost:8081\"]}",
      ""
     ],
-    "timestamp": "2023-03-02T05:19:37Z",
+    "timestamp": "2023-03-02T05:27:16Z",
     "crypto_scheme": "BLS",
     "payload": [
      "localhost:9101",
@@ -120,7 +120,7 @@
      "{\"sign\":\"85cd037f7729f4262b8fa661e5015fdd8b1b0faf74b1e0fa4922565cc09dec9add05a2c951fc030f16d587bcdced5687\", \"ids\":[\"localhost:8080\",\"localhost:8081\"]}",
      ""
     ],
-    "timestamp": "2023-03-02T05:19:37Z",
+    "timestamp": "2023-03-02T05:27:16Z",
     "crypto_scheme": "BLS",
     "payload": [
      "localhost:9102",

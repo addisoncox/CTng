@@ -9,14 +9,14 @@
     "1": "localhost:8081"
    },
    "signature": [
-    "{\"sign\":\"b751174bbeab48e1f9b5d8f90a02cb11768ffb29d947d82627504f2bf38881f6c8160427966093f0ec2ecb6a96385d0f\", \"ids\":[\"localhost:8080\",\"localhost:8081\"]}",
+    "{\"sign\":\"987fb7f215891170482b957f76c8f94a7ef5e87c89fdcd78f7a3264d1c240f224948837d2316213d936b8d6052a05997\", \"ids\":[\"localhost:8080\",\"localhost:8081\"]}",
     ""
    ],
-   "timestamp": "2023-03-02T05:19:37Z",
+   "timestamp": "2023-03-02T05:27:16Z",
    "crypto_scheme": "BLS",
    "payload": [
     "localhost:9000",
-    "{\"Signer\":\"localhost:9000\",\"Timestamp\":\"2023-03-02T05:19:36Z\",\"RootHash\":\"`W\\ufffd\\ufffd$\\ufffd\\ufffd\\ufffd':\\ufffdv\\ufffd\\ufffd\\ufffd\\ufffdFe\\ufffd2\\ufffd$Q\\ufffd$\\u0015\\u0011YKR\\ufffd\\u0011\",\"TreeSize\":12}",
+    "{\"Signer\":\"localhost:9000\",\"Timestamp\":\"2023-03-02T05:27:14Z\",\"RootHash\":\"\\ufffd\\ufffdV\\ufffd\\ufffd\\ufffdժ\\ufffd,\\ufffd\\ufffd3\\ufffd\\u0016\\ufffd\\ufffd\\ufffd\\ufffdx\\ufffd\\ufffd\\ufffd\\ufffd\\ufffd8\\ufffd\\u001a\\\\\\u0005\\ufffd\\ufffd\",\"TreeSize\":12}",
     ""
    ]
   },
@@ -30,14 +30,14 @@
     "1": "localhost:8081"
    },
    "signature": [
-    "{\"sign\":\"59120407a616d55448387bc52b31556938df249faf0356eb8726e6f5acbd7aad82c4676dee10212065c876568778bd98\", \"ids\":[\"localhost:8080\",\"localhost:8081\"]}",
+    "{\"sign\":\"0ddea5e5399f362b3e09c97b65ac861d54c5e37fbf2de09440fde39745df208c5951bda2783929878548b39d2d185586\", \"ids\":[\"localhost:8080\",\"localhost:8081\"]}",
     ""
    ],
-   "timestamp": "2023-03-02T05:19:37Z",
+   "timestamp": "2023-03-02T05:27:16Z",
    "crypto_scheme": "BLS",
    "payload": [
     "localhost:9001",
-    "{\"Signer\":\"localhost:9001\",\"Timestamp\":\"2023-03-02T05:19:36Z\",\"RootHash\":\"\\ufffd\\ufffd\\ufffd\\nȨ\\ufffd#sa\\ufffd\\ufffd\\ufffd6\\ufffd\\ufffd ̸͕\\ufffd\\u003e\\ufffd\\ufffd\\ufffd\\ufffd\\ufffdO\\ufffd|W\",\"TreeSize\":12}",
+    "{\"Signer\":\"localhost:9001\",\"Timestamp\":\"2023-03-02T05:27:14Z\",\"RootHash\":\"p5\\ufffdL\\ufffd\\ufffd:Ye'\\ufffd\\ufffdY\\t\\ufffdW\\u003e\\ufffd\\ufffd\\ufffd\\ufffd4\\u001b\\ufffd\\ufffd\\ufffd\\r*\\u001d\\ufffdCQ\",\"TreeSize\":12}",
     ""
    ]
   }
