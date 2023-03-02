@@ -1,0 +1,65 @@
+[
+  {
+   "application": "CTng",
+   "period": "0",
+   "type": "http://ctng.uconn.edu/301",
+   "signer": "",
+   "signers": {
+    "0": "localhost:8080",
+    "1": "localhost:8081"
+   },
+   "signature": [
+    "{\"sign\":\"ea7f5bd81e22a27d8e4ef4fa47ef2c46712a56f613eadb8b31cf2ce46d0052228b4c506beb50ac2619cdc6bc8d36d982\", \"ids\":[\"localhost:8080\",\"localhost:8081\"]}",
+    ""
+   ],
+   "timestamp": "2023-03-02T05:19:37Z",
+   "crypto_scheme": "BLS",
+   "payload": [
+    "localhost:9000",
+    "{\"Signer\":\"localhost:9000\",\"Timestamp\":\"2023-03-02T05:19:29Z\",\"RootHash\":\"]\\ufffd\\ufffd\\\\hk\\ufffd\\ufffd\\ufffd^Y\\ufffd\\u0004\\ufffd2\\u000b\\ufffd\\ufffd\\ufffd\\ufffd\\u001aȕ\\ufffd\\ufffd\\ufffd\\ufffd$ݼ\\ufffd\\ufffd\",\"TreeSize\":12}",
+    ""
+   ]
+  },
+  {
+   "application": "CTng",
+   "period": "0",
+   "type": "http://ctng.uconn.edu/301",
+   "signer": "",
+   "signers": {
+    "0": "localhost:8080",
+    "1": "localhost:8081"
+   },
+   "signature": [
+    "{\"sign\":\"6a5193e2831cd057c0f05111cb2a1d98dd52b7eefa48abea354dc46e0dd2cd9ece200f1e48095d06f4b94a82d8dd2e02\", \"ids\":[\"localhost:8080\",\"localhost:8081\"]}",
+    ""
+   ],
+   "timestamp": "2023-03-02T05:19:37Z",
+   "crypto_scheme": "BLS",
+   "payload": [
+    "localhost:9001",
+    "{\"Signer\":\"localhost:9001\",\"Timestamp\":\"2023-03-02T05:19:29Z\",\"RootHash\":\"\\ufffd\\ufffd\\u0017\\u001eb\\ufffd\\ufffda\\rAv\\ufffd\\u0008:7\\u001f\\ufffd60\\ufffdV\\t\\ufffdڈ\\ufffd\\ufffd\\ufffd\\u00084\",\"TreeSize\":12}",
+    ""
+   ]
+  },
+  {
+   "application": "CTng",
+   "period": "0",
+   "type": "http://ctng.uconn.edu/301",
+   "signer": "",
+   "signers": {
+    "0": "localhost:8080",
+    "1": "localhost:8081"
+   },
+   "signature": [
+    "{\"sign\":\"9afa295c9e7c527b8e53529cc38ab6424430f955a661caf6cc6d22fc39987b80c8f3839e746b5920fd6fe27f0f526289\", \"ids\":[\"localhost:8080\",\"localhost:8081\"]}",
+    ""
+   ],
+   "timestamp": "2023-03-02T05:19:37Z",
+   "crypto_scheme": "BLS",
+   "payload": [
+    "localhost:9002",
+    "{\"Signer\":\"localhost:9002\",\"Timestamp\":\"2023-03-02T05:19:29Z\",\"RootHash\":\"\\ufffd/L\\ufffdZ\\u000b\\ufffd\\ufffd\\ufffd\\ufffd\\r\\ufffd\\u003eR\\ufffd_\\ufffd\\r.\\ufffd\\ufffdܕ*\\ufffd\\ufffd\\ufffdj\\ufffd{\\ufffdX\",\"TreeSize\":12}",
+    ""
+   ]
+  }
+ ]
