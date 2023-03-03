@@ -6,7 +6,6 @@ import (
 
 func Start() {
 	QueryMonitor()
-	// QueryMonitorOldEndpoints()
 	fmt.Println()
 	QueryServer()
 }
@@ -29,11 +28,12 @@ func QueryMonitor() {
 	fmt.Printf("\nrev root hash: %v\n", GetRootHash(res.REVs))
 }
 
+// Deprecated: These endpoints have been removed from the monitor
 func QueryMonitorOldEndpoints() {
 	// monitorURL := "http://localhost:3000"
 	// backupMonitorURL := "http://localhost:3001"
 
-	res, err := FetchGossipObject("http://localhost:3000/sth")
+	res, err := FetchGossip("http://localhost:3000/sth")
 	sthNumPeriods := len(res)
 	if err != nil {
 		fmt.Printf("sth err: %v\n", err)
@@ -41,7 +41,7 @@ func QueryMonitorOldEndpoints() {
 		fmt.Printf("sth: %v\n", res)
 	}
 
-	res, err = FetchGossipObject("http://localhost:3000/rev")
+	res, err = FetchGossip("http://localhost:3000/rev")
 	revNumPeriods := len(res)
 	if err != nil {
 		fmt.Printf("rev err: %v\n", err)
@@ -51,7 +51,7 @@ func QueryMonitorOldEndpoints() {
 		fmt.Printf("rev num periods: %d\n", revNumPeriods)
 	}
 
-	res, err = FetchGossipObject("http://localhost:3000/pom")
+	res, err = FetchGossip("http://localhost:3000/pom")
 	pomNumPeriods := len(res)
 	if err != nil {
 		fmt.Printf("pom err: %v\n", err)
@@ -60,8 +60,8 @@ func QueryMonitorOldEndpoints() {
 		fmt.Printf("pom num periods: %v\n", pomNumPeriods)
 	}
 
+	// TODO: Query another monitor?
 	if (sthNumPeriods == revNumPeriods) && (sthNumPeriods == pomNumPeriods) {
-		// TODO: Query another monitor
 	}
 }
 
