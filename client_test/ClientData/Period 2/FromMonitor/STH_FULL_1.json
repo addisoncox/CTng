@@ -9,14 +9,14 @@
     "1": "localhost:8081"
    },
    "signature": [
-    "{\"sign\":\"5ee356d832313a8522c6e4d82292de645d18a210f6d8ea577c79c5cc1d50d9ef6e7e52d20f6812a97003241ba8694c98\", \"ids\":[\"localhost:8080\",\"localhost:8081\"]}",
+    "{\"sign\":\"2559ce91d3e7032959a6598050d923676a2096b0499cf6d48bd4b7ab0a3531257cadff7743f891eafe2459e57ba42597\", \"ids\":[\"localhost:8080\",\"localhost:8081\"]}",
     ""
    ],
-   "timestamp": "2023-03-02T05:27:16Z",
+   "timestamp": "2023-03-03T03:30:03Z",
    "crypto_scheme": "BLS",
    "payload": [
     "localhost:9001",
-    "{\"Signer\":\"localhost:9001\",\"Timestamp\":\"2023-03-02T05:27:13Z\",\"RootHash\":\"'\\rO@\\ufffdN\\u0013F\\ufffd\\ufffd\\ufffd\\ufffd\\ufffd瀒\\ufffdŧ$\\ufffd\\u0013e\\ufffd\\ufffd\\ufffd@\\ufffd\\ufffd⹤\",\"TreeSize\":12}",
+    "{\"Signer\":\"localhost:9001\",\"Timestamp\":\"2023-03-03T03:29:59Z\",\"RootHash\":\"q(\\ufffdtm\\u0010\\ufffdhu\\ufffdW\\ufffdX\\u0018\\ufffd\\u0010V%\\ufffd\\ufffd\\ufffd.\\ufffdúz\\ufffd}K\\ufffdlD\",\"TreeSize\":12}",
     ""
    ]
   }

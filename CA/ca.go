@@ -142,6 +142,21 @@ func Generate_N_KeyPairs(subjects []pkix.Name) map[string]*rsa.PublicKey{
 	return keypairs
 }
 
+func Generate_and_return_N_KeyPairs(subjects []pkix.Name) (map[string]*rsa.PublicKey,map[string]*rsa.PrivateKey){
+	keypairs := make(map[string]*rsa.PublicKey)
+	keypairs_priv := make(map[string]*rsa.PrivateKey)
+	for i:=0;i<len(subjects);i++{
+		sk,err := crypto.NewRSAPrivateKey()
+		if err != nil {
+			fmt.Println("Error generating RSA key pair")
+		}
+		pk := sk.PublicKey
+		keypairs[subjects[i].CommonName] = &pk
+		keypairs_priv[subjects[i].CommonName] = sk
+	}
+	return keypairs, keypairs_priv
+}
+
 //generate 1 issuer given N
 func Generate_Issuer(name string) pkix.Name{
 	issuer := pkix.Name{}
@@ -160,6 +175,17 @@ func Generate_N_Signed_PreCert(c *CAContext,N int, host string, validFor time.Du
 		precerts[i] = Generate_Signed_PreCert(c,host, validFor, isCA, issuer, subjects[i], root_cert, root, pubkey, priv)
 	}
 	return precerts
+}
+
+func Generate_N_Signed_PreCert_with_priv(c *CAContext,N int, host string, validFor time.Duration, isCA bool, issuer pkix.Name, root_cert *x509.Certificate, root bool, priv *rsa.PrivateKey, global_offset int) ([]*x509.Certificate,map[string]*rsa.PrivateKey){
+	precerts := make([]*x509.Certificate,N)
+	subjects := Generate_N_Subjects(N, global_offset)
+	pubkeys,privkeys := Generate_and_return_N_KeyPairs(subjects)
+	for i:=0;i<N;i++{
+		pubkey := pubkeys[subjects[i].CommonName]
+		precerts[i] = Generate_Signed_PreCert(c,host, validFor, isCA, issuer, subjects[i], root_cert, root, pubkey, priv)
+	}
+	return precerts, privkeys
 }
 
 // Marshall signed precert to json

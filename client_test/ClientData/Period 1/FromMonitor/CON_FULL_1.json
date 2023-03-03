@@ -9,15 +9,15 @@
     "1": "localhost:8081"
    },
    "signature": [
-    "{\"sign\":\"013bd918c44c5a3048996851970628815d96709ee97f9e8f17b38d64a32e2528e1d26ab703458e9488e41e385479cc0e\", \"ids\":[\"localhost:8080\",\"localhost:8081\"]}",
+    "{\"sign\":\"ee8bfe20fde98140e0c347cbbca565de07d284ff042e6927bdbaa2e3e0ea53dcc44fd0041e6da1570fc43ec7c2dabd94\", \"ids\":[\"localhost:8080\",\"localhost:8081\"]}",
     ""
    ],
-   "timestamp": "2023-03-02T05:27:16Z",
+   "timestamp": "2023-03-03T03:30:03Z",
    "crypto_scheme": "BLS",
    "payload": [
     "localhost:9002",
-    "localhost:9002{\"Signer\":\"localhost:9002\",\"Timestamp\":\"2023-03-02T05:27:11Z\",\"RootHash\":\"A\\ufffd7\\ufffdIͯ\\ufffd\\u000e\\u000f\\ufffd\\ufffd\\ufffd\\ufffd\\u0010\\ufffdЇ\\\\\\ufffd5\\ufffd7d\\ufffdn\\ufffd@\\\\Q\\ufffd\",\"TreeSize\":12}",
-    "localhost:9002{\"Signer\":\"localhost:9002\",\"Timestamp\":\"2023-03-02T05:27:11Z\",\"RootHash\":\"K\\ufffd\\ufffdL\\ufffd\\u0006A\\ufffd\\u001cU.\\ufffd\\u001b\\ufffd\\ufffdAd+\\ufffd٫\\t\\ufffd\\ufffdr `\\ufffd\\ufffd:\\n\",\"TreeSize\":11}"
+    "localhost:9002{\"Signer\":\"localhost:9002\",\"Timestamp\":\"2023-03-03T03:29:57Z\",\"RootHash\":\"T$8\\u0006\\rZ\\ufffd/;*\\ufffd\\ufffdr\\ufffd\\ufffde\\ufffd\\ufffd\\u001e\\ufffd\\ufffdE\\ufffd\\ufffdah\\ufffdȪ\\ufffd\\ufffd\\u001c\",\"TreeSize\":12}",
+    "localhost:9002{\"Signer\":\"localhost:9002\",\"Timestamp\":\"2023-03-03T03:29:57Z\",\"RootHash\":\"\\u000e\\u0017\\ufffdJ\\u000f۪Ǣ\\ufffdE\\ufffd\\ufffd\\ufffd\\u003e\\ufffdo\\ufffd\\u001c\\u0019O\\ufffdc4\\u000e\\ufffd\\ufffdq\\ufffd\\ufffdB;\",\"TreeSize\":11}"
    ]
   }
  ]

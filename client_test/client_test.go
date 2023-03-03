@@ -11,6 +11,7 @@ import(
 	"CTng/util"
 	"fmt"
 	"crypto/x509"
+	"crypto/rsa"
 	"time"
 	"crypto/x509/pkix"
 	"os"
@@ -45,6 +46,7 @@ var ctx_monitor []*monitor.MonitorContext
 // Precent Pool: prior to the cert being logged
 var Precert_pool  [][]*x509.Certificate
 var SignedCertPool[][]x509.Certificate
+var PrivPool [][]*rsa.PrivateKey
 // Cert Pool: after the cert is logged
 var STHs map[gossip.Gossip_ID]gossip.Gossip_object
 var STHs_fake map[gossip.Gossip_ID]gossip.Gossip_object
@@ -74,6 +76,7 @@ func Test_init_variables(t *testing.T){
 	ACC_FULL = make([][]gossip.Gossip_object,4*(num_logger+num_ca))
 	CON_FULL = make([][]gossip.Gossip_object,4*(num_logger+num_ca))
 	Update_FULL = make([]monitor.ClientUpdate,4*(num_logger+num_ca))
+	PrivPool = make([][]*rsa.PrivateKey,num_ca)
 }
 
 func Test_Context_Init(t *testing.T){
@@ -104,7 +107,12 @@ func Test_Context_Init(t *testing.T){
 func ca_logger_setup(Period int){
 	fmt.Println("________________________________CA_Logger_Running_at_Period ", Period,"________________________________")
 	for i:=0;i<num_ca;i++{
-		ncp := CA.Generate_N_Signed_PreCert(ctx_ca[i], num_cert, host, validFor, isCA, issuers[i], ctx_ca[i].Rootcert, false, &ctx_ca[i].CA_crypto_config.RSAPrivateKey, num_cert*i+ 21*(Period))
+		ncp, privmap := CA.Generate_N_Signed_PreCert_with_priv(ctx_ca[i], num_cert, host, validFor, isCA, issuers[i], ctx_ca[i].Rootcert, false, &ctx_ca[i].CA_crypto_config.RSAPrivateKey, num_cert*i+ 21*(Period))
+		//ncp := CA.Generate_N_Signed_PreCert(ctx_ca[i], num_cert, host, validFor, isCA, issuers[i], ctx_ca[i].Rootcert, false, &ctx_ca[i].CA_crypto_config.RSAPrivateKey, num_cert*i+ 21*(Period))
+		// iterate over privmap and append to PrivPool
+		for _, v := range privmap {
+			PrivPool[i] = append(PrivPool[i], v)
+		}
 		Precert_pool[i] = append(Precert_pool[i],ncp...)
 		for j:=0;j<len(Precert_pool[i]);j++{
 			ctx_ca[i].CurrentCertificatePool.AddCert(Precert_pool[i][j])
@@ -343,6 +351,27 @@ func saveCertificateToDisk(certBytes []byte, filePath string) {
 	}
 }
 
+func saveKeyToDisk(privKey *rsa.PrivateKey, filePath string) {
+	keyOut, err := os.OpenFile(filePath, os.O_WRONLY|os.O_CREATE|os.O_TRUNC, 0600)
+	if err != nil {
+		log.Fatalf("Failed to open %s for writing: %v", filePath, err)
+		return
+	}
+	privBytes, err := x509.MarshalPKCS8PrivateKey(privKey)
+	if err != nil {
+		log.Fatalf("Unable to marshal private key: %v", err)
+	}
+	if err := pem.Encode(keyOut, &pem.Block{
+		Type:  "PRIVATE KEY",
+		Bytes: privBytes,
+	}); err != nil {
+		log.Fatalf("Failed to write data to %s: %v", filePath, err)
+	}
+	if err := keyOut.Close(); err != nil {
+		log.Fatalf("Error closing %s: %v", filePath, err)
+	}
+}
+
 func Test_CA_Logger(t *testing.T){
 	// this part produces signed certs with CTng extensions
 	ca_logger_setup(0)
@@ -378,6 +407,13 @@ func Test_CA_Logger(t *testing.T){
 			filename := "CA "+ fmt.Sprint(i)+ "_" + certsaved.Subject.CommonName + "_" + fmt.Sprint(CA.GetSequenceNumberfromCert(&certsaved)) + ".crt"
 			derbytes := certsaved.Raw
 			saveCertificateToDisk(derbytes, "ClientData/Period 3/FromWebserver/"+ filename)
+		}
+		for k:=0;k<28;k++{
+			// write the private key to /ClientData/Period 0/FromWebserver
+			certsaved := SignedCertPool[i][k]
+			keysaved := PrivPool[i][k]
+			filename := certsaved.Subject.CommonName + "_private"+ ".key"
+			saveKeyToDisk(keysaved, "ClientData/Period 0/FromWebserver/"+ filename)
 		}
 }
 }
