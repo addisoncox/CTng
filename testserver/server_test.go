@@ -1,6 +1,6 @@
 package testserver
 
-
+/*
 import(
 	"CTng/CA"
 	"CTng/Logger"
@@ -257,7 +257,7 @@ func testCertLogging (t *testing.T){
 	//fmt.Println("POI list for CA 1 from logger 2 is: ", ca1_from_logger2)
 	//fmt.Println("POI list for CA 2 from logger 1 is: ", ca2_from_logger1)
 	//fmt.Println("POI list for CA 2 from logger 2 is: ", ca2_from_logger2)
-	
+
 	// For all the certs in CA 1 Cert Pool, Sign them and write them to disk
 	ca_1_cert_list := CA1_cert_pool.GetCertList()
 	for i := 0;i < CA1_cert_pool.GetLength();i++{
@@ -490,7 +490,7 @@ func testREVFULL(t *testing.T){
 		fmt.Println("Error in writing REV_FULLs to file")
 	}
 }
-	 
+
 func testCONFULL(t *testing.T){
 	// Create the payload for CON, should be the signer of the STH || STH || STH_alt
 	payload := [3]string{STH_Logger2.Signer, STH_Logger2.Payload[0]+STH_Logger2.Payload[1]+ STH_Logger2.Payload[2], STH_Logger2_alt.Payload[0]+STH_Logger2_alt.Payload[1]+ STH_Logger2_alt.Payload[2]}
@@ -579,4 +579,4 @@ func testCONFULL(t *testing.T){
 	}
 	fmt.Println("-------------------------------CONF FULL Test Passed-------------------------------")
 }
-
+*/

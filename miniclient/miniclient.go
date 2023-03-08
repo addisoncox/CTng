@@ -21,7 +21,7 @@ func QueryMonitor() {
 	fmt.Printf("period: %v\n", res.Period)
 	fmt.Printf("\nsth: %v\n", res.STHs)
 	fmt.Printf("\nrev: %v\n", res.REVs)
-	fmt.Printf("\npom: %v\n", res.PoMs)
+	fmt.Printf("\npom: %v\n", res.CONs)
 
 	fmt.Printf("\nsth delta crv: %v\n", GetDeltaCRV(res.STHs))
 	fmt.Printf("\nsth srh value: %v\n", GetSRH(res.STHs))

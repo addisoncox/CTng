@@ -2,15 +2,15 @@ package gossip
 
 import (
 	"CTng/config"
-	"CTng/util"
 	"CTng/crypto"
+	"CTng/util"
+
 	//"encoding/json"
-	"net/http"	
-	"reflect"
 	"fmt"
+	"net/http"
+	"reflect"
 	"sync"
 )
-
 
 // Types of errors that can occur when parsing a Gossip_object
 const (
@@ -20,20 +20,20 @@ const (
 )
 
 type Entity_Gossip_Object_TSS_Counter struct {
-	Signers     []string
+	Signers      []string
 	Partial_sigs []crypto.SigFragment
-	Num     int
+	Num          int
 }
 
-
-type PoM_PreTSS_Counter struct{
+type PoM_PreTSS_Counter struct {
 	Signers []string //monitors
-	Sigs []string //RSA sigs
-	Num int   //the counter
+	Sigs    []string //RSA sigs
+	Num     int      //the counter
 }
 
 //This DB stores the counter object for  sth_frags. rec_frags and acc_frags
 type Gossip_Object_TSS_DB map[Gossip_ID]*Entity_Gossip_Object_TSS_Counter
+
 //This DB stores accusations and Conflict PoMs
 type Accusation_DB map[Gossip_ID]*PoM_PreTSS_Counter
 type Conflict_DB map[Gossip_ID]*PoM_PreTSS_Counter
@@ -45,21 +45,21 @@ type Conflict_DB map[Gossip_ID]*PoM_PreTSS_Counter
 // Storage utilized by the gossiper,
 // Any objects needed throughout the gossiper's lifetime (such as the http client).
 type GossiperContext struct {
-	Config      *config.Gossiper_config
-	StorageID   string
+	Config    *config.Gossiper_config
+	StorageID string
 	//RWlock
 	RWlock *sync.RWMutex
 	//STH + REV + ACC
-	Storage_RAW  *Gossip_Storage_Counter
+	Storage_RAW *Gossip_Storage_Counter
 	//STH_FRAG + REV_FRAG + ACC_FRAG + CON_FRAG
 	Storage_FRAG *Gossip_Storage_Counter
 	//STH_FULL + REV_FULL
 	Storage_FULL *Gossip_Storage
 	//CON + ACC_FULL
 	Storage_POM_TEMP *Gossip_Storage
-	//CON_FULL 
+	//CON_FULL
 	Storage_POM *Gossip_Storage
-	//ACC_FRAG counter + CON_FRAG counter 
+	//ACC_FRAG counter + CON_FRAG counter
 	Obj_TSS_DB *Gossip_Object_TSS_DB
 	//ACC Counter
 	ACC_DB *Accusation_DB
@@ -68,19 +68,19 @@ type GossiperContext struct {
 	//log
 	G_log *Gossiper_log
 	//File I/O
-	StorageFile string 
+	StorageFile      string
 	StorageDirectory string
-	Client  *http.Client
-	Verbose bool
+	Client           *http.Client
+	Verbose          bool
 }
 
-type GossiperLogEntry struct{	
+type GossiperLogEntry struct {
 	Gossiper_URL string
-	Period string
-	Num_sth int
-	Num_rev int
-	Num_acc int
-	Num_con int
+	Period       string
+	Num_sth      int
+	Num_rev      int
+	Num_acc      int
+	Num_con      int
 	Num_sth_frag int
 	Num_rev_frag int
 	Num_acc_frag int
@@ -93,7 +93,7 @@ type GossiperLogEntry struct{
 
 type Gossiper_log map[string]GossiperLogEntry
 
-func Gossip_Context_Init(config *config.Gossiper_config,Storage_ID string) *GossiperContext{
+func Gossip_Context_Init(config *config.Gossiper_config, Storage_ID string) *GossiperContext {
 	storage_raw := new(Gossip_Storage_Counter)
 	*storage_raw = make(Gossip_Storage_Counter)
 	storage_frag := new(Gossip_Storage_Counter)
@@ -111,25 +111,25 @@ func Gossip_Context_Init(config *config.Gossiper_config,Storage_ID string) *Goss
 	conflict_db := new(Conflict_DB)
 	*conflict_db = make(Conflict_DB)
 	g_log := new(Gossiper_log)
-	*g_log = make(Gossiper_log) 
+	*g_log = make(Gossiper_log)
 	ctx := GossiperContext{
-		Config:      config,
+		Config: config,
 		RWlock: &sync.RWMutex{},
 		//STH + REV + ACC + CON
-		Storage_RAW:  storage_raw,
+		Storage_RAW: storage_raw,
 		//STH_FRAG + REV_FRAG + ACC_FRAG + CON_FRAG
 		Storage_FRAG: storage_frag,
 		//STH_FULL + REV_FULL + ACC_FULL + CON_FULL
 		Storage_FULL: storage_full,
-		//CON_FRAG + ACC_FULL + CON_FULL 
-		Storage_POM: storage_pom,
+		//CON_FRAG + ACC_FULL + CON_FULL
+		Storage_POM:      storage_pom,
 		Storage_POM_TEMP: storage_pom_temp,
-		//ACC_FRAG counter + CON_FRAG counter 
+		//ACC_FRAG counter + CON_FRAG counter
 		Obj_TSS_DB: gossip_object_TSS_DB,
 		//ACC Counter
-		ACC_DB: accusation_db,
-		CON_DB: conflict_db,
-		G_log: g_log,
+		ACC_DB:      accusation_db,
+		CON_DB:      conflict_db,
+		G_log:       g_log,
 		StorageFile: "gossiper_data.json", // could be a parameter in the future.
 		StorageID:   Storage_ID,
 	}
@@ -158,34 +158,34 @@ func InitializeGossiperContext(public_config_path string, private_config_path st
 	conflict_db := new(Conflict_DB)
 	*conflict_db = make(Conflict_DB)
 	g_log := new(Gossiper_log)
-	*g_log = make(Gossiper_log) 
+	*g_log = make(Gossiper_log)
 	ctx := GossiperContext{
-		Config:      &conf,
+		Config: &conf,
 		RWlock: &sync.RWMutex{},
 		//STH + REV + ACC + CON
-		Storage_RAW:  storage_raw,
+		Storage_RAW: storage_raw,
 		//STH_FRAG + REV_FRAG + ACC_FRAG + CON_FRAG
 		Storage_FRAG: storage_frag,
 		//STH_FULL + REV_FULL + ACC_FULL + CON_FULL
 		Storage_FULL: storage_full,
-		//CON_FRAG + ACC_FULL + CON_FULL 
-		Storage_POM: storage_pom,
+		//CON_FRAG + ACC_FULL + CON_FULL
+		Storage_POM:      storage_pom,
 		Storage_POM_TEMP: storage_pom_temp,
-		//ACC_FRAG counter + CON_FRAG counter 
+		//ACC_FRAG counter + CON_FRAG counter
 		Obj_TSS_DB: gossip_object_TSS_DB,
 		//ACC Counter
-		ACC_DB: accusation_db,
-		CON_DB: conflict_db,
-		G_log: g_log,
+		ACC_DB:      accusation_db,
+		CON_DB:      conflict_db,
+		G_log:       g_log,
 		StorageFile: "gossiper_data.json", // could be a parameter in the future.
 		StorageID:   storageID,
 	}
 	return &ctx
 }
 
-func CountStorageCounter(gs *Gossip_Storage_Counter, entry *GossiperLogEntry){
-	for key,_ := range *gs{
-		switch key.Type{
+func CountStorageCounter(gs *Gossip_Storage_Counter, entry *GossiperLogEntry) {
+	for key := range *gs {
+		switch key.Type {
 		case STH:
 			entry.Num_sth++
 		case REV:
@@ -214,9 +214,9 @@ func CountStorageCounter(gs *Gossip_Storage_Counter, entry *GossiperLogEntry){
 	}
 }
 
-func CountStorage(gs *Gossip_Storage, entry *GossiperLogEntry){
-	for key,_ := range *gs{
-		switch key.Type{
+func CountStorage(gs *Gossip_Storage, entry *GossiperLogEntry) {
+	for key := range *gs {
+		switch key.Type {
 		case STH:
 			entry.Num_sth++
 		case REV:
@@ -244,14 +244,15 @@ func CountStorage(gs *Gossip_Storage, entry *GossiperLogEntry){
 		}
 	}
 }
+
 // Saves the Storage object to the value in c.StorageFile.
 func (c *GossiperContext) SaveStorage() error {
 	newentry := GossiperLogEntry{
 		Gossiper_URL: c.Config.Crypto.SelfID.String(),
-		Period: GetCurrentPeriod(),
-		Num_sth: 0,
-		Num_rev: 0,
-		Num_acc: 0,
+		Period:       GetCurrentPeriod(),
+		Num_sth:      0,
+		Num_rev:      0,
+		Num_acc:      0,
 		Num_sth_frag: 0,
 		Num_rev_frag: 0,
 		Num_acc_frag: 0,
@@ -261,46 +262,48 @@ func (c *GossiperContext) SaveStorage() error {
 		Num_ACC_FULL: 0,
 		Num_CON_FULL: 0,
 	}
-	CountStorageCounter((*c).Storage_RAW,&newentry)
-	CountStorageCounter((*c).Storage_FRAG,&newentry)
-	CountStorage((*c).Storage_FULL,&newentry)
-	CountStorage((*c).Storage_POM_TEMP,&newentry)
-	CountStorage((*c).Storage_POM,&newentry)
+	CountStorageCounter((*c).Storage_RAW, &newentry)
+	CountStorageCounter((*c).Storage_FRAG, &newentry)
+	CountStorage((*c).Storage_FULL, &newentry)
+	CountStorage((*c).Storage_POM_TEMP, &newentry)
+	CountStorage((*c).Storage_POM, &newentry)
 	(*c.G_log)[GetCurrentPeriod()] = newentry
 	err := util.WriteData(c.StorageDirectory+"/"+c.StorageFile, c.G_log)
 	return err
 }
-func WipeOneGS(g *Gossip_Storage){
-	for key, _ := range *g{
-		if  key.Period!=GetCurrentPeriod(){
-			delete(*g,key)
+func WipeOneGS(g *Gossip_Storage) {
+	for key := range *g {
+		if key.Period != GetCurrentPeriod() {
+			delete(*g, key)
 		}
 	}
 }
-func WipeOneGSC(g *Gossip_Storage_Counter){
-	for key, _ := range *g{
-		if  key.Period!=GetCurrentPeriod(){
-			delete(*g,key)
+func WipeOneGSC(g *Gossip_Storage_Counter) {
+	for key := range *g {
+		if key.Period != GetCurrentPeriod() {
+			delete(*g, key)
 		}
 	}
 }
+
 //wipe all temp data
-func (c *GossiperContext) WipeStorage(){
+func (c *GossiperContext) WipeStorage() {
 	WipeOneGSC(c.Storage_RAW)
 	WipeOneGSC(c.Storage_FRAG)
 	WipeOneGS(c.Storage_POM_TEMP)
-	for key, _:= range *c.Obj_TSS_DB{
-		if key.Period!=GetCurrentPeriod(){
-			delete(*c.Obj_TSS_DB,key)
+	for key := range *c.Obj_TSS_DB {
+		if key.Period != GetCurrentPeriod() {
+			delete(*c.Obj_TSS_DB, key)
 		}
 	}
-	for key, _:= range *c.ACC_DB{
-		if key.Period!=GetCurrentPeriod(){
-			delete(*c.ACC_DB,key)
+	for key := range *c.ACC_DB {
+		if key.Period != GetCurrentPeriod() {
+			delete(*c.ACC_DB, key)
 		}
 	}
-	fmt.Println(util.BLUE,"Temp storage has been wiped.",util.RESET)
+	fmt.Println(util.BLUE, "Temp storage has been wiped.", util.RESET)
 }
+
 // Read every gossip object from c.StorageFile.
 // Store all files in c.Storage by their ID.
 /*
@@ -331,9 +334,9 @@ func (c *GossiperContext) StoreObject(o Gossip_object) {
 	(*c.Storage)[o.GetID()] = o
 }*/
 
-func (c *GossiperContext) StoreObject(o Gossip_object){
-	switch o.Type{
-	case STH,REV,ACC:
+func (c *GossiperContext) StoreObject(o Gossip_object) {
+	switch o.Type {
+	case STH, REV, ACC:
 		c.RWlock.Lock()
 		(*c.Storage_RAW)[o.Get_Counter_ID()] = o
 		c.RWlock.Unlock()
@@ -342,7 +345,7 @@ func (c *GossiperContext) StoreObject(o Gossip_object){
 		(*c.Storage_RAW)[o.Get_Counter_ID()] = o
 		(*c.Storage_POM_TEMP)[o.GetID()] = o
 		c.RWlock.Unlock()
-	case STH_FRAG,REV_FRAG,ACC_FRAG:
+	case STH_FRAG, REV_FRAG, ACC_FRAG:
 		c.RWlock.Lock()
 		(*c.Storage_FRAG)[o.Get_Counter_ID()] = o
 		c.RWlock.Unlock()
@@ -350,7 +353,7 @@ func (c *GossiperContext) StoreObject(o Gossip_object){
 		c.RWlock.Lock()
 		(*c.Storage_FRAG)[o.Get_Counter_ID()] = o
 		c.RWlock.Unlock()
-	case STH_FULL,REV_FULL:
+	case STH_FULL, REV_FULL:
 		c.RWlock.Lock()
 		(*c.Storage_FULL)[o.GetID()] = o
 		c.RWlock.Unlock()
@@ -402,10 +405,10 @@ func IsDuplicateFromGSC(g Gossip_object, gs *Gossip_Storage_Counter) bool {
 	return exists
 }
 
-func (c *GossiperContext) Has_TSS_CON_POM(entity_URL string, period string) bool{
+func (c *GossiperContext) Has_TSS_CON_POM(entity_URL string, period string) bool {
 	ID := Gossip_ID{
-		Period: "0",
-		Type: CON_FULL,
+		Period:     "0",
+		Type:       CON_FULL,
 		Entity_URL: entity_URL,
 	}
 	if _, ok := (*c.Storage_POM)[ID]; ok {
@@ -414,38 +417,38 @@ func (c *GossiperContext) Has_TSS_CON_POM(entity_URL string, period string) bool
 	return false
 }
 
-func (c *GossiperContext) HasPoM(entity_URL string, period string) bool{
+func (c *GossiperContext) HasPoM(entity_URL string, period string) bool {
 	//first check accusation pom
 	ID := Gossip_ID{
-		Period : period,
-		Type : ACC_FULL,
-		Entity_URL : entity_URL,
+		Period:     period,
+		Type:       ACC_FULL,
+		Entity_URL: entity_URL,
 	}
 	if _, ok := (*c.Storage_POM_TEMP)[ID]; ok {
 		return true
 	}
 	//Then check Unsigned Conflict PoM generated this period
 	ID = Gossip_ID{
-		Period : period,
-		Type : CON,
-		Entity_URL : entity_URL,
+		Period:     period,
+		Type:       CON,
+		Entity_URL: entity_URL,
 	}
 	if _, ok := (*c.Storage_POM_TEMP)[ID]; ok {
 		return true
 	}
 	//Then check Partially Signed Conflict PoM generated this period
 	ID = Gossip_ID{
-		Period : period,
-		Type : CON_FRAG,
-		Entity_URL : entity_URL,
+		Period:     period,
+		Type:       CON_FRAG,
+		Entity_URL: entity_URL,
 	}
 	if _, ok := (*c.Storage_POM_TEMP)[ID]; ok {
 		return true
 	}
 	//Finally check Threshold signed PoMs (from this period and from the past)
 	ID = Gossip_ID{
-		Period: "0",
-		Type: CON_FULL,
+		Period:     "0",
+		Type:       CON_FULL,
 		Entity_URL: entity_URL,
 	}
 	if _, ok := (*c.Storage_POM)[ID]; ok {

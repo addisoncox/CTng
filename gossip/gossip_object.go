@@ -99,7 +99,6 @@ type Gossip_object struct {
 	Period string `json:"period"`
 	Type        string `json:"type"`
 	Signer string `json:"signer"`
-	//**************************The number of signers should be equal to the Threshold, it just happened to be 2 in our case***************************************
 	Signers map[int]string `json:"signers"`
 	Signature [2]string `json:"signature"`
 	// Timestamp is a UTC RFC3339 string

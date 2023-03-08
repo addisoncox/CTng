@@ -46,9 +46,7 @@ func handleClientUpdate(w http.ResponseWriter, r *http.Request) {
 	// Fetch the STH, POM, and REV data corresponding with the specificed period from disk
 	update, err := monitor.PrepareClientUpdate(
 		context,
-		"testserver/1/"+periodStr+"/STH_TSS.json",
-		"testserver/1/"+periodStr+"/REV_TSS.json",
-		"testserver/1/"+periodStr+"/PoM_TSS.json",
+		"client_test/ClientData/Period "+periodStr+"/FromMonitor/ClientUpdate_at_Period "+periodStr+".json",
 	)
 	if err != nil {
 		http.Error(w, "Period not available", http.StatusBadRequest)
