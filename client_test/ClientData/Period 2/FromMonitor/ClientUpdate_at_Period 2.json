@@ -1,136 +1,136 @@
 {
   "STHs": [
-   {
-    "application": "CTng",
-    "period": "2",
-    "type": "http://ctng.uconn.edu/301",
-    "signer": "",
-    "signers": {
-     "0": "localhost:8080",
-     "1": "localhost:8081"
-    },
-    "signature": [
-     "{\"sign\":\"a54ec45a2968ff104d7e85a4cf211b3a556e489184efd9ecd1b934195dade5333ede8f7a3a2847b548175e5e220e3e0f\", \"ids\":[\"localhost:8080\",\"localhost:8081\"]}",
-     ""
-    ],
-    "timestamp": "2023-03-08T06:12:06Z",
-    "crypto_scheme": "BLS",
-    "payload": [
-     "localhost:9001",
-     "{\"Signer\":\"localhost:9001\",\"Timestamp\":\"2023-03-08T06:12:02Z\",\"RootHash\":\"}U\\ufffd\\ufffd\\ufffd4s\\u000b\\ufffd\\ufffd\\ufffd8\\ufffd{\\ufffdY\\ufffdW;\\ufffd\\ufffd1\\u0007\\ufffd\\ufffd\\ufffd\\ufffd\\u0003\\ufffd\\u0002X\\ufffd\",\"TreeSize\":12}",
-     ""
-    ]
-   }
+    {
+      "application": "CTng",
+      "period": "2",
+      "type": "http://ctng.uconn.edu/301",
+      "signer": "",
+      "signers": {
+        "0": "localhost:8080",
+        "1": "localhost:8081"
+      },
+      "signature": [
+        "{\"sign\":\"a8c54a410fadc879f00731870b2d3fcf7be160d0b7d6db724b299bb9e6102c826799bfcb15c443e7626e2da34fa15298\", \"ids\":[\"localhost:8080\",\"localhost:8081\"]}",
+        ""
+      ],
+      "timestamp": "2023-03-09T02:27:19Z",
+      "crypto_scheme": "BLS",
+      "payload": [
+        "localhost:9001",
+        "{\"Signer\":\"localhost:9001\",\"Timestamp\":\"2023-03-09T02:27:16Z\",\"RootHash\":\"ܔ\\ufffd\\u0003\\ufffd\\u000bB\\ufffd\\u000fɿ\\ufffdV9쑲\\ufffdc\\ufffd\\ufffd\\ufffd\\u0014\\ufffd\\ufffd\\ufffdn\\ufffd2i7\\ufffd\",\"TreeSize\":12}",
+        ""
+      ]
+    }
   ],
   "REVs": [
-   {
-    "application": "CTng",
-    "period": "2",
-    "type": "http://ctng.uconn.edu/302",
-    "signer": "",
-    "signers": {
-     "0": "localhost:8080",
-     "1": "localhost:8081"
-    },
-    "signature": [
-     "{\"sign\":\"b92c6f3cc74743402cfe5d467e752d3bb8f6a02d9b34de307f0526786b1db67216b96faeb9484bb9cf87445a12901300\", \"ids\":[\"localhost:8080\",\"localhost:8081\"]}",
-     ""
-    ],
-    "timestamp": "2023-03-08T06:12:06Z",
-    "crypto_scheme": "BLS",
-    "payload": [
-     "localhost:9100",
-     "CRV",
-     "{\"Period\":\"2\",\"Delta_CRV\":\"IkFBQUFBQUFBQUFBPSI=\",\"SRH\":\"{\\\"sig\\\":\\\"cb43b1edbf439a4ec44f3fb96b3efc45fa9b4cc48bb3649b9c128f29f0db9b77c33cf4087c70c03a996db0ed6d8199b66f29d8d55e3c230a6271039e6284fc2c55d2ece5be9873596bb691dea4f6af53c3d6ca9203a437ae88621700a9def6247ff48a251db3ad9d517971354ec8ee811b52223c9b33ad75be6659ffabc8544b11b3e759a06c2368d03c433a4814ea4ff378ee83e58ef92d045f72d4ebbc361332f10cbd08f1009ad3c45a520d900c5517b379976f1f94de9877f69abddc67d032fd810dbcd15995a0ef3fef7bc23f718d62f63509648365931827aa9952566014326a946e763ba826b4ec9b5b68bb8747541a6bb5e0ecb690484e3c68e4edf6\\\",\\\"id\\\":\\\"localhost:9100\\\"}\"}"
-    ]
-   }
+    {
+      "application": "CTng",
+      "period": "2",
+      "type": "http://ctng.uconn.edu/302",
+      "signer": "",
+      "signers": {
+        "0": "localhost:8080",
+        "1": "localhost:8081"
+      },
+      "signature": [
+        "{\"sign\":\"b92c6f3cc74743402cfe5d467e752d3bb8f6a02d9b34de307f0526786b1db67216b96faeb9484bb9cf87445a12901300\", \"ids\":[\"localhost:8080\",\"localhost:8081\"]}",
+        ""
+      ],
+      "timestamp": "2023-03-09T02:27:19Z",
+      "crypto_scheme": "BLS",
+      "payload": [
+        "localhost:9100",
+        "CRV",
+        "{\"Period\":\"2\",\"Delta_CRV\":\"IkFBQUFBQUFBQUFBPSI=\",\"SRH\":\"{\\\"sig\\\":\\\"cb43b1edbf439a4ec44f3fb96b3efc45fa9b4cc48bb3649b9c128f29f0db9b77c33cf4087c70c03a996db0ed6d8199b66f29d8d55e3c230a6271039e6284fc2c55d2ece5be9873596bb691dea4f6af53c3d6ca9203a437ae88621700a9def6247ff48a251db3ad9d517971354ec8ee811b52223c9b33ad75be6659ffabc8544b11b3e759a06c2368d03c433a4814ea4ff378ee83e58ef92d045f72d4ebbc361332f10cbd08f1009ad3c45a520d900c5517b379976f1f94de9877f69abddc67d032fd810dbcd15995a0ef3fef7bc23f718d62f63509648365931827aa9952566014326a946e763ba826b4ec9b5b68bb8747541a6bb5e0ecb690484e3c68e4edf6\\\",\\\"id\\\":\\\"localhost:9100\\\"}\"}"
+      ]
+    }
   ],
   "ACCs": [
-   {
-    "application": "CTng",
-    "period": "2",
-    "type": "http://ctng.uconn.edu/302",
-    "signer": "",
-    "signers": {
-     "0": "localhost:8080",
-     "1": "localhost:8081"
-    },
-    "signature": [
-     "{\"sign\":\"55d1595f362bbae91c3cf0bd334a7161faefe2514e8ba406dfc406379abf24157da95f5a2134390037f8731b8a177005\", \"ids\":[\"localhost:8080\",\"localhost:8081\"]}",
-     ""
-    ],
-    "timestamp": "2023-03-08T06:12:06Z",
-    "crypto_scheme": "BLS",
-    "payload": [
-     "localhost:9102",
-     "",
-     ""
-    ]
-   }
+    {
+      "application": "CTng",
+      "period": "2",
+      "type": "http://ctng.uconn.edu/302",
+      "signer": "",
+      "signers": {
+        "0": "localhost:8080",
+        "1": "localhost:8081"
+      },
+      "signature": [
+        "{\"sign\":\"55d1595f362bbae91c3cf0bd334a7161faefe2514e8ba406dfc406379abf24157da95f5a2134390037f8731b8a177005\", \"ids\":[\"localhost:8080\",\"localhost:8081\"]}",
+        ""
+      ],
+      "timestamp": "2023-03-09T02:27:19Z",
+      "crypto_scheme": "BLS",
+      "payload": [
+        "localhost:9102",
+        "",
+        ""
+      ]
+    }
   ],
   "CONs": [
-   {
-    "application": "CTng",
-    "period": "2",
-    "type": "http://ctng.uconn.edu/302",
-    "signer": "",
-    "signers": {
-     "0": "localhost:8080",
-     "1": "localhost:8081"
+    {
+      "application": "CTng",
+      "period": "2",
+      "type": "http://ctng.uconn.edu/302",
+      "signer": "",
+      "signers": {
+        "0": "localhost:8080",
+        "1": "localhost:8081"
+      },
+      "signature": [
+        "{\"sign\":\"585ec48c71ce572dc21b5c3a4946524200da1977ea76e735cfccbd67a55e2d16f5ba6f15bba84ce897732248fb6ac602\", \"ids\":[\"localhost:8080\",\"localhost:8081\"]}",
+        ""
+      ],
+      "timestamp": "2023-03-09T02:27:19Z",
+      "crypto_scheme": "BLS",
+      "payload": [
+        "localhost:9100",
+        "localhost:9100CRV{\"Period\":\"2\",\"Delta_CRV\":\"IkFBQUFBQUFBQUFBPSI=\",\"SRH\":\"{\\\"sig\\\":\\\"cb43b1edbf439a4ec44f3fb96b3efc45fa9b4cc48bb3649b9c128f29f0db9b77c33cf4087c70c03a996db0ed6d8199b66f29d8d55e3c230a6271039e6284fc2c55d2ece5be9873596bb691dea4f6af53c3d6ca9203a437ae88621700a9def6247ff48a251db3ad9d517971354ec8ee811b52223c9b33ad75be6659ffabc8544b11b3e759a06c2368d03c433a4814ea4ff378ee83e58ef92d045f72d4ebbc361332f10cbd08f1009ad3c45a520d900c5517b379976f1f94de9877f69abddc67d032fd810dbcd15995a0ef3fef7bc23f718d62f63509648365931827aa9952566014326a946e763ba826b4ec9b5b68bb8747541a6bb5e0ecb690484e3c68e4edf6\\\",\\\"id\\\":\\\"localhost:9100\\\"}\"}",
+        "localhost:9100CRV{\"Period\":\"2\",\"Delta_CRV\":\"IkFBQUFBQUFBQUFBPSI=\",\"SRH\":\"{\\\"sig\\\":\\\"cb43b1edbf439a4ec44f3fb96b3efc45fa9b4cc48bb3649b9c128f29f0db9b77c33cf4087c70c03a996db0ed6d8199b66f29d8d55e3c230a6271039e6284fc2c55d2ece5be9873596bb691dea4f6af53c3d6ca9203a437ae88621700a9def6247ff48a251db3ad9d517971354ec8ee811b52223c9b33ad75be6659ffabc8544b11b3e759a06c2368d03c433a4814ea4ff378ee83e58ef92d045f72d4ebbc361332f10cbd08f1009ad3c45a520d900c5517b379976f1f94de9877f69abddc67d032fd810dbcd15995a0ef3fef7bc23f718d62f63509648365931827aa9952566014326a946e763ba826b4ec9b5b68bb8747541a6bb5e0ecb690484e3c68e4edf6\\\",\\\"id\\\":\\\"localhost:9100\\\"}\"}"
+      ]
     },
-    "signature": [
-     "{\"sign\":\"585ec48c71ce572dc21b5c3a4946524200da1977ea76e735cfccbd67a55e2d16f5ba6f15bba84ce897732248fb6ac602\", \"ids\":[\"localhost:8080\",\"localhost:8081\"]}",
-     ""
-    ],
-    "timestamp": "2023-03-08T06:12:06Z",
-    "crypto_scheme": "BLS",
-    "payload": [
-     "localhost:9100",
-     "localhost:9100CRV{\"Period\":\"2\",\"Delta_CRV\":\"IkFBQUFBQUFBQUFBPSI=\",\"SRH\":\"{\\\"sig\\\":\\\"cb43b1edbf439a4ec44f3fb96b3efc45fa9b4cc48bb3649b9c128f29f0db9b77c33cf4087c70c03a996db0ed6d8199b66f29d8d55e3c230a6271039e6284fc2c55d2ece5be9873596bb691dea4f6af53c3d6ca9203a437ae88621700a9def6247ff48a251db3ad9d517971354ec8ee811b52223c9b33ad75be6659ffabc8544b11b3e759a06c2368d03c433a4814ea4ff378ee83e58ef92d045f72d4ebbc361332f10cbd08f1009ad3c45a520d900c5517b379976f1f94de9877f69abddc67d032fd810dbcd15995a0ef3fef7bc23f718d62f63509648365931827aa9952566014326a946e763ba826b4ec9b5b68bb8747541a6bb5e0ecb690484e3c68e4edf6\\\",\\\"id\\\":\\\"localhost:9100\\\"}\"}",
-     "localhost:9100CRV{\"Period\":\"2\",\"Delta_CRV\":\"IkFBQUFBQUFBQUFBPSI=\",\"SRH\":\"{\\\"sig\\\":\\\"cb43b1edbf439a4ec44f3fb96b3efc45fa9b4cc48bb3649b9c128f29f0db9b77c33cf4087c70c03a996db0ed6d8199b66f29d8d55e3c230a6271039e6284fc2c55d2ece5be9873596bb691dea4f6af53c3d6ca9203a437ae88621700a9def6247ff48a251db3ad9d517971354ec8ee811b52223c9b33ad75be6659ffabc8544b11b3e759a06c2368d03c433a4814ea4ff378ee83e58ef92d045f72d4ebbc361332f10cbd08f1009ad3c45a520d900c5517b379976f1f94de9877f69abddc67d032fd810dbcd15995a0ef3fef7bc23f718d62f63509648365931827aa9952566014326a946e763ba826b4ec9b5b68bb8747541a6bb5e0ecb690484e3c68e4edf6\\\",\\\"id\\\":\\\"localhost:9100\\\"}\"}"
-    ]
-   },
-   {
-    "application": "CTng",
-    "period": "2",
-    "type": "http://ctng.uconn.edu/301",
-    "signer": "",
-    "signers": {
-     "0": "localhost:8080",
-     "1": "localhost:8081"
-    },
-    "signature": [
-     "{\"sign\":\"ccf50a9890d66fc874a570f2b299a5cca5b8c5ca35ba12704ab73cdad4a45e4dbfa01018dbec3039cf9d9858932e8a10\", \"ids\":[\"localhost:8080\",\"localhost:8081\"]}",
-     ""
-    ],
-    "timestamp": "2023-03-08T06:12:06Z",
-    "crypto_scheme": "BLS",
-    "payload": [
-     "localhost:9000",
-     "localhost:9000{\"Signer\":\"localhost:9000\",\"Timestamp\":\"2023-03-08T06:12:02Z\",\"RootHash\":\"\\ufffd\\ufffd1\\ufffd\\ufffd~\\ufffd\\ufffd/f\\ufffd\\u00078\\ufffd\\u0004p\\ufffd\\ufffd4DI\\ufffdH\\ufffdy\\ufffd\\ufffdjpZ$Q\",\"TreeSize\":12}",
-     "localhost:9000{\"Signer\":\"localhost:9000\",\"Timestamp\":\"2023-03-08T06:12:02Z\",\"RootHash\":\"\\nT\\tc6\\ufffd\\\\\\ufffd\\ufffdh\\ufffd\\ufffd\\ufffdI%\\ufffdA\\ufffd/\\ufffd\\ufffd@\\ufffds8\\ufffdX\\u000c5\\u0017[\\ufffd\",\"TreeSize\":11}"
-    ]
-   }
+    {
+      "application": "CTng",
+      "period": "2",
+      "type": "http://ctng.uconn.edu/301",
+      "signer": "",
+      "signers": {
+        "0": "localhost:8080",
+        "1": "localhost:8081"
+      },
+      "signature": [
+        "{\"sign\":\"4dcbbd9b94dff7e87b4bf9bbfa5daade2c6cfd8c19670245ac7b7127d34989cd322b2655f1f31984a9c0aa7b87233982\", \"ids\":[\"localhost:8080\",\"localhost:8081\"]}",
+        ""
+      ],
+      "timestamp": "2023-03-09T02:27:19Z",
+      "crypto_scheme": "BLS",
+      "payload": [
+        "localhost:9000",
+        "localhost:9000{\"Signer\":\"localhost:9000\",\"Timestamp\":\"2023-03-09T02:27:16Z\",\"RootHash\":\"\\ufffd\\u00058x\\ufffd\\u0008\\ufffd\\ufffd\\ufffdK\\u0011\\ufffdǬ\\ufffd\\ufffd\\ufffd\\u001a3\\ufffd\\u000fG\\ufffdH\\ufffd\\ufffdG\\u001d\\ufffd2R\\u003c\",\"TreeSize\":12}",
+        "localhost:9000{\"Signer\":\"localhost:9000\",\"Timestamp\":\"2023-03-09T02:27:16Z\",\"RootHash\":\"\\ufffdk)\\ufffd\\ufffd\\ufffd\\ufffd|\\ufffd$Йާ]\\ufffd1\\u0011:\\ufffd\\ufffd\\u0007\\u0012\\ufffd8\\ufffd\\ufffdg_\\ufffdH\",\"TreeSize\":11}"
+      ]
+    }
   ],
-  "MonitorID": "localhost:8182",
   "NUM": {
-   "NUM_ACC_FULL": "1",
-   "NUM_CON_FULL": "1",
-   "Period": "2",
-   "Signer_Monitor": "localhost:8182",
-   "Crypto_Scheme": "rsa",
-   "Signature": "{\"sig\":\"3da53533d2eee0432282452441ce124f1451b46127f59f593fdc0600725c2f39baea80eff2c109a60e8ad952f8b685739f50123afcb4357ad71533b7400acf974d75a6ae1e56b0fa33de276908b3f62925ad6380b4bf8548a28cece9a533539ae94b2d606da31eb6d7da9287ebe118a6d40832a8421435b73f5b9e1b130ea93bedcfdd0bc75c66a725bcf34a0b08f95e0bf9cdcf0b55339b00e9ae96bbb4e266ade92b9c15c1933ad653ba569d84333aae08714df7cb9bf91ab03cd7effeca5be45d334284245dc0ee36d0a847c4c87fc43bde437a225a0da89280a919a4f68b0f4d0509a4e944ffa267bf277564214132227389d1509c6f3171a407cbfd8b6b\",\"id\":\"localhost:8182\"}"
+    "NUM_ACC_FULL": "1",
+    "NUM_CON_FULL": "1",
+    "Period": "2",
+    "Signer_Monitor": "localhost:8182",
+    "Crypto_Scheme": "rsa",
+    "Signature": "{\"sig\":\"3da53533d2eee0432282452441ce124f1451b46127f59f593fdc0600725c2f39baea80eff2c109a60e8ad952f8b685739f50123afcb4357ad71533b7400acf974d75a6ae1e56b0fa33de276908b3f62925ad6380b4bf8548a28cece9a533539ae94b2d606da31eb6d7da9287ebe118a6d40832a8421435b73f5b9e1b130ea93bedcfdd0bc75c66a725bcf34a0b08f95e0bf9cdcf0b55339b00e9ae96bbb4e266ade92b9c15c1933ad653ba569d84333aae08714df7cb9bf91ab03cd7effeca5be45d334284245dc0ee36d0a847c4c87fc43bde437a225a0da89280a919a4f68b0f4d0509a4e944ffa267bf277564214132227389d1509c6f3171a407cbfd8b6b\",\"id\":\"localhost:8182\"}"
   },
   "NUM_FULL": {
-   "NUM_ACC_FULL": "1",
-   "NUM_CON_FULL": "1",
-   "Period": "1",
-   "Signers": {
-    "0": "localhost:8081",
-    "1": "localhost:8082"
-   },
-   "Crypto_Scheme": "bls",
-   "Signature": "{\"sign\":\"760132c6a05aebc25bfa07ab02f00282f5f95a0f3b4a8c5b846de6256bba0217ad1834a992e7693870e9dd48e88daf85\", \"ids\":[\"localhost:8081\",\"localhost:8082\"]}"
+    "NUM_ACC_FULL": "1",
+    "NUM_CON_FULL": "1",
+    "Period": "1",
+    "Signers": {
+      "0": "localhost:8081",
+      "1": "localhost:8082"
+    },
+    "Crypto_Scheme": "bls",
+    "Signature": "{\"sign\":\"760132c6a05aebc25bfa07ab02f00282f5f95a0f3b4a8c5b846de6256bba0217ad1834a992e7693870e9dd48e88daf85\", \"ids\":[\"localhost:8081\",\"localhost:8082\"]}"
   },
+  "MonitorID": "localhost:8182",
   "Period": "2"
- }
+}
