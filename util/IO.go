@@ -41,7 +41,7 @@ func WriteData(filename string, data interface{}) error {
 	// defer the closing of our jsonFile so that we can parse it later on
 	defer jsonFile.Close()
 	//write to the corresponding file
-	file, err := json.MarshalIndent(data, " ", " ")
+	file, err := json.MarshalIndent(data, "", "  ")
 	if err != nil {
 		return err
 	}
@@ -72,4 +72,3 @@ func CreateDir(path string){
 		return
 	}
 }
-

@@ -507,6 +507,8 @@ func prep_update(period int) {
 	var num_full_for_update gossip.NUM_FULL
 	if period == 0 {
 		num_full_for_update = gossip.NUM_FULL{}
+		// Initialize `Signers` field so that it is not null in json encoding
+		num_full_for_update.Signers = map[int]string{}
 	} else {
 		num_full_for_update = NUM_FULL[period]
 	}
@@ -534,6 +536,11 @@ func Test_MG_Period0(t *testing.T) {
 		REV_0 := generate_TSS_FULL(0, REVs[GID_CA[i]], gossip.REV)
 		REV_FULL[0] = append(REV_FULL[0], REV_0)
 	}
+	
+	// These need to be initialized to zero values, otherwise the JSON encoding will be null
+	ACC_FULL[0] = []gossip.Gossip_object{}
+	CON_FULL[0] = []gossip.Gossip_object{}
+
 	prep_update(0)
 	// write all the data to the path ClientData/Period 0/FromMonitor
 	writeall(0, 3, 3, 0, 0)

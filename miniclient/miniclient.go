@@ -1,7 +1,10 @@
 package miniclient
 
 import (
+	"CTng/monitor"
+	"CTng/util"
 	"fmt"
+	"os"
 )
 
 func Start() {
@@ -11,7 +14,7 @@ func Start() {
 }
 
 func QueryMonitor() {
-	res, err := FetchClientUpdate("http://localhost:3000/?period=0")
+	res, err := FetchClientUpdate("http://localhost:3000/?period=3")
 	if err != nil {
 		fmt.Printf("client update err: %v\n", err)
 		return
@@ -21,11 +24,26 @@ func QueryMonitor() {
 	fmt.Printf("period: %v\n", res.Period)
 	fmt.Printf("\nsth: %v\n", res.STHs)
 	fmt.Printf("\nrev: %v\n", res.REVs)
-	fmt.Printf("\npom: %v\n", res.CONs)
+	fmt.Printf("\nacc: %v\n", res.CONs)
+	fmt.Printf("\ncon: %v\n", res.CONs)
 
-	fmt.Printf("\nsth delta crv: %v\n", GetDeltaCRV(res.STHs))
-	fmt.Printf("\nsth srh value: %v\n", GetSRH(res.STHs))
-	fmt.Printf("\nrev root hash: %v\n", GetRootHash(res.REVs))
+	fmt.Printf("\nnum: %v\n", res.NUM)
+	fmt.Printf("\nnum full: %v\n", res.NUM_FULL)
+
+	fmt.Printf("\nsth root hash:\n%v\n", GetRootHash(res.STHs))
+	fmt.Printf("\nrev delta crv: %v\n", GetDeltaCRV(res.REVs))
+	fmt.Printf("\nrev srh value: %v\n", GetSRH(res.REVs))
+	
+	SaveClientUpdate(&res)
+}
+
+func SaveClientUpdate(update *monitor.ClientUpdate) {
+	// Store client update in a local folder (miniclient/data/update_{period}.json)
+	err := os.MkdirAll("miniclient/data/", os.ModePerm)
+	if err != nil {
+		fmt.Printf("Unable to create data folder to store updates")
+	}
+	util.WriteData("miniclient/data/update_"+update.Period+".json", update)
 }
 
 // Deprecated: These endpoints have been removed from the monitor
