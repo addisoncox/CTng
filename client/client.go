@@ -88,9 +88,18 @@ func Handleupdates(c *ClientContext, w http.ResponseWriter, r *http.Request) {
 	}
 	fmt.Println(util.GREEN + update.Period + util.RESET)
 	fmt.Println(util.GREEN+"update received at ", update.Period, util.RESET)
-	//HandleSTHs(c,update.STHs)
-	//HandleREVs(c,update.REVs)
-	//HandlePoMs(c,update.PoMs,update.PoMsig)
+	HandleSTHs(c, &update.STHs)
+	HandleREVs(c, &update.REVs)
+	HandleACCs(c, &update.ACCs)
+	HandleCONs(c, &update.CONs)
+	err = update.NUM.Verify(c.Config.Crypto)
+	if err != nil {
+		//handle this
+	}
+	err = update.NUM_FULL.Verify(c.Config.Crypto)
+	if err != nil {
+		//
+	}
 	//update the last update Period
 	c.LastUpdatePeriod = update.Period
 	//Push the received Signed PoMs to the checking monitor for integrity check
@@ -98,7 +107,7 @@ func Handleupdates(c *ClientContext, w http.ResponseWriter, r *http.Request) {
 	//PushtoMonitor(c, pom_signed)
 }
 
-func HandleSTHs(c *ClientContext, STHs *gossip.Gossip_Storage) {
+func HandleSTHs(c *ClientContext, STHs *[]gossip.Gossip_object) {
 	for _, gossipObject := range *STHs {
 		err := gossipObject.Verify(c.Config.Crypto)
 		if err == nil {
@@ -107,7 +116,7 @@ func HandleSTHs(c *ClientContext, STHs *gossip.Gossip_Storage) {
 	}
 }
 
-func HandleREVs(c *ClientContext, REVs *gossip.Gossip_Storage) {
+func HandleREVs(c *ClientContext, REVs *[]gossip.Gossip_object) {
 	for _, gossipObject := range *REVs {
 		err := gossipObject.Verify(c.Config.Crypto)
 		if err == nil {
@@ -116,14 +125,21 @@ func HandleREVs(c *ClientContext, REVs *gossip.Gossip_Storage) {
 	}
 }
 
-func HandlePoMs(c *ClientContext, poms *gossip.Gossip_Storage, sig string) {
-	err := VerifyPoMs(c, poms, sig)
-	if err != nil {
-		for _, gossipObject := range *poms {
+func HandleACCs(c *ClientContext, ACCs *[]gossip.Gossip_object) {
+	for _, gossipObject := range *ACCs {
+		err := gossipObject.Verify(c.Config.Crypto)
+		if err == nil {
+			(*c.Storage_ACCUSATION_POM)[gossipObject.GetID()] = gossipObject
+		}
+	}
+}
+
+func HandleCONs(c *ClientContext, CONs *[]gossip.Gossip_object) {
+	for _, gossipObject := range *CONs {
+		err := gossipObject.Verify(c.Config.Crypto)
+		if err == nil {
 			(*c.Storage_CONFLICT_POM)[gossipObject.GetID()] = gossipObject
 		}
-	} else {
-		fmt.Println(err)
 	}
 }
 
@@ -137,7 +153,8 @@ func Parse_CTng_extension(cert *x509.Certificate) *CTngExtension {
 func verifySignatures(
 	c *ClientContext,
 	cert x509.Certificate,
-	poms *gossip.Gossip_Storage,
+	conflictPoms *gossip.Gossip_Storage,
+	accusationPoms *gossip.Gossip_Storage,
 	sths *gossip.Gossip_Storage,
 	revs *gossip.Gossip_Storage,
 ) error {
@@ -151,7 +168,13 @@ func verifySignatures(
 	if result != nil {
 		return result
 	}
-	for _, pom := range *poms {
+	for _, pom := range *conflictPoms {
+		err := pom.Verify(c.Config.Crypto)
+		if err != nil {
+			return err
+		}
+	}
+	for _, pom := range *accusationPoms {
 		err := pom.Verify(c.Config.Crypto)
 		if err != nil {
 			return err
@@ -227,17 +250,26 @@ func handleClientRequests(c *ClientContext) {
 // will finish these 2 after the client is working as intended
 func Handlesubjects(c *ClientContext, w http.ResponseWriter, r *http.Request) {
 	var cert x509.Certificate
-	json.Unmarshal([]byte(r.Header["cert"][0]), cert)
-	err := checkCertAgainstPOMList(cert, c.Storage_CONFLICT_POM)
+	err := json.NewDecoder(r.Body).Decode(&cert)
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusBadRequest)
+		return
+	}
+	err = checkCertAgainstPOMList(cert, c.Storage_CONFLICT_POM)
+	if err != nil {
+		//handle rejection
+	}
+	err = verifySignatures(c, cert, c.Storage_CONFLICT_POM, c.Storage_ACCUSATION_POM, c.Storage_STH_FULL, c.Storage_REV_FULL)
 	if err != nil {
 		//handleRejection
 	}
-	err = verifySignatures(c, cert, c.Storage_CONFLICT_POM, c.Storage_STH_FULL, c.Storage_REV_FULL)
-	if err != nil {
-		//handleRejection
+	ctngExtension := Parse_CTng_extension(&cert)
+	var loggerSTH Logger.STH
+	//payload[1] holds marshalled logger STH
+	json.Unmarshal([]byte(ctngExtension.STH.Payload[1]), &loggerSTH)
+	if !verifyPOI(loggerSTH, ctngExtension.POI, cert) {
+		//handle POI verification failed
 	}
-	//ctngExtension := Parse_CTng_extension(&cert)
-	//verifyPOI(ctngExtension.STH, ctngExtension.POI, cert)
 }
 
 func Handleconviction(c *ClientContext, w http.ResponseWriter, r *http.Request) {
