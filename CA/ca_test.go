@@ -1,59 +1,69 @@
-
 package CA
+
 import (
 	"CTng/gossip"
+	"crypto/x509"
+	"encoding/json"
 	"fmt"
 	"testing"
 	"time"
+
 	"github.com/bits-and-blooms/bitset"
-	"crypto/x509"
-	"encoding/json"
 )
 
-func testCRV(t *testing.T){
+func testCRV(t *testing.T) {
 	newCRV := CRV_init()
 	newCRV.Revoke(1)
 	newCRV.Revoke(4)
 	fmt.Println(newCRV.CRV_current)
 	fmt.Println(newCRV.CRV_pre_update)
 	var newbitset = new(bitset.BitSet)
-	newbitset.UnmarshalJSON(newCRV.GetDeltaCRV())
+	newbitset.UnmarshalBinary(newCRV.GetDeltaCRV())
 	fmt.Println(newbitset)
 }
 
-func testCAContext(t *testing.T){
-	ctx := InitializeCAContext("../Gen/ca_testconfig/1/CA_public_config.json","../Gen/ca_testconfig/1/CA_private_config.json","../Gen/ca_testconfig/1/CA_crypto_config.json")
+func TestCAContext(t *testing.T) {
+	ctx := InitializeCAContext("../Gen/ca_testconfig/1/CA_public_config.json", "../Gen/ca_testconfig/1/CA_private_config.json", "../Gen/ca_testconfig/1/CA_crypto_config.json")
 	ctx.CRV.Revoke(1)
 	ctx.CRV.Revoke(4)
-	fmt.Println(ctx.CRV.CRV_current)
-	REV := Generate_Revocation(ctx,"0",0)
-	REV_fake := Generate_Revocation(ctx,"0",1)
-	fmt.Println(REV.Payload[2])
-	fmt.Println(REV_fake.Payload[2])
-	ctx.REV_storage["0"] = REV
-	ctx.REV_storage_fake["0"] = REV_fake
-	fmt.Println(ctx.REV_storage["0"].Payload[2])
-	fmt.Println(ctx.REV_storage_fake["0"].Payload[2])
+	//fmt.Println(ctx.CRV.CRV_current)
+	REV := Generate_Revocation(ctx, "0", 0)
+	//REV_fake := Generate_Revocation(ctx, "0", 1)
+	rev_json, _ := json.Marshal(REV)
+	var rev2 gossip.Gossip_object
+	json.Unmarshal(rev_json, &rev2)
+	var revca Revocation
+	json.Unmarshal([]byte(rev2.Payload[2]), &revca)
+	var newbitset = new(bitset.BitSet)
+	newbitset.UnmarshalBinary(revca.Delta_CRV)
+	fmt.Println(newbitset)
+
+	//fmt.Println(REV.Payload[2])
+	//fmt.Println(REV_fake.Payload[2])
+	//ctx.REV_storage["0"] = REV
+	//ctx.REV_storage_fake["0"] = REV_fake
+	//fmt.Println(ctx.REV_storage["0"].Payload[2])
+	//fmt.Println(ctx.REV_storage_fake["0"].Payload[2])
 }
 
-func testCertMarshal(t *testing.T){
-		ctx := InitializeCAContext("../Gen/ca_testconfig/1/CA_public_config.json","../Gen/ca_testconfig/1/CA_private_config.json","../Gen/ca_testconfig/1/CA_crypto_config.json")
-		//Generate N signed pre-certificates
-		issuer := Generate_Issuer(ctx.CA_private_config.Signer)
-		// generate host
-		host := "www.example.com"
-		// generate valid duration
-		validFor := 365 * 24 * time.Hour
-		isCA := false
-		// generate pre-certificates
-		certs := Generate_N_Signed_PreCert(ctx,64, host, validFor, isCA, issuer, ctx.Rootcert, false,&ctx.PrivateKey, 0)
-		bytearr := certs[0].Raw
-		var cert *x509.Certificate
-		cert = Unmarshall_Signed_PreCert(bytearr)
-		fmt.Println(cert)
+func testCertMarshal(t *testing.T) {
+	ctx := InitializeCAContext("../Gen/ca_testconfig/1/CA_public_config.json", "../Gen/ca_testconfig/1/CA_private_config.json", "../Gen/ca_testconfig/1/CA_crypto_config.json")
+	//Generate N signed pre-certificates
+	issuer := Generate_Issuer(ctx.CA_private_config.Signer)
+	// generate host
+	host := "www.example.com"
+	// generate valid duration
+	validFor := 365 * 24 * time.Hour
+	isCA := false
+	// generate pre-certificates
+	certs := Generate_N_Signed_PreCert(ctx, 64, host, validFor, isCA, issuer, ctx.Rootcert, false, &ctx.PrivateKey, 0)
+	bytearr := certs[0].Raw
+	var cert *x509.Certificate
+	cert = Unmarshall_Signed_PreCert(bytearr)
+	fmt.Println(cert)
 }
 
-func testPOIjson(t *testing.T){
+func testPOIjson(t *testing.T) {
 	SiblingHashes := make([][]byte, 0)
 	SiblingHashes = append(SiblingHashes, []byte("1"))
 	NeighborHash := []byte("2")
@@ -66,8 +76,8 @@ func testPOIjson(t *testing.T){
 	fmt.Println(newpoi2)
 }
 
-func TestCtngExtension(t *testing.T){
-	ctx := InitializeCAContext("../Gen/ca_testconfig/1/CA_public_config.json","../Gen/ca_testconfig/1/CA_private_config.json","../Gen/ca_testconfig/1/CA_crypto_config.json")
+func testCtngExtension(t *testing.T) {
+	ctx := InitializeCAContext("../Gen/ca_testconfig/1/CA_public_config.json", "../Gen/ca_testconfig/1/CA_private_config.json", "../Gen/ca_testconfig/1/CA_crypto_config.json")
 	//Generate N signed pre-certificates
 	issuer := Generate_Issuer(ctx.CA_private_config.Signer)
 	// generate host
@@ -76,7 +86,7 @@ func TestCtngExtension(t *testing.T){
 	validFor := 365 * 24 * time.Hour
 	isCA := false
 	// generate pre-certificates
-	certs := Generate_N_Signed_PreCert(ctx,1, host, validFor, isCA, issuer, ctx.Rootcert, false,&ctx.PrivateKey, 0)
+	certs := Generate_N_Signed_PreCert(ctx, 1, host, validFor, isCA, issuer, ctx.Rootcert, false, &ctx.PrivateKey, 0)
 	ctx.CurrentCertificatePool.AddCert(certs[0])
 	fmt.Println(GetCTngExtensions(certs[0]))
 	// now add STH and POI to it
@@ -91,7 +101,7 @@ func TestCtngExtension(t *testing.T){
 	}
 	target_cert := ctx.CurrentCertificatePool.GetCertBySubjectKeyID(string(certs[0].SubjectKeyId))
 	target_cert = AddCTngExtension(target_cert, newctngext)
-	ctx.CurrentCertificatePool.UpdateCertBySubjectKeyID(string(certs[0].SubjectKeyId), target_cert)	
+	ctx.CurrentCertificatePool.UpdateCertBySubjectKeyID(string(certs[0].SubjectKeyId), target_cert)
 	fmt.Println(GetCTngExtensions(ctx.CurrentCertificatePool.GetCertBySubjectKeyID(string(certs[0].SubjectKeyId))))
 	signed_certs := SignAllCerts(ctx)
 	fmt.Println(GetCTngExtensions(&signed_certs[0]))
