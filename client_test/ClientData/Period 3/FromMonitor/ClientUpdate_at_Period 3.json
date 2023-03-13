@@ -10,14 +10,14 @@
         "1": "localhost:8081"
       },
       "signature": [
-        "{\"sign\":\"57a4d4e6a122e9fd16b447098636a58a06077cecedc62f037303c7a9d19e0d8fec6a6621f2d46e11800316d141d45904\", \"ids\":[\"localhost:8080\",\"localhost:8081\"]}",
+        "{\"sign\":\"33a4f865512b68a91cc4d4c9875242ff51bc14009723962ed9648ce2de9bd165a2e5acd96df920f209719a9a9b56d38f\", \"ids\":[\"localhost:8080\",\"localhost:8081\"]}",
         ""
       ],
-      "timestamp": "2023-03-09T02:27:19Z",
+      "timestamp": "2023-03-13T21:59:40Z",
       "crypto_scheme": "BLS",
       "payload": [
         "localhost:9000",
-        "{\"Signer\":\"localhost:9000\",\"Timestamp\":\"2023-03-09T02:27:19Z\",\"RootHash\":\"\\ufffd\\ufffd_O4I\\ufffd\\ufffd\\ufffd\\u001d#6\\ufffdǌư!\\u001cv\\ufffd\\ufffd\\u0014E\\ufffd3\\u0001\\ufffd\\u0011\",\"TreeSize\":12}",
+        "{\"Signer\":\"localhost:9000\",\"Timestamp\":\"2023-03-13T21:59:38Z\",\"RootHash\":\"C\\ufffd\\ufffdG\\u000e\\ufffd1\\ufffd\\ufffd\\ufffd\\\"\\ufffd1\\ufffdK\\ufffd\\ufffdE\\ufffd\\u0003\\ufffd|q'\\ufffd\\ufffd\\ufffd\\ufffd3?\",\"TreeSize\":12}",
         ""
       ]
     },
@@ -31,14 +31,14 @@
         "1": "localhost:8081"
       },
       "signature": [
-        "{\"sign\":\"27dd8ba3156cee7ce3c97328691e0c53c41b8562b023d0e87bb03ab0e64d3f96c2cba9233137ad837a2e8147bd85b183\", \"ids\":[\"localhost:8080\",\"localhost:8081\"]}",
+        "{\"sign\":\"0e131fa462f01ff3c6668cee41367b68500512bfbebfbeabbf8491a3d909bb3855208a52f2e6a6ed8aef627c4940fc8b\", \"ids\":[\"localhost:8080\",\"localhost:8081\"]}",
         ""
       ],
-      "timestamp": "2023-03-09T02:27:19Z",
+      "timestamp": "2023-03-13T21:59:40Z",
       "crypto_scheme": "BLS",
       "payload": [
         "localhost:9001",
-        "{\"Signer\":\"localhost:9001\",\"Timestamp\":\"2023-03-09T02:27:19Z\",\"RootHash\":\"VV\\ufffd\\ufffd=\\ufffd\\ufffd'\\ufffd\\u0000\\ufffd\\u001e\\u0005@|%\\ufffd\\u0014?\\ufffdn4\\ufffdv\\u0002+\\ufffd\\ufffd\\ufffd\\\\\\ufffd\\ufffd\",\"TreeSize\":12}",
+        "{\"Signer\":\"localhost:9001\",\"Timestamp\":\"2023-03-13T21:59:38Z\",\"RootHash\":\"\\ufffd\\ufffd#2\\ufffd\\ufffdZ*\\ufffd\\ufffd\\ufffd«\\ufffd\\ufffd5r\\ufffdi\\u0008\\ufffd$1X\\ufffd\\u0013e{~U\\u0013\\r\",\"TreeSize\":12}",
         ""
       ]
     }
@@ -54,15 +54,15 @@
         "1": "localhost:8081"
       },
       "signature": [
-        "{\"sign\":\"1e215d708061d376baccb53ef25fc92d1743011495c0b1ed24ea3461fdfba33b8ef21905779e2f5e9617aa88dd1e6e81\", \"ids\":[\"localhost:8080\",\"localhost:8081\"]}",
+        "{\"sign\":\"5abd9a1afa1294ce5a023b1a00bd946a10315306748a36ac7cd1462d3541c78ef38bfc51374b2d5a64dad4b71f18970c\", \"ids\":[\"localhost:8080\",\"localhost:8081\"]}",
         ""
       ],
-      "timestamp": "2023-03-09T02:27:19Z",
+      "timestamp": "2023-03-13T21:59:40Z",
       "crypto_scheme": "BLS",
       "payload": [
         "localhost:9100",
         "CRV",
-        "{\"Period\":\"3\",\"Delta_CRV\":\"IkFBQUFBQUFBQUIwQUFBQUFFQUFBQUE9PSI=\",\"SRH\":\"{\\\"sig\\\":\\\"0b5d5243f9976ddcc1f5f0ac6a8e3a36d648368f7a79f9105dc1ea5f06936f71ba29f62c89bd1927c2f6d667c13d7b3f04220d031fd61cc89db556da5a59252bde747a23801ec2b1a30846c613b9b5506b651bff6b5539195cdd03edb24d8acd1f534a40b8e92fc5c7fe0e3ea20b122b2624e59fedf1b9f22f12d75ac039646e4820dbde990872b4d99e0b23d71465ad31d73dcd1e13a19fe95a7588c230ff716c86f6a664a3108a54ab3b48d8e8d2a38b1040c459ecb0813afd4823dda1d1b5c53ce3f5b6aedc4367a6314602d29958b0ddc79f8f09c572056ef4e71bcd7b8b39808e3ada074806d548c4980a7450dbecc5a7f5e4c38fefb924cd8897c87e9a\\\",\\\"id\\\":\\\"localhost:9100\\\"}\"}"
+        "{\"Period\":\"3\",\"Delta_CRV\":\"AAAAAAAAAB0AAAAAEAAAAA==\",\"SRH\":\"{\\\"sig\\\":\\\"7f99e8d933dbbfd78234265fbcd3d6755b2363f7cc4d8455aa33681054fbd942c115ab763d3ba938837311e1538bab2312179dd2444782c6c16d0e5d5b906024982cd2d19b684215b15fb18a653880e214e98c1018b6510a451cd9c2d5136659a52056783c42ab8dc7c7401074f4422757accf695aa82fb414425c3aa1056e4685378f0b05fdbeb32ec1b3e8927d0795c1c5f7fcb443aaacd7e19d0e235603040f1ec400dc05eb3832d7cbabcee96865ac0a0e409cda81577fcf4c047d522ab07b68b32250bd7311054b75b9fb1fa569b2c674ad8dd4bb88acc4a4eca379df32132c8ebb27cb79eca70ebf154dc1c30e395d98cdc4e8c36359d2cdab79b3785e\\\",\\\"id\\\":\\\"localhost:9100\\\"}\"}"
       ]
     },
     {
@@ -75,15 +75,15 @@
         "1": "localhost:8081"
       },
       "signature": [
-        "{\"sign\":\"67862ec4ad71b362a07f9ff3370317a10204e54d1ef43a3e4c6fae0b076afc59e6b5123ee05fee847b4e1ca88f7d510f\", \"ids\":[\"localhost:8080\",\"localhost:8081\"]}",
+        "{\"sign\":\"32588a210e319489cb50f979e6a0bf7509ecd44d59865fd7ab79bb5cdfe0253b3bedcc1b05d6fd41750400483e5bd214\", \"ids\":[\"localhost:8080\",\"localhost:8081\"]}",
         ""
       ],
-      "timestamp": "2023-03-09T02:27:19Z",
+      "timestamp": "2023-03-13T21:59:40Z",
       "crypto_scheme": "BLS",
       "payload": [
         "localhost:9101",
         "CRV",
-        "{\"Period\":\"3\",\"Delta_CRV\":\"IkFBQUFBQUFBQUIwQUFBQUFFQUFBQUE9PSI=\",\"SRH\":\"{\\\"sig\\\":\\\"9d5a59cff1e1905b12c48b15c3dc865ccdd3a565d63b0db89c92241e88d8c8a6fdd9089e42ecd9d8c6f566a61aec53d0376238e0c7b26b7328aadc70ff2760761a48d106ee93e04d76dade0298ccd3cab2fc9f94d984163df63c651d6f08509b3b5e7010293eaf24c02d04092a88e6464b9566bcd2b9c83a692255ed1314815cc35e6d9acfe9dfec42092464ef1142a04d47208d9af64b52553c77910ee9ec77d711d2936a8a441c4e746a8c432bc16f472f97a83beda7d47ced5479fee6b82c2ee8c4fa595c315cba66bc3703185bed1a384b995f3556e6b81494057c0e12167d5812be657c8d9f1b96c66c8d14900b8d9e3e3ffd3f2c5ce8b5edd9aef06266\\\",\\\"id\\\":\\\"localhost:9101\\\"}\"}"
+        "{\"Period\":\"3\",\"Delta_CRV\":\"AAAAAAAAAB0AAAAAEAAAAA==\",\"SRH\":\"{\\\"sig\\\":\\\"cba3b3483328c29a5bbb8e278a36d6249f87be5d6ed0698d2f8f8d4c0866d7756b71f6467125c9552d7a4b1144ac66f92872c8de2970b52b3db4d2532f819b65b289382bdbfae6cec73fdd6c290ce277b272cbb84111465d6e2ade32775f51e10e7986e073f7476ea5f3cf8e6de96cd5745ed4f296b11eea31d265e180d6c4bd22c9e8336fb55e05f31e18068e8883223cb6fb7330eed17cc9eb757a0ee6a117140f08b6da9a90c12921f73bf821365756797c5461111fc80fd420e4fcc595a9cfe2075ca69a3e3126a7660141386a4228443ba2135c0c45182418f231e681e4e8d4f24234442324fd116eff7d9c2cadefcba359ecbbf30f66814dc1df226927\\\",\\\"id\\\":\\\"localhost:9101\\\"}\"}"
       ]
     }
   ],
