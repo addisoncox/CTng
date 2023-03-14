@@ -1,4 +1,5 @@
 package Gen
+
 import (
 	"CTng/CA"
 	"CTng/Logger"
@@ -6,21 +7,24 @@ import (
 	"CTng/crypto"
 	"CTng/gossip"
 	"CTng/monitor"
+
 	//"CTng/util"
 	//"bytes"
 	//"encoding/json"
-	"fmt"
 	"encoding/json"
+	"fmt"
 	"io/ioutil"
+
 	//"log"
 	//"net/http"
 	//"testing"
-	"os"
 	"crypto/rsa"
+	"os"
 	//"strings"
 	//"strconv"
 	//"github.com/gorilla/mux"
 )
+
 func GenerateCryptoconfig_map(Total int, Threshold int, entitytype string) map[string]crypto.StoredCryptoConfig {
 	prefix := "localhost:000"
 	switch entitytype {
@@ -32,19 +36,19 @@ func GenerateCryptoconfig_map(Total int, Threshold int, entitytype string) map[s
 		prefix = "localhost:818"
 	case "Gossiper":
 		prefix = "localhost:808"
-	}	
-	var cryptoConfigs map [string]crypto.StoredCryptoConfig
+	}
+	var cryptoConfigs map[string]crypto.StoredCryptoConfig
 	cryptoConfigs = make(map[string]crypto.StoredCryptoConfig)
 	for i := 0; i < Total; i++ {
 		newcryptoConfig := crypto.StoredCryptoConfig{
-			SelfID: crypto.CTngID(prefix + fmt.Sprint(i)),
-			Threshold: Threshold,
-			N: Total,
-			HashScheme: 4,
-			SignScheme: "rsa",
+			SelfID:          crypto.CTngID(prefix + fmt.Sprint(i)),
+			Threshold:       Threshold,
+			N:               Total,
+			HashScheme:      4,
+			SignScheme:      "rsa",
 			ThresholdScheme: "bls",
 		}
-		cryptoConfigs[prefix + fmt.Sprint(i)] = newcryptoConfig
+		cryptoConfigs[prefix+fmt.Sprint(i)] = newcryptoConfig
 	}
 	return cryptoConfigs
 }
@@ -111,8 +115,7 @@ func GenerateLogger_private_config_map(G_list []string, M_list []string, C_list 
 	return logger_private_map
 }
 
-
-func GenerateCA_public_config(L_list []string, C_list []string, MMD int, MRD int, Http_vers []string) *CA.CA_public_config{
+func GenerateCA_public_config(L_list []string, C_list []string, MMD int, MRD int, Http_vers []string) *CA.CA_public_config {
 	// generate CA config
 	ca_public_config := CA.GenerateCA_public_config_template()
 	// All_CA_URLs
@@ -128,7 +131,7 @@ func GenerateCA_public_config(L_list []string, C_list []string, MMD int, MRD int
 	return ca_public_config
 }
 
-func GenerateLogger_public_config(L_list []string, C_list []string, MMD int, MRD int, Http_vers []string) *Logger.Logger_public_config{
+func GenerateLogger_public_config(L_list []string, C_list []string, MMD int, MRD int, Http_vers []string) *Logger.Logger_public_config {
 	// generate logger config
 	logger_public_config := Logger.GenerateLogger_public_config_template()
 	// All_CA_URLs
@@ -144,8 +147,7 @@ func GenerateLogger_public_config(L_list []string, C_list []string, MMD int, MRD
 	return logger_public_config
 }
 
-
-func GenerateMonitor_public_config(G_list []string, M_list []string, C_list []string, L_list []string, MMD int, MRD int, Gossip_wait_time int,Http_vers []string) *config.Monitor_public_config{
+func GenerateMonitor_public_config(G_list []string, M_list []string, C_list []string, L_list []string, MMD int, MRD int, Gossip_wait_time int, Http_vers []string) *config.Monitor_public_config {
 	return &config.Monitor_public_config{
 		All_CA_URLs:      C_list,
 		All_Logger_URLs:  L_list,
@@ -157,8 +159,7 @@ func GenerateMonitor_public_config(G_list []string, M_list []string, C_list []st
 	}
 }
 
-
-func GenerateMonitor_private_config_map(G_list []string, M_list []string, C_list []string, L_list []string, MMD int, MRD int, Gossip_wait_time int,Http_vers []string, filepath string) map[string]config.Monitor_config{
+func GenerateMonitor_private_config_map(G_list []string, M_list []string, C_list []string, L_list []string, MMD int, MRD int, Gossip_wait_time int, Http_vers []string, filepath string) map[string]config.Monitor_config {
 	Monitor_private_map := make(map[string]config.Monitor_config)
 	for i := 0; i < len(M_list); i++ {
 		// generate monitor config
@@ -177,8 +178,7 @@ func GenerateMonitor_private_config_map(G_list []string, M_list []string, C_list
 	return Monitor_private_map
 }
 
-
-func GenerateGossiper_public_config(G_list []string, M_list []string, C_list []string, L_list []string, MMD int, MRD int, Gossip_wait_time int,Communiation_delay int,Http_vers []string) *config.Gossiper_public_config{
+func GenerateGossiper_public_config(G_list []string, M_list []string, C_list []string, L_list []string, MMD int, MRD int, Gossip_wait_time int, Communiation_delay int, Http_vers []string) *config.Gossiper_public_config {
 	return &config.Gossiper_public_config{
 		Communiation_delay: Communiation_delay,
 		Gossip_wait_time:   Gossip_wait_time,
@@ -192,7 +192,7 @@ func GenerateGossiper_public_config(G_list []string, M_list []string, C_list []s
 	}
 }
 
-func GenerateGossiper_private_config_map(G_list []string, M_list []string, C_list []string, L_list []string, MMD int, MRD int, Gossip_wait_time int,Communiation_delay int,Http_vers []string, filepath string) map[string]config.Gossiper_config{
+func GenerateGossiper_private_config_map(G_list []string, M_list []string, C_list []string, L_list []string, MMD int, MRD int, Gossip_wait_time int, Communiation_delay int, Http_vers []string, filepath string) map[string]config.Gossiper_config {
 	Gossiper_private_map := make(map[string]config.Gossiper_config)
 	for i := 0; i < len(G_list); i++ {
 		// generate gossiper config
@@ -203,7 +203,7 @@ func GenerateGossiper_private_config_map(G_list []string, M_list []string, C_lis
 			Port:                "808" + fmt.Sprint(i),
 		}
 		// append to gossiperConfigs
-		Gossiper_private_map[gossiper_private_config.Owner_URL] = *gossiper_private_config
+		Gossiper_private_map[G_list[i]] = *gossiper_private_config
 	}
 	return Gossiper_private_map
 }
@@ -213,8 +213,8 @@ func write_all_configs_to_file(public_config interface{}, private_config interfa
 	public_config_path := filepath + entitytype + "_public_config.json"
 	private_config_path := filepath + entitytype + "_private_config.json"
 	crypto_config_path := filepath + entitytype + "_crypto_config.json"
-	public_config_json, _ := json.MarshalIndent(public_config," "," ")
-	private_config_json, _ := json.MarshalIndent(private_config," "," ")
+	public_config_json, _ := json.MarshalIndent(public_config, " ", " ")
+	private_config_json, _ := json.MarshalIndent(private_config, " ", " ")
 	crypto_config_json, _ := json.MarshalIndent(crypto_config, " ", " ")
 	ioutil.WriteFile(public_config_path, public_config_json, 0644)
 	ioutil.WriteFile(private_config_path, private_config_json, 0644)
@@ -224,11 +224,11 @@ func write_all_configs_to_file(public_config interface{}, private_config interfa
 func write_config_to_file(config interface{}, filepath string, entitytype string, configtype string) {
 	// write to file
 	config_path := filepath + entitytype + "_" + configtype + "_config.json"
-	config_json, _ := json.MarshalIndent(config," "," ")
+	config_json, _ := json.MarshalIndent(config, " ", " ")
 	ioutil.WriteFile(config_path, config_json, 0644)
 }
 
-func RSA_gen(entity_list []string) (crypto.RSAPublicMap, map[string]*rsa.PrivateKey){
+func RSA_gen(entity_list []string) (crypto.RSAPublicMap, map[string]*rsa.PrivateKey) {
 	// generate RSA key pairs
 	// public key map
 	public_key_map := make(crypto.RSAPublicMap)
@@ -236,7 +236,7 @@ func RSA_gen(entity_list []string) (crypto.RSAPublicMap, map[string]*rsa.Private
 	private_key_map := make(map[string]*rsa.PrivateKey)
 	// generate RSA key pairs for all entities
 	for i := 0; i < len(entity_list); i++ {
-		sk,err := crypto.NewRSAPrivateKey()
+		sk, err := crypto.NewRSAPrivateKey()
 		if err != nil {
 			fmt.Println("Error generating RSA key pair")
 		}
@@ -246,7 +246,7 @@ func RSA_gen(entity_list []string) (crypto.RSAPublicMap, map[string]*rsa.Private
 	}
 	return public_key_map, private_key_map
 }
-func RSA_gen_all(G_list []string, M_list[]string, C_list []string, L_list[]string) (crypto.RSAPublicMap, map[string]*rsa.PrivateKey){
+func RSA_gen_all(G_list []string, M_list []string, C_list []string, L_list []string) (crypto.RSAPublicMap, map[string]*rsa.PrivateKey) {
 	//use RSA_gen to generate all RSA keys
 	entity_list := append(G_list, M_list...)
 	entity_list = append(entity_list, C_list...)
@@ -254,7 +254,7 @@ func RSA_gen_all(G_list []string, M_list[]string, C_list []string, L_list[]strin
 	return RSA_gen(entity_list)
 }
 
-func BLS_gen_all(G_list []string) (map[string][]byte, map[string][]byte){
+func BLS_gen_all(G_list []string) (map[string][]byte, map[string][]byte) {
 	//create a list of crypto.CTngID
 	var entity_list []crypto.CTngID
 	for i := 0; i < len(G_list); i++ {
@@ -284,7 +284,7 @@ func Update_crypto_config(crypto_config *crypto.StoredCryptoConfig, SignaturePub
 	crypto_config.ThresholdSecretKey = BLSPrivateMap[crypto_config.SelfID.String()]
 }
 
-func Generateall(num_gossiper int, Threshold int, num_logger int, num_ca int, num_cert int, MMD int, MRD int, config_path string){
+func Generateall(num_gossiper int, Threshold int, num_logger int, num_ca int, num_cert int, MMD int, MRD int, config_path string) {
 	Total := num_gossiper
 	G_list, M_list, C_list, L_list := Generate_all_list(num_gossiper, num_ca, num_logger)
 	ca_private_config_map := make(map[string]CA.CA_private_config)
@@ -306,24 +306,24 @@ func Generateall(num_gossiper int, Threshold int, num_logger int, num_ca int, nu
 	// Generate CA public config map
 	ca_public_config := GenerateCA_public_config(L_list, C_list, MMD, MMD, []string{"1.1"})
 	// Generate CA private config map
-	ca_private_config_map = GenerateCA_private_config_map(G_list, M_list, L_list,num_ca, num_cert)
+	ca_private_config_map = GenerateCA_private_config_map(G_list, M_list, L_list, num_ca, num_cert)
 	// Generate CA crypto config map
-	ca_crypto_config_map = GenerateCryptoconfig_map(Total,Threshold,"CA")
+	ca_crypto_config_map = GenerateCryptoconfig_map(Total, Threshold, "CA")
 	// Create CA directory
 	os.Mkdir("ca_testconfig", 0777)
 	// Generate Logger public config map
 	logger_public_config := GenerateLogger_public_config(L_list, C_list, MMD, MMD, []string{"1.1"})
 	// Generate Logger private config map
-	logger_private_config_map = GenerateLogger_private_config_map(G_list,M_list,C_list, num_logger)
+	logger_private_config_map = GenerateLogger_private_config_map(G_list, M_list, C_list, num_logger)
 	// Generate Logger crypto config map
-	logger_crypto_config_map = GenerateCryptoconfig_map(Total,Threshold,"Logger")
+	logger_crypto_config_map = GenerateCryptoconfig_map(Total, Threshold, "Logger")
 	// Create Logger directory
 	os.Mkdir("logger_testconfig", 0777)
 	// write all CA public config, private config, crypto config to file
-	for i := 0;i < num_ca;i++{
+	for i := 0; i < num_ca; i++ {
 		// create a new folder for each CA if not exist
-		os.Mkdir(config_path+ "ca_testconfig/" + fmt.Sprint(i+1), 0777)
-		filepath := config_path+ "ca_testconfig/" + fmt.Sprint(i+1) + "/"
+		os.Mkdir(config_path+"ca_testconfig/"+fmt.Sprint(i+1), 0777)
+		filepath := config_path + "ca_testconfig/" + fmt.Sprint(i+1) + "/"
 		crypto_config := ca_crypto_config_map[C_list[i]]
 		//update threshold public map
 		crypto_config.ThresholdPublicMap = BLSPublicMap
@@ -336,10 +336,10 @@ func Generateall(num_gossiper int, Threshold int, num_logger int, num_ca int, nu
 		write_all_configs_to_file(ca_public_config, ca_private_config_map[C_list[i]], crypto_config, filepath, "CA")
 	}
 	// write all Logger public config, private config, crypto config to file
-	for i := 0;i < num_logger;i++{
+	for i := 0; i < num_logger; i++ {
 		// create a new folder for each Logger
-		os.Mkdir(config_path+"logger_testconfig/" + fmt.Sprint(i+1), 0777)
-		filepath := config_path+"logger_testconfig/" + fmt.Sprint(i+1) + "/"
+		os.Mkdir(config_path+"logger_testconfig/"+fmt.Sprint(i+1), 0777)
+		filepath := config_path + "logger_testconfig/" + fmt.Sprint(i+1) + "/"
 		crypto_config := logger_crypto_config_map[L_list[i]]
 		//update threshold public map
 		crypto_config.ThresholdPublicMap = BLSPublicMap
@@ -352,18 +352,18 @@ func Generateall(num_gossiper int, Threshold int, num_logger int, num_ca int, nu
 		write_all_configs_to_file(logger_public_config, logger_private_config_map[L_list[i]], crypto_config, filepath, "Logger")
 	}
 	// Generate Monitor public config map
-	monitor_public_config := GenerateMonitor_public_config(G_list, M_list, C_list, L_list, MMD, MMD,5, []string{"1.1"})
+	monitor_public_config := GenerateMonitor_public_config(G_list, M_list, C_list, L_list, MMD, MMD, 5, []string{"1.1"})
 	// Generate Monitor private config map
-	monitor_private_config_map = GenerateMonitor_private_config_map(G_list, M_list, C_list, L_list, MMD, MMD,5, []string{"1.1"}, " ")
+	monitor_private_config_map = GenerateMonitor_private_config_map(G_list, M_list, C_list, L_list, MMD, MMD, 5, []string{"1.1"}, " ")
 	// Generate Monitor crypto config map
-	monitor_crypto_config_map = GenerateCryptoconfig_map(Total,Threshold,"Monitor")
+	monitor_crypto_config_map = GenerateCryptoconfig_map(Total, Threshold, "Monitor")
 	// Create Monitor directory
 	os.Mkdir("monitor_testconfig", 0777)
 	// write all Monitor public config, private config, crypto config to file
-	for i := 0;i < num_gossiper;i++{
+	for i := 0; i < num_gossiper; i++ {
 		// create a new folder for each Monitor
-		os.Mkdir(config_path+"monitor_testconfig/" + fmt.Sprint(i+1), 0777)
-		filepath := config_path+ "monitor_testconfig/" + fmt.Sprint(i+1) + "/"
+		os.Mkdir(config_path+"monitor_testconfig/"+fmt.Sprint(i+1), 0777)
+		filepath := config_path + "monitor_testconfig/" + fmt.Sprint(i+1) + "/"
 		//update the monitor private config with the monitor crypto config path
 		monitor_private_config := monitor_private_config_map[M_list[i]]
 		monitor_private_config.Crypto_config_location = filepath + "crypto_config.json"
@@ -379,21 +379,21 @@ func Generateall(num_gossiper int, Threshold int, num_logger int, num_ca int, nu
 		write_all_configs_to_file(monitor_public_config, monitor_private_config, crypto_config, filepath, "Monitor")
 	}
 	// Generate Gossiper public config map
-	gossiper_public_config := GenerateGossiper_public_config(G_list, M_list, C_list, L_list, MMD, MMD,5,5, []string{"1.1"})
+	gossiper_public_config := GenerateGossiper_public_config(G_list, M_list, C_list, L_list, MMD, MMD, 5, 5, []string{"1.1"})
 	// Generate Gossiper private config map
-	gossiper_private_config_map = GenerateGossiper_private_config_map(G_list, M_list, C_list, L_list, MMD, MMD,5,5, []string{"1.1"}, " ")
+	gossiper_private_config_map = GenerateGossiper_private_config_map(G_list, M_list, C_list, L_list, MMD, MMD, 5, 5, []string{"1.1"}, " ")
 	// Generate Gossiper crypto config map
-	gossiper_crypto_config_map = GenerateCryptoconfig_map(Total,Threshold,"Gossiper")
+	gossiper_crypto_config_map = GenerateCryptoconfig_map(Total, Threshold, "Gossiper")
 	// Create Gossiper directory
 	os.Mkdir("gossiper_testconfig", 0777)
 	// write all Gossiper public config, private config, crypto config to file
-	for i := 0;i < num_gossiper;i++{
+	for i := 0; i < num_gossiper; i++ {
 		// create a new folder for each Gossiper
-		os.Mkdir(config_path+ "gossiper_testconfig/" + fmt.Sprint(i+1), 0777)
+		os.Mkdir(config_path+"gossiper_testconfig/"+fmt.Sprint(i+1), 0777)
 		filepath := config_path + "gossiper_testconfig/" + fmt.Sprint(i+1) + "/"
 		//update the gossiper private config with the gossiper crypto config path
 		gossiper_private_config := gossiper_private_config_map[G_list[i]]
-		gossiper_private_config.Crypto_config_location= filepath + "crypto_config.json"
+		gossiper_private_config.Crypto_config_location = filepath + "crypto_config.json"
 		crypto_config := gossiper_crypto_config_map[G_list[i]]
 		//update threshold public map
 		crypto_config.ThresholdPublicMap = BLSPublicMap
@@ -408,34 +408,34 @@ func Generateall(num_gossiper int, Threshold int, num_logger int, num_ca int, nu
 }
 
 // warning: Only use this function after generating all the config files in SAME directory
-func InitializeOneEntity (entity_type string, entity_id string) any{
+func InitializeOneEntity(entity_type string, entity_id string) any {
 	// initialize CA context
 	if entity_type == "CA" {
 		path_1 := "ca_testconfig/" + entity_id + "/CA_public_config.json"
 		path_2 := "ca_testconfig/" + entity_id + "/CA_private_config.json"
 		path_3 := "ca_testconfig/" + entity_id + "/CA_crypto_config.json"
-		return CA.InitializeCAContext(path_1,path_2,path_3)
+		return CA.InitializeCAContext(path_1, path_2, path_3)
 	}
 	// initialze Logger context
 	if entity_type == "Logger" {
 		path_1 := "logger_testconfig/" + entity_id + "/Logger_public_config.json"
 		path_2 := "logger_testconfig/" + entity_id + "/Logger_private_config.json"
 		path_3 := "logger_testconfig/" + entity_id + "/Logger_crypto_config.json"
-		return Logger.InitializeLoggerContext(path_1,path_2,path_3)
+		return Logger.InitializeLoggerContext(path_1, path_2, path_3)
 	}
 	// initialze Monitor context
 	if entity_type == "Monitor" {
 		path_1 := "monitor_testconfig/" + entity_id + "/Monitor_public_config.json"
 		path_2 := "monitor_testconfig/" + entity_id + "/Monitor_private_config.json"
 		path_3 := "monitor_testconfig/" + entity_id + "/Monitor_crypto_config.json"
-		return monitor.InitializeMonitorContext(path_1,path_2,path_3,entity_id)
+		return monitor.InitializeMonitorContext(path_1, path_2, path_3, entity_id)
 	}
 	// initialze Gossiper context
 	if entity_type == "Gossiper" {
 		path_1 := "gossiper_testconfig/" + entity_id + "/Gossiper_public_config.json"
 		path_2 := "gossiper_testconfig/" + entity_id + "/Gossiper_private_config.json"
 		path_3 := "gossiper_testconfig/" + entity_id + "/Gossiper_crypto_config.json"
-		return gossip.InitializeGossiperContext(path_1,path_2,path_3,entity_id)
+		return gossip.InitializeGossiperContext(path_1, path_2, path_3, entity_id)
 	}
 	return nil
 }

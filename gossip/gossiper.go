@@ -1,18 +1,19 @@
 package gossip
 
-
 import (
+	"CTng/crypto"
 	"CTng/util"
 	"bytes"
 	"encoding/json"
 	"fmt"
-	"strings"
-	"CTng/crypto"
 	"log"
 	"net/http"
 	"os"
-	"github.com/gorilla/mux"
+	"strings"
 	"time"
+
+	"github.com/gorilla/mux"
+
 	//"reflect"
 	//"math/rand"
 	//"math"
@@ -71,6 +72,7 @@ func handleRequests(c *GossiperContext) {
 func homePage(w http.ResponseWriter, r *http.Request) {
 	fmt.Fprintf(w, "Welcome to the base page for the CTng gossiper.")
 }
+
 // handleGossip() is ran when POST is recieved at /gossip/push-data.
 // It should verify the Gossip object and then send it to the network.
 func handleGossip(c *GossiperContext, w http.ResponseWriter, r *http.Request) {
@@ -83,72 +85,72 @@ func handleGossip(c *GossiperContext, w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	// Verify the object is valid, if invalid we just ignore it
-	// CON do not have a signature on it yet 
+	// CON do not have a signature on it yet
 	err = gossip_obj.Verify(c.Config.Crypto)
 	if err != nil {
 		//fmt.Println("Received invalid object "+TypeString(gossip_obj.Type)+" from " + util.GetSenderURL(r) + ".")
-		fmt.Println(util.RED,"Received invalid object "+TypeString(gossip_obj.Type)+ " signed by " + gossip_obj.Signer+" aka "+EntityString(gossip_obj.Signer) + ".",util.RESET)
+		fmt.Println(util.RED, "Received invalid object "+TypeString(gossip_obj.Type)+" signed by "+gossip_obj.Signer+" aka "+EntityString(gossip_obj.Signer)+".", util.RESET)
 		http.Error(w, err.Error(), http.StatusOK)
 		return
 	}
-	switch gossip_obj.Type{
+	switch gossip_obj.Type {
 	case STH, REV:
 		//fmt.Println(util.GREEN,"Received Valid object "+TypeString(gossip_obj.Type)+ " signed by " + gossip_obj.Signer+" aka "+EntityString(gossip_obj.Signer) + ".",util.RESET)
-		Handle_Sign_and_Gossip(c,gossip_obj)
+		Handle_Sign_and_Gossip(c, gossip_obj)
 	case ACC:
 		//fmt.Println(util.GREEN,"Received Valid object "+TypeString(gossip_obj.Type)+ " signed by " + gossip_obj.Signer+" aka "+EntityString(gossip_obj.Signer) + ".",util.RESET)
-		Handle_ACC(c,gossip_obj)
+		Handle_ACC(c, gossip_obj)
 	case CON:
-		fmt.Println(util.GREEN,"Received Valid object "+TypeString(gossip_obj.Type)+util.RESET)
+		fmt.Println(util.GREEN, "Received Valid object "+TypeString(gossip_obj.Type)+util.RESET)
 		Handle_CON(c, gossip_obj)
 	case STH_FRAG, REV_FRAG, ACC_FRAG, CON_FRAG:
-		fmt.Println(util.GREEN,"Received Valid object "+TypeString(gossip_obj.Type)+ " signed by " + gossip_obj.Signer+" aka "+EntityString(gossip_obj.Signer) + ".",util.RESET)
-		Handle_Frag(c,gossip_obj)
+		fmt.Println(util.GREEN, "Received Valid object "+TypeString(gossip_obj.Type)+" signed by "+gossip_obj.Signer+" aka "+EntityString(gossip_obj.Signer)+".", util.RESET)
+		Handle_Frag(c, gossip_obj)
 	case STH_FULL, REV_FULL, ACC_FULL, CON_FULL:
-		Handle_FULL(c,gossip_obj)
+		Handle_FULL(c, gossip_obj)
 	}
 }
 
-func Check_conflicts_and_poms(c *GossiperContext, g Gossip_object)bool{
-	if c.HasPoM(g.Payload[0],g.Period){
+func Check_conflicts_and_poms(c *GossiperContext, g Gossip_object) bool {
+	if c.HasPoM(g.Payload[0], g.Period) {
 		return true
 	}
-	if IsDuplicateFromGSC(g, c.Storage_RAW){
-		stored_obj, _ := GetObjectFromGSC(g.Get_Counter_ID(),c.Storage_RAW)
+	if IsDuplicateFromGSC(g, c.Storage_RAW) {
+		stored_obj, _ := GetObjectFromGSC(g.Get_Counter_ID(), c.Storage_RAW)
 		//fmt.Println(util.YELLOW,stored_obj.Signature[0], g.Signature[0])
-		pom_gen := DetectConflicts(c,g,stored_obj)
+		pom_gen := DetectConflicts(c, g, stored_obj)
 		//true if there is pom
 		return pom_gen
 	}
 	return false
 }
 
-func Handle_CON(c *GossiperContext, g Gossip_object){
+func Handle_CON(c *GossiperContext, g Gossip_object) {
 	pom_err := c.Has_TSS_CON_POM(g.Payload[0], g.Period)
-	if pom_err{
+	if pom_err {
 		return
 	}
-	if IsDuplicateFromGSC(g, c.Storage_RAW){
+	if IsDuplicateFromGSC(g, c.Storage_RAW) {
 		//swap for gossiper sync
-		hashmsg1 := g.Payload[0]+g.Payload[1]+g.Payload[2]
+		hashmsg1 := g.Payload[0] + g.Payload[1] + g.Payload[2]
 		hash1, _ := crypto.GenerateSHA256([]byte(hashmsg1))
 		int1 := binary.BigEndian.Uint32(hash1)
 		existing_obj := (*c.Storage_RAW)[g.Get_Counter_ID()]
-		hashmsg2 := existing_obj.Payload[0]+existing_obj.Payload[1]+g.Payload[2]
+		hashmsg2 := existing_obj.Payload[0] + existing_obj.Payload[1] + g.Payload[2]
 		hash2, _ := crypto.GenerateSHA256([]byte(hashmsg2))
 		int2 := binary.BigEndian.Uint32(hash2)
 		//this means it is not a duplicate because the payload is different
-		if int1 > int2{
+		if int1 > int2 {
 			//store object should swap in the new object using the same Gossip ID as the key
 			c.StoreObject(g)
 			//send it to connected gossipers
-			GossipData(c,g)
+			GossipData(c, g)
 		}
-	}else{
+	} else {
 		c.StoreObject(g)
 	}
 	f := func() {
-		sig_frag, err := c.Config.Crypto.ThresholdSign(g.Payload[0]+g.Payload[1]+g.Payload[2])
+		sig_frag, err := c.Config.Crypto.ThresholdSign(g.Payload[0] + g.Payload[1] + g.Payload[2])
 		if err != nil {
 			fmt.Println(err.Error())
 		}
@@ -158,31 +160,31 @@ func Handle_CON(c *GossiperContext, g Gossip_object){
 		g.Signer = c.Config.Crypto.SelfID.String()
 		g.Crypto_Scheme = "bls"
 		c.StoreObject(g)
-		Process_TSS_Object(c,g,CON_FULL)
-		GossipData(c,g)
+		Process_TSS_Object(c, g, CON_FULL)
+		GossipData(c, g)
 	}
 	// Delay the calling of f until gossip_wait_time has passed.
 	time.AfterFunc(time.Duration(c.Config.Public.Gossip_wait_time)*time.Second, f)
 }
-func Handle_Sign_and_Gossip(c *GossiperContext, g Gossip_object){
-	if g.Signature[0] == (*c.Storage_RAW)[g.Get_Counter_ID()].Signature[0]{
+func Handle_Sign_and_Gossip(c *GossiperContext, g Gossip_object) {
+	if g.Signature[0] == (*c.Storage_RAW)[g.Get_Counter_ID()].Signature[0] {
 		return
 	}
-	if Check_conflicts_and_poms(c,g){
-		return 
+	if Check_conflicts_and_poms(c, g) {
+		return
 	}
 	c.StoreObject(g)
-	GossipData(c,g)
+	GossipData(c, g)
 	//This handles the STHS
 	if g.Type == STH {
 		// The below function for creates the STH_FRAG object after Gossip_wait_time
 		f := func() {
-			if Check_conflicts_and_poms(c,g){
+			if Check_conflicts_and_poms(c, g) {
 				return
 			}
 			pom_err := c.HasPoM(g.Signer, g.Period)
 			//if there is no conflicting information/PoM send the Threshold signed version to the gossiper
-			sig_frag, err := c.Config.Crypto.ThresholdSign(g.Payload[0]+g.Payload[1]+g.Payload[2])
+			sig_frag, err := c.Config.Crypto.ThresholdSign(g.Payload[0] + g.Payload[1] + g.Payload[2])
 			if err != nil {
 				fmt.Println(err.Error())
 			}
@@ -193,8 +195,8 @@ func Handle_Sign_and_Gossip(c *GossiperContext, g Gossip_object){
 				g.Signer = c.Config.Crypto.SelfID.String()
 				g.Crypto_Scheme = "bls"
 				c.StoreObject(g)
-				Process_TSS_Object(c,g,STH_FULL)
-				GossipData(c,g)
+				Process_TSS_Object(c, g, STH_FULL)
+				GossipData(c, g)
 			} else {
 				fmt.Println(util.RED, "Conflicting information/PoM found, not sending STH_FRAG", util.RESET)
 			}
@@ -206,15 +208,15 @@ func Handle_Sign_and_Gossip(c *GossiperContext, g Gossip_object){
 	}
 	//if the object is from a CA, revocation information
 	//this handles revocation information
-	if  g.Type == REV{
+	if g.Type == REV {
 		f := func() {
-			if Check_conflicts_and_poms(c,g){
+			if Check_conflicts_and_poms(c, g) {
 				return
 			}
 			fmt.Println(util.BLUE, "Signing Revocation of", g.Signer, util.RESET)
 			pom_err := c.HasPoM(g.Signer, g.Period)
 			if pom_err == false {
-				sig_frag, err := c.Config.Crypto.ThresholdSign(g.Payload[0]+g.Payload[1]+g.Payload[2])
+				sig_frag, err := c.Config.Crypto.ThresholdSign(g.Payload[0] + g.Payload[1] + g.Payload[2])
 				if err != nil {
 					fmt.Println(err.Error())
 				}
@@ -223,8 +225,8 @@ func Handle_Sign_and_Gossip(c *GossiperContext, g Gossip_object){
 				g.Signer = c.Config.Crypto.SelfID.String()
 				g.Crypto_Scheme = "bls"
 				c.StoreObject(g)
-				Process_TSS_Object(c,g,REV_FULL)
-				GossipData(c,g)
+				Process_TSS_Object(c, g, REV_FULL)
+				GossipData(c, g)
 			}
 		}
 		time.AfterFunc(time.Duration(c.Config.Public.Gossip_wait_time)*time.Second, f)
@@ -232,125 +234,124 @@ func Handle_Sign_and_Gossip(c *GossiperContext, g Gossip_object){
 	}
 }
 
-func Handle_ACC(c* GossiperContext, g Gossip_object){
-	if IsDuplicateFromGSC(g, c.Storage_RAW){
+func Handle_ACC(c *GossiperContext, g Gossip_object) {
+	if IsDuplicateFromGSC(g, c.Storage_RAW) {
 		return
 	}
 	//fmt.Println(util.GREEN,"ACC is not a duplicate",util.RESET)
-	if Check_conflicts_and_poms(c,g){
-		return 
+	if Check_conflicts_and_poms(c, g) {
+		return
 	}
 	//fmt.Println(util.GREEN, "No PoM against", g.Payload[0], util.RESET)
 	c.StoreObject(g)
-	GossipData(c,g)
+	GossipData(c, g)
 	//fmt.Println(util.GREEN, "ACC stored", util.RESET)
 	//Check if there is already an entry in ACC DB
-	obj := (*c.ACC_DB)[g.GetID()] 
+	obj := (*c.ACC_DB)[g.GetID()]
 	//this means this is the first accusation against this entity
-	if obj == nil{
+	if obj == nil {
 		new_signers := []string{}
 		new_signers = append(new_signers, g.Signer)
 		new_sigs := []string{}
 		new_sigs = append(new_sigs, g.Signature[0])
 		new_counter := PoM_PreTSS_Counter{
 			Signers: new_signers,
-			Sigs: new_sigs,
-			Num: 1,
+			Sigs:    new_sigs,
+			Num:     1,
 		}
 		(*c.ACC_DB)[g.GetID()] = &new_counter
 		//fmt.Println(util.GREEN,"First accusation against ",g.Payload[0], " processed.", util.RESET)
-	}else{
+	} else {
 		obj.Num++
 		(*c.ACC_DB)[g.GetID()] = obj
-		if obj.Num>=c.Config.Crypto.Threshold{
+		if obj.Num >= c.Config.Crypto.Threshold {
 			payload := g.Payload
-			sig, err := c.Config.Crypto.ThresholdSign(payload[0]+payload[1]+payload[2])
-			if err != nil{
+			sig, err := c.Config.Crypto.ThresholdSign(payload[0] + payload[1] + payload[2])
+			if err != nil {
 				fmt.Println("Threshold Sign failed.")
 				return
 			}
 			sig_field := [2]string{sig.String(), ""}
 			acc_frag := Gossip_object{
-				Application: g.Application,
-				Type:        ACC_FRAG,
-				Period:      GetCurrentPeriod(),
-				Signer:      c.Config.Crypto.SelfID.String(),
-				Timestamp:   GetCurrentTimestamp(),
-				Signature:   sig_field,
+				Application:   g.Application,
+				Type:          ACC_FRAG,
+				Period:        GetCurrentPeriod(),
+				Signer:        c.Config.Crypto.SelfID.String(),
+				Timestamp:     GetCurrentTimestamp(),
+				Signature:     sig_field,
 				Crypto_Scheme: "BLS",
-				Payload:     payload,
+				Payload:       payload,
 			}
 			c.StoreObject(acc_frag)
 			Process_TSS_Object(c, acc_frag, ACC_FULL)
-			GossipData(c,acc_frag)
+			GossipData(c, acc_frag)
 		}
 	}
 }
 
-
-func Handle_Frag(c* GossiperContext, g Gossip_object){
-	if IsDuplicateFromGSC(g, c.Storage_FRAG){
+func Handle_Frag(c *GossiperContext, g Gossip_object) {
+	if IsDuplicateFromGSC(g, c.Storage_FRAG) {
 		return
 	}
-	if Check_conflicts_and_poms(c,g) && g.Type != CON_FRAG{
-		return 
+	if Check_conflicts_and_poms(c, g) && g.Type != CON_FRAG {
+		return
 	}
-	switch g.Type{
+	switch g.Type {
 	case STH_FRAG:
 		c.StoreObject(g)
 		Process_TSS_Object(c, g, STH_FULL)
-		GossipData(c,g)
+		GossipData(c, g)
 	case REV_FRAG:
 		c.StoreObject(g)
 		Process_TSS_Object(c, g, REV_FULL)
-		GossipData(c,g)
+		GossipData(c, g)
 	case ACC_FRAG:
 		c.StoreObject(g)
 		Process_TSS_Object(c, g, ACC_FULL)
-		GossipData(c,g)
+		GossipData(c, g)
 	case CON_FRAG:
 		fmt.Println(util.GREEN, "Storing CON_FRAG Signed by ", g.Signer, util.RESET)
 		c.StoreObject(g)
 		Process_TSS_Object(c, g, CON_FULL)
-		GossipData(c,g)
+		GossipData(c, g)
 	}
 }
 
-func Handle_FULL(c* GossiperContext, g Gossip_object){
-	switch g.Type{
-	case STH_FULL,REV_FULL:
-		if IsDuplicateFromGS(g, c.Storage_FULL){
+func Handle_FULL(c *GossiperContext, g Gossip_object) {
+	switch g.Type {
+	case STH_FULL, REV_FULL:
+		if IsDuplicateFromGS(g, c.Storage_FULL) {
 			return
-		}else{
+		} else {
 			c.StoreObject(g)
-			GossipData(c,g)
+			GossipData(c, g)
 		}
 	case CON_FULL:
-		if IsDuplicateFromGS(g, c.Storage_POM){
+		if IsDuplicateFromGS(g, c.Storage_POM) {
 			return
-		}else{
+		} else {
 			c.StoreObject(g)
-			GossipData(c,g)
+			GossipData(c, g)
 		}
 	case ACC_FULL:
-		if IsDuplicateFromGS(g, c.Storage_POM_TEMP){
+		if IsDuplicateFromGS(g, c.Storage_POM_TEMP) {
 			return
-		}else{
+		} else {
 			c.StoreObject(g)
-			GossipData(c,g)
+			GossipData(c, g)
 		}
 	}
 
-
 }
+
 // Sends a gossip object to all connected gossipers.
 // This function assumes you are passing valid data. ALWAYS CHECK BEFORE CALLING THIS FUNCTION.
 func GossipData(c *GossiperContext, gossip_obj Gossip_object) error {
 	//desync
 	/*
-	rand.Seed(time.Now().UnixNano())
-    n := rand.Intn(100) // n will be between 0 and 10
-    time.Sleep(time.Duration(n)*time.Millisecond)
+			rand.Seed(time.Now().UnixNano())
+		    n := rand.Intn(100) // n will be between 0 and 10
+		    time.Sleep(time.Duration(n)*time.Millisecond)
 	*/
 	// Convert gossip object to JSON
 	msg, err := json.Marshal(gossip_obj)
@@ -406,10 +407,10 @@ func SendToOwner(c *GossiperContext, obj Gossip_object) {
 // Process a valid gossip object which is a duplicate to another one.
 // If the signature/payload is identical, then we can safely ignore the duplicate.
 // Otherwise, we generate a PoM for two objects sent in the same period.
-func DetectConflicts(c *GossiperContext, obj Gossip_object, dup Gossip_object) bool{
+func DetectConflicts(c *GossiperContext, obj Gossip_object, dup Gossip_object) bool {
 	//If the object has PoM already, it is dead already
 	//if c.HasPoM(obj.Payload[0],obj.Period){
-		//return nil
+	//return nil
 	//}
 	//If the object type is the same
 	//In the same Periord
@@ -418,15 +419,15 @@ func DetectConflicts(c *GossiperContext, obj Gossip_object, dup Gossip_object) b
 	//MALICIOUS, you are exposed
 	//note PoMs can have different signatures
 	//fmt.Println(util.YELLOW, "Trying to detect conflicts", TypeString(obj.Type), TypeString(dup.Type), obj.Signature[0] == dup.Signature[0],util.RESET)
-	if obj.Type == dup.Type && obj.Period == dup.Period && obj.Signer == dup.Signer && obj.Signature[0] != dup.Signature[0]{
-		D2_POM:= Gossip_object{
+	if obj.Type == dup.Type && obj.Period == dup.Period && obj.Signer == dup.Signer && obj.Signature[0] != dup.Signature[0] {
+		D2_POM := Gossip_object{
 			Application: obj.Application,
 			Type:        CON,
 			Period:      GetCurrentPeriod(),
 			Signer:      "",
 			Timestamp:   GetCurrentTimestamp(),
 			Signature:   [2]string{obj.Signature[0], dup.Signature[0]},
-			Payload:     [3]string{obj.Signer, obj.Payload[0]+obj.Payload[1]+obj.Payload[2],dup.Payload[0]+dup.Payload[1]+dup.Payload[2]},
+			Payload:     [3]string{obj.Signer, obj.Payload[0] + obj.Payload[1] + obj.Payload[2], dup.Payload[0] + dup.Payload[1] + dup.Payload[2]},
 		}
 		_, sigerr1 := crypto.RSASigFromString(D2_POM.Signature[0])
 		_, sigerr2 := crypto.RSASigFromString(D2_POM.Signature[1])
@@ -435,9 +436,9 @@ func DetectConflicts(c *GossiperContext, obj Gossip_object, dup Gossip_object) b
 		fmt.Println(util.YELLOW, "Entity: ", D2_POM.Payload[0], " is Malicious!", util.RESET)
 		//SendToOwner(c,D2_POM)
 		c.StoreObject(D2_POM)
-		GossipData(c,D2_POM)
+		GossipData(c, D2_POM)
 		f := func() {
-			sig_frag, err := c.Config.Crypto.ThresholdSign(D2_POM.Payload[0]+D2_POM.Payload[1]+D2_POM.Payload[2])
+			sig_frag, err := c.Config.Crypto.ThresholdSign(D2_POM.Payload[0] + D2_POM.Payload[1] + D2_POM.Payload[2])
 			if err != nil {
 				fmt.Println(err.Error())
 			}
@@ -448,8 +449,8 @@ func DetectConflicts(c *GossiperContext, obj Gossip_object, dup Gossip_object) b
 			D2_POM.Crypto_Scheme = "bls"
 			fmt.Println(util.GREEN, "Storing CON_FRAG Signed by ", D2_POM.Signer, util.RESET)
 			c.StoreObject(D2_POM)
-			GossipData(c,D2_POM)
-			Process_TSS_Object(c,D2_POM,CON_FULL)
+			GossipData(c, D2_POM)
+			Process_TSS_Object(c, D2_POM, CON_FULL)
 		}
 		// Delay the calling of f until gossip_wait_time has passed.
 		time.AfterFunc(time.Duration(c.Config.Public.Gossip_wait_time)*time.Second, f)
@@ -458,13 +459,13 @@ func DetectConflicts(c *GossiperContext, obj Gossip_object, dup Gossip_object) b
 	return false
 }
 
-func Process_TSS_Object(gc *GossiperContext, new_obj Gossip_object, target_type string) error{
+func Process_TSS_Object(gc *GossiperContext, new_obj Gossip_object, target_type string) error {
 	c := gc.Config.Crypto
 	key := new_obj.GetID()
 	//fmt.Println(key)
-	newkey:=Gossip_ID{
-		Period: key.Period,
-		Type: target_type,
+	newkey := Gossip_ID{
+		Period:     key.Period,
+		Type:       target_type,
 		Entity_URL: key.Entity_URL,
 	}
 	p_sig, err := crypto.SigFragmentFromString(new_obj.Signature[0])
@@ -473,10 +474,10 @@ func Process_TSS_Object(gc *GossiperContext, new_obj Gossip_object, target_type 
 		return err
 	}
 	//If there is already an TSS Object
-	if _, ok:= (*gc.Storage_FULL)[newkey]; ok{
-		fmt.Println(util.BLUE + "There already exists a "+ TypeString(target_type)+ " Object" + util.RESET)
+	if _, ok := (*gc.Storage_FULL)[newkey]; ok {
+		fmt.Println(util.BLUE + "There already exists a " + TypeString(target_type) + " Object" + util.RESET)
 		return nil
-	} 
+	}
 	//If there isn't a STH_FULL Object yet, but there exists some other sth_frag
 	if val, ok := (*gc.Obj_TSS_DB)[key]; ok {
 		val.Signers[val.Num] = new_obj.Signer
@@ -488,38 +489,38 @@ func Process_TSS_Object(gc *GossiperContext, new_obj Gossip_object, target_type 
 		val.Num = val.Num + 1
 		//fmt.Println("Finished updating Counters, the new number is", val.Num)
 		//now we check if the number of sigs have reached the threshold
-		if val.Num>=c.Threshold{
+		if val.Num >= c.Threshold {
 			TSS_sig, _ := c.ThresholdAggregate(val.Partial_sigs)
-			TSS_sig_string,_ := TSS_sig.String()
+			TSS_sig_string, _ := TSS_sig.String()
 			sigfield := new([2]string)
 			(*sigfield)[0] = TSS_sig_string
 			signermap := make(map[int]string)
-			for i := 0; i<c.Threshold; i++{
+			for i := 0; i < c.Threshold; i++ {
 				signermap[i] = val.Signers[i]
 			}
 			TSS_period := "0"
 			//Set CON_FULL Period Number to 0 so that the monitor can search for it
 			//Also this is fine because we only need 1 conflict_pom for each convicted entity
-			if target_type != CON_FULL{
+			if target_type != CON_FULL {
 				TSS_period = new_obj.Period
 			}
 			TSS_FULL_obj := Gossip_object{
-				Application: new_obj.Application,
-				Type:        target_type,
-				Period:      TSS_period,
-				Signer:      "",
-				Signers:     signermap,
-				Timestamp:   GetCurrentTimestamp(),
-				Signature:   *sigfield,
+				Application:   new_obj.Application,
+				Type:          target_type,
+				Period:        TSS_period,
+				Signer:        "",
+				Signers:       signermap,
+				Timestamp:     GetCurrentTimestamp(),
+				Signature:     *sigfield,
 				Crypto_Scheme: "BLS",
-				Payload:     new_obj.Payload,
+				Payload:       new_obj.Payload,
 			}
 			//Store the POM
-			fmt.Println(util.BLUE+TypeString(target_type)+" generated and Stored"+util.RESET)
+			fmt.Println(util.BLUE + TypeString(target_type) + " generated and Stored" + util.RESET)
 			gc.StoreObject(TSS_FULL_obj)
-			GossipData(gc,TSS_FULL_obj)
+			GossipData(gc, TSS_FULL_obj)
 			//send to the monitor
-			SendToOwner(gc,TSS_FULL_obj)
+			SendToOwner(gc, TSS_FULL_obj)
 			return nil
 		}
 	}
@@ -527,9 +528,9 @@ func Process_TSS_Object(gc *GossiperContext, new_obj Gossip_object, target_type 
 	//fmt.Println("This is the first partial sig registered")
 	new_counter := new(Entity_Gossip_Object_TSS_Counter)
 	*new_counter = Entity_Gossip_Object_TSS_Counter{
-		Signers:     []string{new_obj.Signer,""},
-		Num:      1,
-		Partial_sigs: []crypto.SigFragment{p_sig,p_sig},
+		Signers:      []string{new_obj.Signer, ""},
+		Num:          1,
+		Partial_sigs: []crypto.SigFragment{p_sig, p_sig},
 	}
 	(*gc.Obj_TSS_DB)[key] = new_counter
 	//fmt.Println("Number of counters in TSS DB is: ", len(*gc.Obj_TSS_DB))
@@ -550,11 +551,8 @@ func PeriodicTasks(c *GossiperContext) {
 	c.WipeStorage()
 }
 
-func InitializeGossiperStorage (c* GossiperContext){
-	c.StorageDirectory = "testData/gossiperdata/"+c.StorageID+"/"
-	c.StorageFile = "GossipStorage.Json"
-	util.CreateFile(c.StorageDirectory+c.StorageFile)
-
+func InitializeGossiperStorage(c *GossiperContext) {
+	util.CreateFile(c.StorageDirectory + c.StorageFile)
 }
 
 func StartGossiperServer(c *GossiperContext) {
