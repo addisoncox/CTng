@@ -34,6 +34,8 @@ type ClientContext struct {
 	Storage_REV_FULL       *gossip.Gossip_Storage
 	Storage_CONFLICT_POM   *gossip.Gossip_Storage
 	Storage_ACCUSATION_POM *gossip.Gossip_Storage
+	Storage_NUM            *gossip.NUM
+	Storage_NUM_FULL       *gossip.NUM_FULL
 	Storage_CRVRECORD      *CRV_Storage
 	Client                 *http.Client
 	Config                 *Client_config
