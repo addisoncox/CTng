@@ -100,6 +100,14 @@ func Handleupdates(c *ClientContext, w http.ResponseWriter, r *http.Request) {
 	if err != nil {
 		//
 	}
+	// check NUM_FULL against prev num
+	if update.NUM_FULL.NUM_ACC_FULL != c.Storage_NUM.NUM_ACC_FULL ||
+		update.NUM.NUM_CON_FULL != c.Storage_NUM.NUM_CON_FULL {
+		fmt.Println("Got NUM_FULL != prev NUM")
+		return
+	}
+	c.Storage_NUM = &update.NUM
+	c.Storage_NUM_FULL = &update.NUM_FULL
 	//update the last update Period
 	c.LastUpdatePeriod = update.Period
 	//Push the received Signed PoMs to the checking monitor for integrity check
