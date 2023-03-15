@@ -1,4 +1,38 @@
 package client
+
+import (
+	"CTng/monitor"
+	"CTng/util"
+	"encoding/json"
+	"fmt"
+	"testing"
+
+	"github.com/bits-and-blooms/bitset"
+)
+
+func TestGet_SRH_and_DCRV(t *testing.T) {
+	//read from client_test/ClientData/Period 0/FromMonitor/ClientUpdate_at_Period 0.json"3"
+	client_json, err := util.ReadByte("../client_test/ClientData/Period 0/FromMonitor/ClientUpdate_at_Period 0.json")
+	if err != nil {
+		t.Error(err)
+	}
+	var clientUpdate monitor.ClientUpdate
+	err = json.Unmarshal(client_json, &clientUpdate)
+	if err != nil {
+		t.Error(err)
+	}
+	var SRHs []string
+	var DCRVs []bitset.BitSet
+	for _, rev := range clientUpdate.REVs {
+		newSRH, newDCRV := Get_SRH_and_DCRV(rev)
+		SRHs = append(SRHs, newSRH)
+		DCRVs = append(DCRVs, newDCRV)
+	}
+	fmt.Println(SRHs)
+	fmt.Println(DCRVs)
+
+}
+
 /*
 package main
 

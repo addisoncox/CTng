@@ -9,7 +9,6 @@ import (
 	"github.com/Workiva/go-datastructures/bitarray"
 
 	//"github.com/gorilla/mux"
-	"encoding/json"
 	"net/http"
 )
 
@@ -54,23 +53,6 @@ type SignedPoMs struct {
 	PoMs   gossip.Gossip_Storage
 	Period string
 	Sig    string
-}
-
-type SRH struct {
-	RootHash string
-	TreeSize int
-	Period   string
-}
-type Revocation struct {
-	//This is computed by bitarray.Bitarray.toNums
-	Delta_CRV []int
-	SRH       SRH
-}
-
-func GetRootHash(g gossip.Gossip_object) string {
-	var REV1 Revocation
-	json.Unmarshal([]byte(g.Payload[2]), &REV1)
-	return REV1.SRH.RootHash
 }
 
 func LoadClientConfig(path string, cryptopath string) (Client_config, error) {

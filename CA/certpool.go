@@ -3,7 +3,6 @@ package CA
 // This is a fork of x509.Certificate Transparency go/x509/cert_pool.go
 // The original file is licensed under the BSD 3-Clause License
 
-
 import (
 	//"CTng/gossip"
 	"encoding/pem"
@@ -140,7 +139,7 @@ func (s *CertPool) Subjects() [][]byte {
 }
 
 // Get a Cerificate from the pool by its subjectkeyid
-func (s *CertPool) GetCertBySubjectKeyID(subjectKeyId string) *x509.Certificate{
+func (s *CertPool) GetCertBySubjectKeyID(subjectKeyId string) *x509.Certificate {
 	if s == nil {
 		return nil
 	}
@@ -152,7 +151,6 @@ func (s *CertPool) GetCertBySubjectKeyID(subjectKeyId string) *x509.Certificate{
 
 	return s.certs[candidates[0]]
 }
-
 
 func (c *CertPool) GetLength() int {
 	return len(c.certs)
@@ -183,4 +181,3 @@ func (s *CertPool) UpdateCertBySubjectKeyID(subjectKeyId string, cert *x509.Cert
 
 	s.certs[candidates[0]] = cert
 }
-

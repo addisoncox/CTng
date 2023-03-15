@@ -1,7 +1,5 @@
 package CA
 
-
-
 import (
 	"CTng/gossip"
 	//"CTng/crypto"
@@ -9,17 +7,20 @@ import (
 	//"bytes"
 	"encoding/json"
 	"fmt"
+
 	//"io/ioutil"
 	"crypto/x509"
 	"log"
 	"net/http"
 	"time"
+
 	//"strings"
-	"crypto/rsa"
-	"strconv"
 	"bytes"
-	"github.com/gorilla/mux"
+	"crypto/rsa"
 	"io/ioutil"
+	"strconv"
+
+	"github.com/gorilla/mux"
 )
 
 const PROTOCOL = "http://"
@@ -51,7 +52,7 @@ func handleCARequests(c *CAContext) {
 }
 
 // receive get request from monitor
-func requestREV(c *CAContext, w http.ResponseWriter, r *http.Request){
+func requestREV(c *CAContext, w http.ResponseWriter, r *http.Request) {
 	Period := gossip.GetCurrentPeriod()
 	c.Request_Count++
 	switch c.CA_Type {
@@ -61,9 +62,9 @@ func requestREV(c *CAContext, w http.ResponseWriter, r *http.Request){
 		return
 	case 1:
 		//split-world CA
-		if c.Request_Count % c.MisbehaviorInterval == 0{
+		if c.Request_Count%c.MisbehaviorInterval == 0 {
 			json.NewEncoder(w).Encode(c.REV_storage_fake[Period])
-		}else{
+		} else {
 			json.NewEncoder(w).Encode(c.REV_storage[Period])
 		}
 		return
@@ -72,9 +73,9 @@ func requestREV(c *CAContext, w http.ResponseWriter, r *http.Request){
 		return
 	case 3:
 		//sometimes unresponsive CA
-		if c.Request_Count % c.MisbehaviorInterval == 0{
-			return	
-		}else{
+		if c.Request_Count%c.MisbehaviorInterval == 0 {
+			return
+		} else {
 			json.NewEncoder(w).Encode(c.REV_storage[Period])
 		}
 	}
@@ -105,7 +106,6 @@ func receive_sth(c *CAContext, w http.ResponseWriter, r *http.Request) {
 	fmt.Println("STH storage: ", c.STH_storage)
 }
 
-
 // receive POI from logger
 func receive_poi(c *CAContext, w http.ResponseWriter, r *http.Request) {
 	// Unmarshal the request body into [][]byte
@@ -126,7 +126,7 @@ func receive_poi(c *CAContext, w http.ResponseWriter, r *http.Request) {
 		POI: poi.ProofOfInclusion,
 	}
 	target_cert := c.CurrentCertificatePool.GetCertBySubjectKeyID(string(poi.SubjectKeyId))
-	if target_cert != nil{
+	if target_cert != nil {
 		fmt.Println(poi.SubjectKeyId)
 		target_cert = AddCTngExtension(target_cert, extension)
 		c.CurrentCertificatePool.UpdateCertBySubjectKeyID(string(poi.SubjectKeyId), target_cert)
@@ -134,12 +134,12 @@ func receive_poi(c *CAContext, w http.ResponseWriter, r *http.Request) {
 }
 
 //send a signed precert to a logger
-func Send_Signed_PreCert_To_Logger(c *CAContext,precert *x509.Certificate, logger string){
+func Send_Signed_PreCert_To_Logger(c *CAContext, precert *x509.Certificate, logger string) {
 	precert_json := Marshall_Signed_PreCert(precert)
 	//fmt.Println(precert_json)
 	//fmt.Println(logger)
 	//fmt.Println(precert_json)
-	resp, err := c.Client.Post(PROTOCOL+ logger+"/Logger/receive-precerts", "application/json", bytes.NewBuffer(precert_json))
+	resp, err := c.Client.Post(PROTOCOL+logger+"/Logger/receive-precerts", "application/json", bytes.NewBuffer(precert_json))
 	if err != nil {
 		fmt.Println("Failed to send precert to loggers: ", err)
 	}
@@ -147,38 +147,38 @@ func Send_Signed_PreCert_To_Logger(c *CAContext,precert *x509.Certificate, logge
 }
 
 // send a signed precert to all loggers
-func Send_Signed_PreCert_To_Loggers(c *CAContext, precert *x509.Certificate, loggers []string){
+func Send_Signed_PreCert_To_Loggers(c *CAContext, precert *x509.Certificate, loggers []string) {
 	//fmt.Println(loggers)
-	for i:=0;i<len(loggers);i++{
+	for i := 0; i < len(loggers); i++ {
 		precert_json := Marshall_Signed_PreCert(precert)
 		//fmt.Println(precert_json)
 		//fmt.Println(loggers[i])
-		resp, err := c.Client.Post(PROTOCOL+ loggers[i]+"/Logger/receive-precerts", "application/json", bytes.NewBuffer(precert_json))
+		resp, err := c.Client.Post(PROTOCOL+loggers[i]+"/Logger/receive-precerts", "application/json", bytes.NewBuffer(precert_json))
 		if err != nil {
 			fmt.Println("Failed to send precert to loggers: ", err)
-		}else{
+		} else {
 			defer resp.Body.Close()
 		}
 	}
 }
 
-func wipeSTHstorage(c *CAContext){
+func wipeSTHstorage(c *CAContext) {
 	for k := range c.STH_storage {
 		delete(c.STH_storage, k)
 	}
 }
 
-func SignAllCerts(c *CAContext) []x509.Certificate{
+func SignAllCerts(c *CAContext) []x509.Certificate {
 	root := c.Rootcert
 	priv := c.CA_crypto_config.RSAPrivateKey
 	certs := c.CurrentCertificatePool.GetCerts()
 	var signed_certs []x509.Certificate
-	for i:=0;i<len(certs);i++{
+	for i := 0; i < len(certs); i++ {
 		cert := certs[i]
 		pub := cert.PublicKey
 		rsaPub, ok := pub.(*rsa.PublicKey)
 		if !ok {
-    		// handle the case where pub is not of type *rsa.PublicKey
+			// handle the case where pub is not of type *rsa.PublicKey
 		}
 		signed_cert := Sign_certificate(&cert, root, false, rsaPub, &priv)
 		signed_certs = append(signed_certs, *signed_cert)
@@ -186,7 +186,7 @@ func SignAllCerts(c *CAContext) []x509.Certificate{
 	return signed_certs
 }
 
-func GetCurrentPeriod() string{
+func GetCurrentPeriod() string {
 	timerfc := time.Now().UTC().Format(time.RFC3339)
 	Miniutes, err := strconv.Atoi(timerfc[14:16])
 	Periodnum := strconv.Itoa(Miniutes)
@@ -195,7 +195,7 @@ func GetCurrentPeriod() string{
 	return Periodnum
 }
 
-func GerCurrentSecond() string{
+func GerCurrentSecond() string {
 	timerfc := time.Now().UTC().Format(time.RFC3339)
 	Second, err := strconv.Atoi(timerfc[17:19])
 	Secondnum := strconv.Itoa(Second)
@@ -220,11 +220,11 @@ func PeriodicTask(ctx *CAContext) {
 	validFor := 365 * 24 * time.Hour
 	isCA := false
 	// generate pre-certificates
-	certs := Generate_N_Signed_PreCert(ctx,ctx.CA_private_config.Cert_per_period, host, validFor, isCA, issuer, ctx.Rootcert, false,&ctx.PrivateKey, 0)
+	certs := Generate_N_Signed_PreCert(ctx, ctx.CA_private_config.Cert_per_period, host, validFor, isCA, issuer, ctx.Rootcert, false, &ctx.PrivateKey, 0)
 	fmt.Println(len(certs))
 	//Send the pre-certificates to the log
 	// iterate over certs
-	for i:=0;i<len(certs);i++{
+	for i := 0; i < len(certs); i++ {
 		//store in current cert pool
 		ctx.CurrentCertificatePool.AddCert(certs[i])
 		fmt.Println(certs[i].SubjectKeyId)
@@ -235,7 +235,7 @@ func PeriodicTask(ctx *CAContext) {
 		// want to see if the STHs and POIs are updated
 		var certlist []x509.Certificate
 		certlist = ctx.CurrentCertificatePool.GetCerts()
-		for i:=0;i<len(certlist);i++{
+		for i := 0; i < len(certlist); i++ {
 			//var ctngexts []CTngExtension
 			//ctngexts = GetCTngExtensions(&certlist[i])
 			//fmt.Println("CTng Extension for Cert", i, "is", ctngexts)
@@ -250,8 +250,8 @@ func PeriodicTask(ctx *CAContext) {
 		periodnum = periodnum + 1
 		// convert int to string
 		period = strconv.Itoa(periodnum)
-		rev := Generate_Revocation(ctx, period,0)
-		fake_rev := Generate_Revocation(ctx, period,1)
+		rev := Generate_Revocation(ctx, period, 0)
+		fake_rev := Generate_Revocation(ctx, period, 1)
 		ctx.REV_storage[period] = rev
 		ctx.REV_storage[fake_rev.Period] = fake_rev
 		fmt.Println("CA Finished Generating Revocation for next period")
@@ -259,7 +259,6 @@ func PeriodicTask(ctx *CAContext) {
 	}
 	time.AfterFunc(time.Duration(ctx.CA_public_config.MMD-20)*time.Second, f1)
 }
-
 
 // Our CA does not create certificate by requests
 // The purpose of the CA is for testing purposes only
