@@ -1,0 +1,67 @@
+{
+  "STHs": [
+    {
+      "application": "CTng",
+      "period": "35",
+      "type": "http://ctng.uconn.edu/301",
+      "signer": "",
+      "signers": {
+        "0": "localhost:8082",
+        "1": "localhost:8081"
+      },
+      "signature": [
+        "{\"sign\":\"56985d98bfe410d3d8831e654957e2139b35d3aea2baf9845936b9972c05001ce7840e7032dc00ce08635d0346597d11\", \"ids\":[\"localhost:8081\",\"localhost:8082\"]}",
+        ""
+      ],
+      "timestamp": "2023-03-15T03:35:05Z",
+      "crypto_scheme": "BLS",
+      "payload": [
+        "localhost:9001",
+        "{\"Signer\":\"localhost:9001\",\"Timestamp\":\"2023-03-15T03:34:40Z\",\"RootHash\":\"0\\ufffd\\ufffd\\u0000\\u000e\\ufffd\\ufffd\\ufffd\\ufffd#\\u000c\\ufffdT\\ufffd\\ufffd\\ufffd\\ufffd\\u0012\\ufffd\\ufffd+\\ufffdR\\ufffd\\ufffd\\u0014\\u001aG\\ufffd*%\\ufffd\",\"TreeSize\":3}",
+        ""
+      ]
+    },
+    {
+      "application": "CTng",
+      "period": "35",
+      "type": "http://ctng.uconn.edu/301",
+      "signer": "",
+      "signers": {
+        "0": "localhost:8082",
+        "1": "localhost:8081"
+      },
+      "signature": [
+        "{\"sign\":\"8b25d2b78e29dfa520d5d63251d6dbe76e860a8eb3f062b6bd70bdd0f777e042bae63f79ec1f37c85ec54b6ed19f5307\", \"ids\":[\"localhost:8081\",\"localhost:8082\"]}",
+        ""
+      ],
+      "timestamp": "2023-03-15T03:35:05Z",
+      "crypto_scheme": "BLS",
+      "payload": [
+        "localhost:9000",
+        "{\"Signer\":\"localhost:9000\",\"Timestamp\":\"2023-03-15T03:34:40Z\",\"RootHash\":\"0\\ufffd\\ufffd\\u0000\\u000e\\ufffd\\ufffd\\ufffd\\ufffd#\\u000c\\ufffdT\\ufffd\\ufffd\\ufffd\\ufffd\\u0012\\ufffd\\ufffd+\\ufffdR\\ufffd\\ufffd\\u0014\\u001aG\\ufffd*%\\ufffd\",\"TreeSize\":3}",
+        ""
+      ]
+    }
+  ],
+  "REVs": [],
+  "ACCs": [],
+  "CONs": [],
+  "NUM": {
+    "NUM_ACC_FULL": "0",
+    "NUM_CON_FULL": "0",
+    "Period": "36",
+    "Signer_Monitor": "localhost:8182",
+    "Crypto_Scheme": "rsa",
+    "Signature": "{\"sig\":\"b30c01b9fd14b63b7a290c78bd131d7bb8033425fbe565816063a017bf1c2d30dc0f87815e2cfe572fb48db5a80996fd70e85a530c39d7cc41f24804b3834eca0c9c5758da58c7833376b47a5c61ad6e225ba70647baa91824ddf0edfae50588cf7ca7aa77da20489022b391d9c69f3b2fc8c08ca92158fd62d0ed6804fb3ffa52b781d7b55a5debc0a8cfe3ea03604939c77ac37ed98b519a38044b5defffb3be0fbf3437dcec39fc72f1c15f82357f55cdd3fb1c1695c69b5a6b26d134b72cf4a0e07d39af36bb2a397322a7e1a26f86f2a7eb31b1272fe6524c48b388631948e9bc9d3f75f892c3e147f48a02b84c1c52d4f9651ac0a685207909ad5a9b31\",\"id\":\"localhost:8182\"}"
+  },
+  "NUM_FULL": {
+    "NUM_ACC_FULL": "",
+    "NUM_CON_FULL": "",
+    "Period": "",
+    "Signers": null,
+    "Crypto_Scheme": "",
+    "Signature": ""
+  },
+  "MonitorID": "localhost:8182",
+  "Period": "36"
+}
