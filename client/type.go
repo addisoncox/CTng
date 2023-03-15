@@ -101,3 +101,26 @@ func (crv *CRVRecord) GetCRV() {
 	}
 	fmt.Println(x)
 }
+
+func InitializeClientContext(path string, cryptopath string) ClientContext {
+	conf, err := LoadClientConfig(path, cryptopath)
+	if err != nil {
+		panic(err)
+	}
+	storage_conflict_pom := new(gossip.Gossip_Storage)
+	*storage_conflict_pom = make(gossip.Gossip_Storage)
+	storage_sth_full := new(gossip.Gossip_Storage)
+	*storage_sth_full = make(gossip.Gossip_Storage)
+	storage_rev_full := new(gossip.Gossip_Storage)
+	*storage_rev_full = make(gossip.Gossip_Storage)
+	storage_crv := new(CRV_Storage)
+	*storage_crv = make(CRV_Storage)
+	ctx := ClientContext{
+		Storage_STH_FULL:     storage_sth_full,
+		Storage_REV_FULL:     storage_rev_full,
+		Storage_CONFLICT_POM: storage_conflict_pom,
+		Storage_CRVRECORD:    storage_crv,
+		Config:               &conf,
+	}
+	return ctx
+}

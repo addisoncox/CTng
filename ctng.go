@@ -5,19 +5,12 @@ Code Ownership:
 Finn - Made main function
 */
 import (
-	// "CTng/CA"
 	"CTng/client"
-	"CTng/config"
-	"CTng/gossip"
-	// "CTng/logger"
-	"CTng/minimon"
-	"CTng/miniclient"
-	"CTng/monitor"
-	"CTng/testData/fakeCA"
-	"CTng/testData/fakeLogger"
-	"CTng/webserver"
 	"CTng/logger_ca"
+	"CTng/miniclient"
+	"CTng/minimon"
 	"CTng/network"
+	"CTng/webserver"
 	"fmt"
 	"os"
 )
@@ -55,43 +48,8 @@ func main() {
 		network.StartLogger(os.Args[2])
 	case "network_ca":
 		network.StartCA(os.Args[2])
-	case "gossiper":
-		// make the config object.
-		conf, err := config.LoadGossiperConfig(os.Args[2], os.Args[3], os.Args[4])
-		if err != nil {
-			fmt.Println(helpText)
-			panic(err)
-		}
-		ctx := gossip.Gossip_Context_Init(&conf, os.Args[5])
-		gossip.StartGossiperServer(ctx)
-	case "monitor":
-		ctx := monitor.InitializeMonitorContext(os.Args[2], os.Args[3], os.Args[4], os.Args[5])
-		monitor.StartMonitorServer(ctx)
-	case "logger":
-		fakeLogger.RunFakeLogger(os.Args[2])
-	case "ca":
-		fakeCA.RunFakeCA(os.Args[2])
 	case "client":
-		conf, err := client.LoadClientConfig(os.Args[2], os.Args[3])
-		if err != nil {
-			fmt.Println(helpText)
-			panic(err)
-		}
-		storage_conflict_pom := new(gossip.Gossip_Storage)
-		*storage_conflict_pom = make(gossip.Gossip_Storage)
-		storage_sth_full := new(gossip.Gossip_Storage)
-		*storage_sth_full = make(gossip.Gossip_Storage)
-		storage_rev_full := new(gossip.Gossip_Storage)
-		*storage_rev_full = make(gossip.Gossip_Storage)
-		storage_crv := new(client.CRV_Storage)
-		*storage_crv = make(client.CRV_Storage)
-		ctx := client.ClientContext{
-			Storage_STH_FULL:     storage_sth_full,
-			Storage_REV_FULL:     storage_rev_full,
-			Storage_CONFLICT_POM: storage_conflict_pom,
-			Storage_CRVRECORD:    storage_crv,
-			Config:               &conf,
-		}
+		ctx := client.InitializeClientContext(os.Args[2], os.Args[3])
 		client.StartClientServer(&ctx)
 	default:
 		fmt.Println(helpText)

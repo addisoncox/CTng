@@ -53,22 +53,62 @@ func WriteData(filename string, data interface{}) error {
 }
 
 func CreateFile(path string) {
-    // check if file exists
-    var _, err = os.Stat(path)
+	// check if file exists
+	var _, err = os.Stat(path)
 
-    // create file if not exists
-    if os.IsNotExist(err) {
-        var file, err = os.Create(path)
-        if err!=nil {
-            return
-        }
-        defer file.Close()
-    }
+	// create file if not exists
+	if os.IsNotExist(err) {
+		var file, err = os.Create(path)
+		if err != nil {
+			return
+		}
+		defer file.Close()
+	}
 }
 
-func CreateDir(path string){
+func CreateDir(path string) {
 	err := os.MkdirAll(path, 0755)
 	if err != nil {
 		return
 	}
+}
+
+func DeleteFilesAndDirectories(path string) error {
+	// Open the directory specified by the path
+	dir, err := os.Open(path)
+	if err != nil {
+		return err
+	}
+	defer dir.Close()
+
+	// Read all the contents of the directory
+	fileInfos, err := dir.Readdir(0)
+	if err != nil {
+		return err
+	}
+
+	// Loop through all the files and directories in the directory
+	for _, fileInfo := range fileInfos {
+		// Create the full path to the file or directory
+		fullPath := path + "/" + fileInfo.Name()
+
+		// If the file or directory is a directory, recursively delete it
+		if fileInfo.IsDir() {
+			if err := DeleteFilesAndDirectories(fullPath); err != nil {
+				return err
+			}
+		} else {
+			// Otherwise, delete the file
+			if err := os.Remove(fullPath); err != nil {
+				return err
+			}
+		}
+	}
+
+	// Finally, delete the directory itself
+	if err := os.Remove(path); err != nil {
+		return err
+	}
+
+	return nil
 }

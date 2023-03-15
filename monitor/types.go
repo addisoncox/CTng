@@ -8,7 +8,6 @@ import (
 	"errors"
 	"fmt"
 	"net/http"
-	"os"
 	"reflect"
 )
 
@@ -217,50 +216,10 @@ func (c *MonitorContext) InitializeMonitorStorage(filepath string) {
 
 func (c *MonitorContext) CleanUpMonitorStorage() {
 	//delete all files in storage directory
-	err := deleteFilesAndDirectories(c.StorageDirectory)
+	err := util.DeleteFilesAndDirectories(c.StorageDirectory)
 	if err != nil {
 		fmt.Println(err)
 	}
-}
-
-func deleteFilesAndDirectories(path string) error {
-	// Open the directory specified by the path
-	dir, err := os.Open(path)
-	if err != nil {
-		return err
-	}
-	defer dir.Close()
-
-	// Read all the contents of the directory
-	fileInfos, err := dir.Readdir(0)
-	if err != nil {
-		return err
-	}
-
-	// Loop through all the files and directories in the directory
-	for _, fileInfo := range fileInfos {
-		// Create the full path to the file or directory
-		fullPath := path + "/" + fileInfo.Name()
-
-		// If the file or directory is a directory, recursively delete it
-		if fileInfo.IsDir() {
-			if err := deleteFilesAndDirectories(fullPath); err != nil {
-				return err
-			}
-		} else {
-			// Otherwise, delete the file
-			if err := os.Remove(fullPath); err != nil {
-				return err
-			}
-		}
-	}
-
-	// Finally, delete the directory itself
-	if err := os.Remove(path); err != nil {
-		return err
-	}
-
-	return nil
 }
 
 func InitializeMonitorContext(public_config_path string, private_config_path string, crypto_config_path string, storageID string) *MonitorContext {
