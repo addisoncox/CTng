@@ -367,7 +367,7 @@ func GossipData(c *GossiperContext, gossip_obj Gossip_object) error {
 		if err != nil {
 			if strings.Contains(err.Error(), "Client.Timeout") ||
 				strings.Contains(err.Error(), "connection refused") {
-				fmt.Println(util.RED+"Connection failed to "+url+".", util.RESET)
+				fmt.Println(util.RED+"Connection failed to "+url+"."+" Error message: ", err, util.RESET)
 				// Don't accuse gossipers for inactivity.
 				// defer Accuse(c, url)
 			} else {
@@ -552,12 +552,19 @@ func PeriodicTasks(c *GossiperContext) {
 }
 
 func InitializeGossiperStorage(c *GossiperContext) {
-	util.CreateFile(c.StorageDirectory + c.StorageFile)
+	// create the storage directory if it doesn't exist
+	if _, err := os.Stat(c.StorageDirectory); os.IsNotExist(err) {
+		os.Mkdir(c.StorageDirectory, 0755)
+	}
+	// create the storage file if it doesn't exist
+	if _, err := os.Stat(c.StorageDirectory + c.StorageFile); os.IsNotExist(err) {
+		os.Create(c.StorageDirectory + c.StorageFile)
+	}
 }
 
 func StartGossiperServer(c *GossiperContext) {
 	// Check if the storage file exists in this directory
-	InitializeGossiperStorage(c)
+	//InitializeGossiperStorage(c)
 	// Create the http client to be used.
 	tr := &http.Transport{}
 	c.Client = &http.Client{

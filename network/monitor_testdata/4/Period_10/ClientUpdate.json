@@ -1,0 +1,24 @@
+{
+  "STHs": [],
+  "REVs": [],
+  "ACCs": [],
+  "CONs": [],
+  "NUM": {
+    "NUM_ACC_FULL": "0",
+    "NUM_CON_FULL": "0",
+    "Period": "10",
+    "Signer_Monitor": "localhost:8183",
+    "Crypto_Scheme": "rsa",
+    "Signature": "{\"sig\":\"17e03519ac09174d0a11ae254c3beab0c287afcaf80d207b7213491c45e3eb38776bc0bdf24b78087e9532421b80644975fab8b1f0886cedf5454d9f16e5dd2f730fd0b609425ce4a689fc0f6b54a0b446b6470fa71a4edd90782d9b7a62fdd442c71cf372931b70dc0532f50865d38e09b5b7dd04a1c0063f10873227ad05a62d42ce48f9820ef8c63c11904e683bb0a368b355889767b2d2a697b477125d0742e9c0e4aacf59e9bf5938c8f51bfa8b460b99baa572084b289a391870f325d281c46cd7bf1cde76a004cf4e54fe419a9de7b6c68d4aeb263a7093f7470b210821bcec757d07e96fd8a7342376409d9e26d7119220587e05bdab98f291efa467\",\"id\":\"localhost:8183\"}"
+  },
+  "NUM_FULL": {
+    "NUM_ACC_FULL": "",
+    "NUM_CON_FULL": "",
+    "Period": "",
+    "Signers": null,
+    "Crypto_Scheme": "",
+    "Signature": ""
+  },
+  "MonitorID": "localhost:8183",
+  "Period": "10"
+}

@@ -5,6 +5,7 @@ import (
 	"CTng/Logger"
 	"CTng/gossip"
 	"CTng/monitor"
+	"CTng/util"
 	"fmt"
 	"time"
 )
@@ -36,7 +37,7 @@ func StartMonitor(MID string) {
 	path_3 := path_prefix + "/Monitor_crypto_config.json"
 	ctx_monitor := monitor.InitializeMonitorContext(path_1, path_2, path_3, MID)
 	// clean up the storage
-	ctx_monitor.InitializeMonitorStorage("network")
+	ctx_monitor.InitializeMonitorStorage("network/monitor_testdata/")
 	// delete all the files in the storage
 	ctx_monitor.CleanUpMonitorStorage()
 	//ctx_monitor.Mode = 0
@@ -53,5 +54,11 @@ func StartGossiper(GID string) {
 	path_3 := path_prefix + "/Gossiper_crypto_config.json"
 	ctx_gossiper := gossip.InitializeGossiperContext(path_1, path_2, path_3, GID)
 	ctx_gossiper.StorageDirectory = "network/gossiper_testdata/" + ctx_gossiper.StorageID + "/"
+	ctx_gossiper.StorageFile = "gossiper_testdata.json"
+	ctx_gossiper.CleanUpGossiperStorage()
+	// create the storage directory if not exist
+	util.CreateDir(ctx_gossiper.StorageDirectory)
+	// create the storage file if not exist
+	util.CreateFile(ctx_gossiper.StorageDirectory + ctx_gossiper.StorageFile)
 	gossip.StartGossiperServer(ctx_gossiper)
 }

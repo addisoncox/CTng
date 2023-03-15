@@ -195,10 +195,17 @@ func GenerateGossiper_public_config(G_list []string, M_list []string, C_list []s
 func GenerateGossiper_private_config_map(G_list []string, M_list []string, C_list []string, L_list []string, MMD int, MRD int, Gossip_wait_time int, Communiation_delay int, Http_vers []string, filepath string) map[string]config.Gossiper_config {
 	Gossiper_private_map := make(map[string]config.Gossiper_config)
 	for i := 0; i < len(G_list); i++ {
+		// connected gossiper should be all except itself
+		connected_gossiper := make([]string, 0)
+		for j := 0; j < len(G_list); j++ {
+			if i != j {
+				connected_gossiper = append(connected_gossiper, G_list[j])
+			}
+		}
 		// generate gossiper config
 		gossiper_private_config := &config.Gossiper_config{
 			// Crypto_config_location: filepath,
-			Connected_Gossipers: G_list,
+			Connected_Gossipers: connected_gossiper,
 			Owner_URL:           M_list[i],
 			Port:                "808" + fmt.Sprint(i),
 		}

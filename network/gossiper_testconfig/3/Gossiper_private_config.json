@@ -3,7 +3,6 @@
   "Connected_Gossipers": [
    "localhost:8080",
    "localhost:8081",
-   "localhost:8082",
    "localhost:8083"
   ],
   "Owner_URL": "localhost:8182",
