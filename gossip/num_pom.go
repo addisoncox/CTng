@@ -2,6 +2,9 @@ package gossip
 
 import (
 	"CTng/crypto"
+	"encoding/json"
+	"net/http"
+	"sync"
 )
 
 // Content tbs = NUM_ACC_FULL || NUM_CON_FULL || PERIOD || SIGNER_MONITOR
@@ -32,6 +35,60 @@ type NUM_FULL struct {
 	Signers       map[int]string
 	Crypto_Scheme string
 	Signature     string
+}
+
+type NUM_Counter struct {
+	NUMs      map[string][]string
+	NUM_FRAGs []*NUM_FRAG
+	NUM_FULL  bool
+	NUMs_lock sync.Mutex
+}
+
+func NUM_Counter_Init() *NUM_Counter {
+	return &NUM_Counter{
+		NUMs:      make(map[string][]string),
+		NUM_FRAGs: make([]*NUM_FRAG, 0),
+		NUM_FULL:  false,
+	}
+}
+
+func (n *NUM_Counter) Add_NUM(num any) {
+	n.NUMs_lock.Lock()
+	defer n.NUMs_lock.Unlock()
+	var key string
+	switch num.(type) {
+	case *NUM:
+		key = num.(*NUM).NUM_ACC_FULL + num.(*NUM).NUM_CON_FULL + num.(*NUM).Period
+		if _, ok := n.NUMs[key]; !ok {
+			n.NUMs[key] = []string{}
+		}
+		n.NUMs[key] = append(n.NUMs[key], num.(*NUM).Signer_Monitor)
+	case *NUM_FRAG:
+		n.NUM_FRAGs = append(n.NUM_FRAGs, num.(*NUM_FRAG))
+	case *NUM_FULL:
+		n.NUM_FULL = true
+	}
+
+}
+
+func (n *NUM_Counter) Get_NUM(num any) int {
+	n.NUMs_lock.Lock()
+	defer n.NUMs_lock.Unlock()
+	switch num.(type) {
+	case *NUM:
+		return len(n.NUMs[num.(*NUM).NUM_ACC_FULL+num.(*NUM).NUM_CON_FULL+num.(*NUM).Period])
+	case *NUM_FRAG:
+		return len(n.NUM_FRAGs)
+	}
+	return 0
+}
+
+func (n *NUM_Counter) Clear() {
+	n.NUMs_lock.Lock()
+	defer n.NUMs_lock.Unlock()
+	n.NUMs = make(map[string][]string)
+	n.NUM_FRAGs = []*NUM_FRAG{}
+	n.NUM_FULL = false
 }
 
 func (n *NUM) Verify(cryptoconf *crypto.CryptoConfig) error {
@@ -87,5 +144,139 @@ func Generate_NUM_FULL(NUM_FRAG_LIST []*NUM_FRAG, cryptoconf *crypto.CryptoConfi
 		Signers:       signermap,
 		Crypto_Scheme: "bls",
 		Signature:     TSS_sig_string,
+	}
+}
+
+func IsDuplicateNUM(c GossiperContext, num any) bool {
+	switch num.(type) {
+	case *NUM:
+		// check if the num is in the NUM_Storage
+		// if yes, return true
+		// if no, return false
+		// if Signer_Monitor is in the NUM_Storage, return true
+		// if not, return false
+		if len(c.NUM_Storage.NUMs[num.(*NUM).NUM_ACC_FULL+num.(*NUM).NUM_CON_FULL+num.(*NUM).Period]) > 0 {
+			// check if the signer is in the NUM_Storage
+			for _, signer := range c.NUM_Storage.NUMs[num.(*NUM).NUM_ACC_FULL+num.(*NUM).NUM_CON_FULL+num.(*NUM).Period] {
+				if signer == num.(*NUM).Signer_Monitor {
+					return true
+				}
+			}
+			return false
+		}
+		return false
+	case *NUM_FRAG:
+		// check if the num_frag is in the NUM_Storage
+		// if yes, return true
+		// if no, return false
+		if len(c.NUM_Storage.NUM_FRAGs) > 0 {
+			for _, num_frag := range c.NUM_Storage.NUM_FRAGs {
+				if num_frag.Signature == num.(*NUM_FRAG).Signature {
+					return true
+				}
+			}
+			return false
+		}
+		return false
+	case *NUM_FULL:
+		// check if the num_full is in the NUM_Storage
+		if c.NUM_Storage.NUM_FULL {
+			return true
+		}
+		return false
+	}
+	return false
+}
+
+func handleNUM(g *GossiperContext, w http.ResponseWriter, r *http.Request) {
+	// get the num from the request
+	decoder := json.NewDecoder(r.Body)
+	var num NUM
+	err := decoder.Decode(&num)
+	if err != nil {
+		panic(err)
+	}
+	// check if the num is duplicate
+	if IsDuplicateNUM(*g, &num) {
+		return
+	}
+	// verify the num
+	/*
+		err = num.Verify(g.Config.Crypto)
+		if err != nil {
+			panic(err)
+		}
+	*/
+	g.NUM_Storage.Add_NUM(&num)
+	Gossip_NUM_type(*g, &num)
+	if g.NUM_Storage.Get_NUM(&num) >= g.Config.Crypto.Threshold {
+		// generate NUM_FRAG
+		num_frag := Generate_NUM_FRAG(&num, g.Config.Crypto)
+		// send NUM_FRAG to all gossiper
+		g.NUM_Storage.Add_NUM(num_frag)
+		Gossip_NUM_type(*g, num_frag)
+	}
+}
+
+func handleNUM_FRAG(g *GossiperContext, w http.ResponseWriter, r *http.Request) {
+	// get the num_frag from the request
+	decoder := json.NewDecoder(r.Body)
+	var num_frag NUM_FRAG
+	err := decoder.Decode(&num_frag)
+	if err != nil {
+		panic(err)
+	}
+	// check if the num_frag is duplicate
+	if IsDuplicateNUM(*g, &num_frag) {
+		return
+	}
+	// check if there are threshold number of num_frags already
+	if len(g.NUM_Storage.NUM_FRAGs) >= g.Config.Crypto.Threshold {
+		return
+	}
+	// check if the NUM_FULL is already generated
+	if g.NUM_Storage.NUM_FULL {
+		return
+	}
+	// verify the num_frag
+	/*
+		err = num_frag.Verify(g.Config.Crypto)
+		if err != nil {
+			panic(err)
+		}*/
+	g.NUM_Storage.Add_NUM(&num_frag)
+	if g.NUM_Storage.Get_NUM(&num_frag) >= g.Config.Crypto.Threshold {
+		// generate NUM_FULL
+		num_full := Generate_NUM_FULL(g.NUM_Storage.NUM_FRAGs, g.Config.Crypto)
+		// send NUM_FULL to all monitor
+		g.NUM_Storage.NUM_FULL = true
+		SendToOwner(g, *num_full)
+		Gossip_NUM_type(*g, num_full)
+	}
+}
+
+func handleNUM_FULL(g *GossiperContext, w http.ResponseWriter, r *http.Request) {
+	// get the num_full from the request
+	decoder := json.NewDecoder(r.Body)
+	var num_full NUM_FULL
+	err := decoder.Decode(&num_full)
+	if err != nil {
+		panic(err)
+	}
+	// check if the num_full is duplicate
+	if IsDuplicateNUM(*g, &num_full) {
+		return
+	}
+	// verify the num_full
+	/*
+		err = num_full.Verify(g.Config.Crypto)
+		if err != nil {
+			panic(err)
+		}*/
+	// if NUM_FULL in NUM_Storage is empty, then send it to owner
+	if !g.NUM_Storage.NUM_FULL {
+		// send NUM_FULL to owner
+		g.NUM_Storage.NUM_FULL = true
+		SendToOwner(g, num_full)
 	}
 }

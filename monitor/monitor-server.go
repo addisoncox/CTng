@@ -2,14 +2,16 @@ package monitor
 
 import (
 	"CTng/gossip"
+	"fmt"
 	"log"
 	"net/http"
 	"time"
-	"fmt"
+
 	"github.com/gorilla/mux"
 )
 
 const PROTOCOL = "http://"
+
 func bindMonitorContext(context *MonitorContext, fn func(context *MonitorContext, w http.ResponseWriter, r *http.Request)) func(w http.ResponseWriter, r *http.Request) {
 	return func(w http.ResponseWriter, r *http.Request) {
 		fn(context, w, r)
@@ -23,6 +25,7 @@ func handleMonitorRequests(c *MonitorContext) {
 	gorillaRouter.HandleFunc("/monitor/get-update", bindMonitorContext(c, requestupdate)).Methods("GET")
 	gorillaRouter.HandleFunc("/monitor/recieve-gossip", bindMonitorContext(c, handle_gossip)).Methods("POST")
 	gorillaRouter.HandleFunc("/monitor/recieve-gossip-from-gossiper", bindMonitorContext(c, handle_gossip_from_gossiper)).Methods("POST")
+	gorillaRouter.HandleFunc("/monitor/num_full", bindMonitorContext(c, handle_num_full)).Methods("POST")
 	// Start the HTTP server.
 	http.Handle("/", gorillaRouter)
 	// Listen on port set by config until server is stopped.
@@ -30,10 +33,10 @@ func handleMonitorRequests(c *MonitorContext) {
 }
 
 func StartMonitorServer(c *MonitorContext) {
-	if c.Mode == 0{
-	time_wait := gossip.Getwaitingtime();
-	fmt.Println("Waiting for ",time_wait," seconds");
-	time.Sleep(time.Duration(time_wait)*time.Second);
+	if c.Mode == 0 {
+		time_wait := gossip.Getwaitingtime()
+		fmt.Println("Waiting for ", time_wait, " seconds")
+		time.Sleep(time.Duration(time_wait) * time.Second)
 	}
 	tr := &http.Transport{}
 	c.Client = &http.Client{

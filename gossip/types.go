@@ -67,6 +67,8 @@ type GossiperContext struct {
 	CON_DB *Conflict_DB
 	//log
 	G_log *Gossiper_log
+	// NUM_Storage
+	NUM_Storage *NUM_Counter
 	//File I/O
 	StorageFile      string
 	StorageDirectory string
@@ -89,6 +91,8 @@ type GossiperLogEntry struct {
 	Num_REV_FULL int
 	Num_ACC_FULL int
 	Num_CON_FULL int
+	Num_NUM      int
+	Num_NUM_FRAG int
 }
 
 type Gossiper_log map[string]GossiperLogEntry
@@ -112,6 +116,7 @@ func Gossip_Context_Init(config *config.Gossiper_config, Storage_ID string) *Gos
 	*conflict_db = make(Conflict_DB)
 	g_log := new(Gossiper_log)
 	*g_log = make(Gossiper_log)
+	num_storage := NUM_Counter_Init()
 	ctx := GossiperContext{
 		Config: config,
 		RWlock: &sync.RWMutex{},
@@ -130,6 +135,7 @@ func Gossip_Context_Init(config *config.Gossiper_config, Storage_ID string) *Gos
 		ACC_DB:      accusation_db,
 		CON_DB:      conflict_db,
 		G_log:       g_log,
+		NUM_Storage: num_storage,
 		StorageFile: "gossiper_data.json", // could be a parameter in the future.
 		StorageID:   Storage_ID,
 	}
@@ -159,6 +165,7 @@ func InitializeGossiperContext(public_config_path string, private_config_path st
 	*conflict_db = make(Conflict_DB)
 	g_log := new(Gossiper_log)
 	*g_log = make(Gossiper_log)
+	num_storage := NUM_Counter_Init()
 	ctx := GossiperContext{
 		Config: &conf,
 		RWlock: &sync.RWMutex{},
@@ -179,6 +186,7 @@ func InitializeGossiperContext(public_config_path string, private_config_path st
 		G_log:       g_log,
 		StorageFile: "gossiper_data.json", // could be a parameter in the future.
 		StorageID:   storageID,
+		NUM_Storage: num_storage,
 	}
 	return &ctx
 }
@@ -210,6 +218,7 @@ func CountStorageCounter(gs *Gossip_Storage_Counter, entry *GossiperLogEntry) {
 			entry.Num_ACC_FULL++
 		case CON_FULL:
 			entry.Num_CON_FULL++
+
 		}
 	}
 }
@@ -261,15 +270,21 @@ func (c *GossiperContext) SaveStorage() error {
 		Num_REV_FULL: 0,
 		Num_ACC_FULL: 0,
 		Num_CON_FULL: 0,
+		Num_NUM_FRAG: 0,
 	}
 	CountStorageCounter((*c).Storage_RAW, &newentry)
 	CountStorageCounter((*c).Storage_FRAG, &newentry)
 	CountStorage((*c).Storage_FULL, &newentry)
 	CountStorage((*c).Storage_POM_TEMP, &newentry)
 	CountStorage((*c).Storage_POM, &newentry)
-	(*c.G_log)[GetCurrentPeriod()] = newentry
-	err := util.WriteData(c.StorageDirectory+"/"+c.StorageFile, c.G_log)
-	return err
+	newentry.Num_NUM_FRAG = len(c.NUM_Storage.NUM_FRAGs)
+	newentry.Num_NUM = len(c.NUM_Storage.NUMs)
+	if newentry.Num_sth+newentry.Num_rev+newentry.Num_acc+newentry.Num_con+newentry.Num_sth_frag+newentry.Num_rev_frag+newentry.Num_acc_frag+newentry.Num_con_frag+newentry.Num_STH_FULL+newentry.Num_REV_FULL+newentry.Num_ACC_FULL+newentry.Num_CON_FULL != 0 {
+		(*c.G_log)[GetCurrentPeriod()] = newentry
+		err := util.WriteData(c.StorageDirectory+"/"+c.StorageFile, c.G_log)
+		return err
+	}
+	return nil
 }
 func WipeOneGS(g *Gossip_Storage) {
 	for key := range *g {
@@ -291,6 +306,7 @@ func (c *GossiperContext) WipeStorage() {
 	WipeOneGSC(c.Storage_RAW)
 	WipeOneGSC(c.Storage_FRAG)
 	WipeOneGS(c.Storage_POM_TEMP)
+	c.NUM_Storage.Clear()
 	for key := range *c.Obj_TSS_DB {
 		if key.Period != GetCurrentPeriod() {
 			delete(*c.Obj_TSS_DB, key)
@@ -371,8 +387,10 @@ func (c *GossiperContext) StoreObject(o Gossip_object) {
 // Returns 2 fields: the object, and whether or not the object was successfully found.
 // If the object isn't found then all fields of the Gossip_object will also be empty.
 // WARNING: only checks the given storage
-func GetObjectFromGS(id Gossip_ID, g *Gossip_Storage) (Gossip_object, bool) {
+func GetObjectFromGS(id Gossip_ID, g *Gossip_Storage, c *GossiperContext) (Gossip_object, bool) {
+	c.RWlock.Lock()
 	obj := (*g)[id]
+	c.RWlock.Unlock()
 	if reflect.DeepEqual(obj, Gossip_object{}) {
 		return obj, false
 	}
@@ -381,16 +399,18 @@ func GetObjectFromGS(id Gossip_ID, g *Gossip_Storage) (Gossip_object, bool) {
 
 // Given a gossip object, check if the an object with the same ID exists in the storage.
 //WARNING: only checks the given storage
-func IsDuplicateFromGS(g Gossip_object, gs *Gossip_Storage) bool {
+func IsDuplicateFromGS(g Gossip_object, gs *Gossip_Storage, c *GossiperContext) bool {
 	id := g.GetID()
-	_, exists := GetObjectFromGS(id, gs)
+	_, exists := GetObjectFromGS(id, gs, c)
 	return exists
 }
 
 // If the object isn't found then all fields of the Gossip_object will also be empty.
 // WARNING: only checks the given storage
-func GetObjectFromGSC(id Gossip_Counter_ID, g *Gossip_Storage_Counter) (Gossip_object, bool) {
+func GetObjectFromGSC(id Gossip_Counter_ID, g *Gossip_Storage_Counter, c *GossiperContext) (Gossip_object, bool) {
+	c.RWlock.Lock()
 	obj := (*g)[id]
+	c.RWlock.Unlock()
 	if reflect.DeepEqual(obj, Gossip_object{}) {
 		return obj, false
 	}
@@ -399,9 +419,9 @@ func GetObjectFromGSC(id Gossip_Counter_ID, g *Gossip_Storage_Counter) (Gossip_o
 
 // Given a gossip object, check if the an object with the same ID exists in the storage.
 //WARNING: only checks the given storage
-func IsDuplicateFromGSC(g Gossip_object, gs *Gossip_Storage_Counter) bool {
+func IsDuplicateFromGSC(g Gossip_object, gs *Gossip_Storage_Counter, c *GossiperContext) bool {
 	id := g.Get_Counter_ID()
-	_, exists := GetObjectFromGSC(id, gs)
+	_, exists := GetObjectFromGSC(id, gs, c)
 	return exists
 }
 

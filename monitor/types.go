@@ -207,6 +207,17 @@ func (c *MonitorContext) WipeStorage() {
 			delete(*c.Storage_CONFLICT_POM_DELTA, key)
 		}
 	}
+	// we can clear All STH and REV storage, because we will write them to file at the end of the period
+	for key := range *c.Storage_STH_FULL {
+		if key.Period != gossip.GetCurrentPeriod() {
+			delete(*c.Storage_STH_FULL, key)
+		}
+	}
+	for key := range *c.Storage_REV_FULL {
+		if key.Period != gossip.GetCurrentPeriod() {
+			delete(*c.Storage_REV_FULL, key)
+		}
+	}
 	fmt.Println(util.BLUE, "Temp storage has been wiped.", util.RESET)
 }
 

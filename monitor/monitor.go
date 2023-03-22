@@ -86,6 +86,27 @@ func handle_gossip(c *MonitorContext, w http.ResponseWriter, r *http.Request) {
 	http.Error(w, "Gossip object Processed.", http.StatusOK)
 }
 
+func handle_num_full(c *MonitorContext, w http.ResponseWriter, r *http.Request) {
+	// Get the number of full objects stored.
+	var num_full gossip.NUM_FULL
+	err := json.NewDecoder(r.Body).Decode(&num_full)
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusBadRequest)
+	}
+	// Verify the object is valid.
+	/*
+		err = num_full.Verify(c.Config.Crypto)
+		if err != nil {
+			fmt.Println("Recieved invalid object from " + util.GetSenderURL(r) + ".")
+			http.Error(w, err.Error(), http.StatusOK)
+			return
+		}
+	*/
+	// Check for duplicate object.
+	c.Storage_NUM_FULL = &num_full
+	http.Error(w, "NUM_FULL Processed.", http.StatusOK)
+}
+
 func QueryLoggers(c *MonitorContext) {
 	for _, logger := range c.Config.Logger_URLs {
 		// var today = time.Now().UTC().Format(time.RFC3339)[0:10]
@@ -226,7 +247,7 @@ func Send_POM_NUM_to_gossiper(c *MonitorContext, num gossip.NUM) {
 		fmt.Println(err)
 	}
 	// Send the gossip object to the gossiper.
-	resp, postErr := c.Client.Post(PROTOCOL+c.Config.Gossiper_URL+"/gossip/NUM", "application/json", bytes.NewBuffer(msg))
+	resp, postErr := c.Client.Post(PROTOCOL+c.Config.Gossiper_URL+"/gossip/num", "application/json", bytes.NewBuffer(msg))
 	if postErr != nil {
 		fmt.Println(util.RED+"Error sending object to Gossiper: ", postErr.Error(), util.RESET)
 	} else {
@@ -336,8 +357,11 @@ func PeriodicTasks(c *MonitorContext) {
 		c.Clean_Conflicting_Object()
 		c.WipeStorage()
 		update, NUM := GenerateUpdate(c)
-		Send_POM_NUM_to_gossiper(c, NUM)
 		c.SaveStorage(gossip.GetCurrentPeriod(), update)
+		f2 := func() {
+			Send_POM_NUM_to_gossiper(c, NUM)
+		}
+		time.AfterFunc(time.Duration(20)*time.Second, f2)
 	}
 	time.AfterFunc(time.Duration(c.Config.Public.MMD-20)*time.Second, f1)
 }

@@ -9,6 +9,7 @@ import (
 	"log"
 	"net/http"
 	"os"
+	"reflect"
 	"strings"
 	"time"
 
@@ -60,6 +61,10 @@ func handleRequests(c *GossiperContext) {
 	gorillaRouter.HandleFunc("/gossip/push-data", bindContext(c, handleGossip)).Methods("POST")
 	// Monitor interaction endpoint
 	gorillaRouter.HandleFunc("/gossip/gossip-data", bindContext(c, handleGossip)).Methods("POST")
+	// POM num endpoints
+	gorillaRouter.HandleFunc("/gossip/num", bindContext(c, handleNUM)).Methods("POST")
+	gorillaRouter.HandleFunc("/gossip/num_frag", bindContext(c, handleNUM_FRAG)).Methods("POST")
+	gorillaRouter.HandleFunc("/gossip/num_full", bindContext(c, handleNUM_FULL)).Methods("POST")
 	// Start the HTTP server.
 	http.Handle("/", gorillaRouter)
 	fmt.Println(util.BLUE+"Listening on port:", c.Config.Port, util.RESET)
@@ -101,10 +106,10 @@ func handleGossip(c *GossiperContext, w http.ResponseWriter, r *http.Request) {
 		//fmt.Println(util.GREEN,"Received Valid object "+TypeString(gossip_obj.Type)+ " signed by " + gossip_obj.Signer+" aka "+EntityString(gossip_obj.Signer) + ".",util.RESET)
 		Handle_ACC(c, gossip_obj)
 	case CON:
-		fmt.Println(util.GREEN, "Received Valid object "+TypeString(gossip_obj.Type)+util.RESET)
+		//fmt.Println(util.GREEN, "Received Valid object "+TypeString(gossip_obj.Type)+util.RESET)
 		Handle_CON(c, gossip_obj)
 	case STH_FRAG, REV_FRAG, ACC_FRAG, CON_FRAG:
-		fmt.Println(util.GREEN, "Received Valid object "+TypeString(gossip_obj.Type)+" signed by "+gossip_obj.Signer+" aka "+EntityString(gossip_obj.Signer)+".", util.RESET)
+		//fmt.Println(util.GREEN, "Received Valid object "+TypeString(gossip_obj.Type)+" signed by "+gossip_obj.Signer+" aka "+EntityString(gossip_obj.Signer)+".", util.RESET)
 		Handle_Frag(c, gossip_obj)
 	case STH_FULL, REV_FULL, ACC_FULL, CON_FULL:
 		Handle_FULL(c, gossip_obj)
@@ -115,8 +120,8 @@ func Check_conflicts_and_poms(c *GossiperContext, g Gossip_object) bool {
 	if c.HasPoM(g.Payload[0], g.Period) {
 		return true
 	}
-	if IsDuplicateFromGSC(g, c.Storage_RAW) {
-		stored_obj, _ := GetObjectFromGSC(g.Get_Counter_ID(), c.Storage_RAW)
+	if IsDuplicateFromGSC(g, c.Storage_RAW, c) {
+		stored_obj, _ := GetObjectFromGSC(g.Get_Counter_ID(), c.Storage_RAW, c)
 		//fmt.Println(util.YELLOW,stored_obj.Signature[0], g.Signature[0])
 		pom_gen := DetectConflicts(c, g, stored_obj)
 		//true if there is pom
@@ -130,7 +135,7 @@ func Handle_CON(c *GossiperContext, g Gossip_object) {
 	if pom_err {
 		return
 	}
-	if IsDuplicateFromGSC(g, c.Storage_RAW) {
+	if IsDuplicateFromGSC(g, c.Storage_RAW, c) {
 		//swap for gossiper sync
 		hashmsg1 := g.Payload[0] + g.Payload[1] + g.Payload[2]
 		hash1, _ := crypto.GenerateSHA256([]byte(hashmsg1))
@@ -154,7 +159,7 @@ func Handle_CON(c *GossiperContext, g Gossip_object) {
 		if err != nil {
 			fmt.Println(err.Error())
 		}
-		fmt.Println(util.BLUE, "Signing CON against", g.Payload[0], util.RESET)
+		//fmt.Println(util.BLUE, "Signing CON against", g.Payload[0], util.RESET)
 		g.Type = CON_FRAG
 		g.Signature[0] = sig_frag.String()
 		g.Signer = c.Config.Crypto.SelfID.String()
@@ -167,7 +172,10 @@ func Handle_CON(c *GossiperContext, g Gossip_object) {
 	time.AfterFunc(time.Duration(c.Config.Public.Gossip_wait_time)*time.Second, f)
 }
 func Handle_Sign_and_Gossip(c *GossiperContext, g Gossip_object) {
-	if g.Signature[0] == (*c.Storage_RAW)[g.Get_Counter_ID()].Signature[0] {
+	c.RWlock.Lock()
+	sig_stored := (*c.Storage_RAW)[g.Get_Counter_ID()].Signature[0]
+	c.RWlock.Unlock()
+	if g.Signature[0] == sig_stored {
 		return
 	}
 	if Check_conflicts_and_poms(c, g) {
@@ -189,7 +197,7 @@ func Handle_Sign_and_Gossip(c *GossiperContext, g Gossip_object) {
 				fmt.Println(err.Error())
 			}
 			if pom_err == false {
-				fmt.Println(util.BLUE, "Signing STH of", g.Signer, util.RESET)
+				//fmt.Println(util.BLUE, "Signing STH of", g.Signer, util.RESET)
 				g.Type = STH_FRAG
 				g.Signature[0] = sig_frag.String()
 				g.Signer = c.Config.Crypto.SelfID.String()
@@ -213,7 +221,7 @@ func Handle_Sign_and_Gossip(c *GossiperContext, g Gossip_object) {
 			if Check_conflicts_and_poms(c, g) {
 				return
 			}
-			fmt.Println(util.BLUE, "Signing Revocation of", g.Signer, util.RESET)
+			//fmt.Println(util.BLUE, "Signing Revocation of", g.Signer, util.RESET)
 			pom_err := c.HasPoM(g.Signer, g.Period)
 			if pom_err == false {
 				sig_frag, err := c.Config.Crypto.ThresholdSign(g.Payload[0] + g.Payload[1] + g.Payload[2])
@@ -235,7 +243,7 @@ func Handle_Sign_and_Gossip(c *GossiperContext, g Gossip_object) {
 }
 
 func Handle_ACC(c *GossiperContext, g Gossip_object) {
-	if IsDuplicateFromGSC(g, c.Storage_RAW) {
+	if IsDuplicateFromGSC(g, c.Storage_RAW, c) {
 		return
 	}
 	//fmt.Println(util.GREEN,"ACC is not a duplicate",util.RESET)
@@ -290,7 +298,7 @@ func Handle_ACC(c *GossiperContext, g Gossip_object) {
 }
 
 func Handle_Frag(c *GossiperContext, g Gossip_object) {
-	if IsDuplicateFromGSC(g, c.Storage_FRAG) {
+	if IsDuplicateFromGSC(g, c.Storage_FRAG, c) {
 		return
 	}
 	if Check_conflicts_and_poms(c, g) && g.Type != CON_FRAG {
@@ -310,7 +318,7 @@ func Handle_Frag(c *GossiperContext, g Gossip_object) {
 		Process_TSS_Object(c, g, ACC_FULL)
 		GossipData(c, g)
 	case CON_FRAG:
-		fmt.Println(util.GREEN, "Storing CON_FRAG Signed by ", g.Signer, util.RESET)
+		//fmt.Println(util.GREEN, "Storing CON_FRAG Signed by ", g.Signer, util.RESET)
 		c.StoreObject(g)
 		Process_TSS_Object(c, g, CON_FULL)
 		GossipData(c, g)
@@ -320,21 +328,21 @@ func Handle_Frag(c *GossiperContext, g Gossip_object) {
 func Handle_FULL(c *GossiperContext, g Gossip_object) {
 	switch g.Type {
 	case STH_FULL, REV_FULL:
-		if IsDuplicateFromGS(g, c.Storage_FULL) {
+		if IsDuplicateFromGS(g, c.Storage_FULL, c) {
 			return
 		} else {
 			c.StoreObject(g)
 			GossipData(c, g)
 		}
 	case CON_FULL:
-		if IsDuplicateFromGS(g, c.Storage_POM) {
+		if IsDuplicateFromGS(g, c.Storage_POM, c) {
 			return
 		} else {
 			c.StoreObject(g)
 			GossipData(c, g)
 		}
 	case ACC_FULL:
-		if IsDuplicateFromGS(g, c.Storage_POM_TEMP) {
+		if IsDuplicateFromGS(g, c.Storage_POM_TEMP, c) {
 			return
 		} else {
 			c.StoreObject(g)
@@ -383,15 +391,64 @@ func GossipData(c *GossiperContext, gossip_obj Gossip_object) error {
 	return nil
 }
 
+func Gossip_NUM_type(c GossiperContext, num any) {
+	msg, err := json.Marshal(num)
+	if err != nil {
+		panic(err)
+	}
+	dstendpoint := ""
+	switch num.(type) {
+	case *NUM:
+		dstendpoint = "/gossip/num"
+	case *NUM_FRAG:
+		dstendpoint = "/gossip/num_frag"
+	case *NUM_FULL:
+		dstendpoint = "/gossip/num_full"
+	}
+	for _, url := range c.Config.Connected_Gossipers {
+		//fmt.Println("Attempting to sending data to", url)
+		// HTTP POST the data to the url or IP address.
+		if dstendpoint == "" {
+			panic("dstendpoint is empty")
+		}
+		resp, err := c.Client.Post("http://"+url+dstendpoint, "application/json", bytes.NewBuffer(msg))
+		if err != nil {
+			if strings.Contains(err.Error(), "Client.Timeout") ||
+				strings.Contains(err.Error(), "connection refused") {
+				fmt.Println(util.RED+"Connection failed to "+url+"."+" Error message: ", err, util.RESET)
+				// Don't accuse gossipers for inactivity.
+				// defer Accuse(c, url)
+			} else {
+				fmt.Println(util.RED+err.Error(), "sending to "+url+".", util.RESET)
+			}
+			continue
+		}
+		// Close the response, mentioned by http.Post
+		// Alernatively, we could return the response from this function.
+		defer resp.Body.Close()
+		//fmt.Println("Gossiped to " + url + " and recieved " + resp.Status)
+	}
+
+}
+
 // Sends a gossip object to the owner of the gossiper.
-func SendToOwner(c *GossiperContext, obj Gossip_object) {
+func SendToOwner(c *GossiperContext, obj any) {
 	// Convert gossip object to JSON
 	msg, err := json.Marshal(obj)
 	if err != nil {
 		fmt.Println(err)
 	}
+	endpoint := ""
+	objtype := reflect.TypeOf(obj)
+	fmt.Println(util.BLUE+"Sending ", objtype, " to owner", util.RESET)
+	switch obj.(type) {
+	case Gossip_object:
+		endpoint = "/monitor/recieve-gossip-from-gossiper"
+	case NUM_FULL:
+		endpoint = "/monitor/num_full"
+	}
 	// Send the gossip object to the owner.
-	resp, postErr := c.Client.Post("http://"+c.Config.Owner_URL+"/monitor/recieve-gossip-from-gossiper", "application/json", bytes.NewBuffer(msg))
+	resp, postErr := c.Client.Post("http://"+c.Config.Owner_URL+endpoint, "application/json", bytes.NewBuffer(msg))
 	if postErr != nil {
 		fmt.Println("Error sending object to owner: " + postErr.Error())
 	} else {
@@ -474,12 +531,17 @@ func Process_TSS_Object(gc *GossiperContext, new_obj Gossip_object, target_type 
 		return err
 	}
 	//If there is already an TSS Object
+	gc.RWlock.Lock()
 	if _, ok := (*gc.Storage_FULL)[newkey]; ok {
-		fmt.Println(util.BLUE + "There already exists a " + TypeString(target_type) + " Object" + util.RESET)
+		//fmt.Println(util.BLUE + "There already exists a " + TypeString(target_type) + " Object" + util.RESET)
+		gc.RWlock.Unlock()
 		return nil
 	}
+	gc.RWlock.Unlock()
 	//If there isn't a STH_FULL Object yet, but there exists some other sth_frag
+	gc.RWlock.Lock()
 	if val, ok := (*gc.Obj_TSS_DB)[key]; ok {
+		gc.RWlock.Unlock()
 		val.Signers[val.Num] = new_obj.Signer
 		if err != nil {
 			fmt.Println("partial sig conversion error (from string)")
@@ -524,6 +586,7 @@ func Process_TSS_Object(gc *GossiperContext, new_obj Gossip_object, target_type 
 			return nil
 		}
 	}
+	gc.RWlock.Unlock()
 	//if the this is the first STH_FRAG received
 	//fmt.Println("This is the first partial sig registered")
 	new_counter := new(Entity_Gossip_Object_TSS_Counter)
@@ -532,7 +595,9 @@ func Process_TSS_Object(gc *GossiperContext, new_obj Gossip_object, target_type 
 		Num:          1,
 		Partial_sigs: []crypto.SigFragment{p_sig, p_sig},
 	}
+	gc.RWlock.Lock()
 	(*gc.Obj_TSS_DB)[key] = new_counter
+	gc.RWlock.Unlock()
 	//fmt.Println("Number of counters in TSS DB is: ", len(*gc.Obj_TSS_DB))
 	return nil
 
@@ -546,7 +611,7 @@ func PeriodicTasks(c *GossiperContext) {
 		PeriodicTasks(c)
 	}
 	time.AfterFunc(time.Duration(c.Config.Public.MMD)*time.Second, f)
-	fmt.Println("Gossiper running on Period: ", GetCurrentPeriod())
+	fmt.Println("Gossiper ", c.StorageID, " running on Period: ", GetCurrentPeriod())
 	c.SaveStorage()
 	c.WipeStorage()
 }
