@@ -24,6 +24,8 @@ Documentation + Function descriptions exist in each file/subfolder.
 ## Folders for Testing 
 
 
+**`gen`**: generates all config files for all entities within the network topology
+
 **`client_test`**: Contains all the config and data to test the just the client  
 
 **`logger_ca`**: Contains all the config and data to test
