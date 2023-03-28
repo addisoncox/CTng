@@ -65,7 +65,7 @@ To evaluate the output, navigate to the network folder and execute:
 
 - `go test`
 
-####Note: let the system run for more than 3 min before you start the evaluation. 
+#### Note: let the system run for more than 3 min before you start the evaluation. 
 
 ### Licensing
 Both imports we use, gorilla/mux and herumi/bls-go-binary, use an OpenBSD 3-clause license. as a result, we use the same Please see LICENSE in the outer folder for details.
