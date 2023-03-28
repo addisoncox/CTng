@@ -50,14 +50,20 @@ Run `go install .` before continuing!
 
 To run on Linux or WSL2:
 
-sh 3344.sh  
+- `sh 3344.sh`  
 
-if the sh file format is not working, try dos2unix 3344.sh
+if the sh file format is not working, try 
+- `dos2unix 3344.sh`
 
 The test data includes 3 CAs, 3 loggers, 4 monitors, 4 gossipers
 
-To close all tmux sessions, you can use the tmux kill-server command. 
+To close all tmux sessions, you can use command:
 
+- `tmux kill-server`
+
+To evaluate the output, navigate to the network folder and execute:
+
+- `go test`
 
 ### Licensing
 Both imports we use, gorilla/mux and herumi/bls-go-binary, use an OpenBSD 3-clause license. as a result, we use the same Please see LICENSE in the outer folder for details.
